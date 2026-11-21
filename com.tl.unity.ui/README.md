@@ -10,13 +10,15 @@ The clips and their rules are engine-free and live in `com.tl.ui`; this package 
 
 ## Install
 
-Add all three packages to `Packages/manifest.json`. A Git package cannot pull another Git package, so each one is listed:
+The packages live on the tl.unity branch `feat/uitk-blocks` and are tested as local packages. Add all three to `Packages/manifest.json` with `file:` paths to a checkout of that branch:
 
 ```json
-"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#main",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.ui#main",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity.ui#main"
+"com.tl.unity": "file:/path/to/tl.unity/com.tl.unity",
+"com.tl.ui": "file:/path/to/tl.unity/com.tl.ui",
+"com.tl.unity.ui": "file:/path/to/tl.unity/com.tl.unity.ui"
 ```
+
+Once the branch is merged, each also installs by Git URL (`https://github.com/IAFahim/tl.unity.git?path=/com.tl.ui#main` and so on); list all three, because a Git package cannot pull another Git package. The Git install is not tested yet.
 
 ## Set up a screen
 
@@ -43,7 +45,7 @@ Rules when clips disagree: Hide beats Show, Disable beats Enable, Remove Class b
 
 ## Commands
 
-The **Commands** table turns a target's Click, Pointer Enter, Pointer Leave or Value Changed event, or an Input Action **Hotkey**, into one action: play, stop, pause, resume or restart a timeline slot, **Send To Game** (a code and payload appended to the timeline object's `UiCommandInbox` buffer, read and cleared by your Burst systems), or a UnityEvent.
+The **Commands** table turns a target's Click, Pointer Enter, Pointer Leave or Value Changed event, or an Input Action **Hotkey** (built, not yet covered by a test), into one action: play, stop, pause, resume or restart a timeline slot, **Send To Game** (a code and payload appended to the timeline object's `UiCommandInbox` buffer, read and cleared by your Burst systems), or a UnityEvent.
 
 ```csharp
 foreach (var inbox in SystemAPI.Query<DynamicBuffer<UiCommandInbox>>())
@@ -90,6 +92,7 @@ Unity 7000.0.0a16, `-batchmode -nographics`, PlayMode tests in a fresh project w
 
 - Basics: every block matches its clip to the tick (a 0 to 1 s clip at 60 Hz is on for ticks 0 to 59). On the third play the Tl UI Panel's code allocates 0 B over 34,369 frames.
 - Hud: Tl UI Data and Tl UI Panel allocate 0 B over 240 frames in which the singleton changes every frame; the whole main thread allocated 158,776 B in those frames against 157,440 B with the data paused, so the binding updates add about 6 B per frame.
+- Package tests: selectors for one element, a class and a type; Hide with Keep Space, Enable on an authored-disabled button, Remove Class; translate, scale, rotate and width channels; Pointer Enter, Pointer Leave and Value Changed commands into the inbox; Play, Stop, Pause and Resume clicks into the request buffer; a ScriptableObject data source through `tl-percent` and `tl-hidden`.
 - Every UI Toolkit call the panel makes (style display, set enabled, label text, progress value, focus, attach, detach) allocates 0 B once warm.
 
 The first play of a timeline pays one-time costs: UI Toolkit focus and blur paths, Attach creating its template, Tl filling its per-stage event cache. Rendering was not part of these runs.
