@@ -1,0 +1,14 @@
+{
+  "name": "Tl.Ui",
+  "rootNamespace": "Tl.Ui",
+  "references": [
+    "Tl.Core",
+    "Tl.Unity",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Entities"
+  ],
+  "allowUnsafeCode": true,
+  "autoReferenced": true,
+  "noEngineReferences": false
+}
