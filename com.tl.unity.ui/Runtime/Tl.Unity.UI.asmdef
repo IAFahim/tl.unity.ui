@@ -1,0 +1,19 @@
+{
+  "name": "Tl.Unity.UI",
+  "rootNamespace": "TlUi",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.Tracks",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.InputSystem",
+    "Unity.Mathematics",
+    "Unity.Timeline"
+  ],
+  "allowUnsafeCode": true,
+  "autoReferenced": true
+}

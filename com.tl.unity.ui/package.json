@@ -1,0 +1,35 @@
+{
+  "name": "com.tl.unity.ui",
+  "version": "0.1.0-preview.1",
+  "displayName": "Tl Unity UI",
+  "description": "UI Toolkit for Tl timelines and ECS. A Tl UI Document next to the UI Document addresses elements with selectors and applies Show, Hide, Enable, Disable, class, attach, animate, text, signal and focus clips from com.tl.ui by Id, touching only what changed; clicks, value changes and hotkeys start UI timelines or send codes to game systems; Tl UI Data shows an ECS singleton written from Burst through UI Toolkit data binding, re-evaluated only when its bytes change. Zero managed allocation per frame once warm.",
+  "unity": "7000.0",
+  "unityRelease": "0a16",
+  "license": "MIT",
+  "author": {
+    "name": "IAFahim",
+    "url": "https://github.com/IAFahim"
+  },
+  "keywords": [
+    "tl",
+    "timeline",
+    "ui toolkit",
+    "uitk",
+    "ecs"
+  ],
+  "dependencies": {
+    "com.tl.ui": "0.1.0-preview.1",
+    "com.tl.unity": "0.2.0-preview.1",
+    "com.unity.entities": "6.7.0",
+    "com.unity.inputsystem": "7.0.0",
+    "com.unity.timeline": "6.7.0",
+    "com.unity.modules.uielements": "1.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Basics",
+      "description": "One timeline drives every time block on one screen: Show, Hide, Disable, Add Class, Attach, Animate with hold (opacity and a progress bar), Text with reveal, a Signal and Focus. Tl UI > Samples > Build Basics, then Play. Builder and a PlayMode test that checks every block against its clip and measures the managed allocation of the UI code per frame.",
+      "path": "Samples~/Basics"
+    }
+  ]
+}

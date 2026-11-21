@@ -15,6 +15,12 @@ namespace Tl.Ui
         [Feeds(typeof(UiChannelKind))]
         public static UiChannelFeed MoveTheChannelAlongTheCurve(in TlFrame<AnimateClip> frame)
             => UiChannelFeed.One(frame.Clip.Channel, frame.Clip.Value.Evaluate(frame.Progress), frame.Clip.Hold);
+
+        [Pulse(typeof(UiChannelKind), On = ClipEvent.End)]
+        public static UiChannelFeed HoldTheLastKeyWhenTheClipEnds(in TlFrame<AnimateClip> frame)
+            => frame.Clip.Hold
+                ? UiChannelFeed.One(frame.Clip.Channel, frame.Clip.Value.Evaluate(frame.Direction > 0 ? 1f : 0f), true)
+                : default;
     }
 
     [TlClip("UI/Text")]

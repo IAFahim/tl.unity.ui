@@ -164,14 +164,14 @@ public sealed class UiTimelineTests
     public void AnimateFollowsItsCurveAndHoldsWhileTextAndUnheldChannelsRestWhenTheirClipEnds()
     {
         var records = PlayBasics(TimelineTicks + 10, 0, out _);
-        var lastFadeValue = FadeInAndHold.Value.Evaluate(59 / 60f);
+        var lastFadeValue = FadeInAndHold.Value.Evaluate(1f);
         foreach (var record in records)
         {
             var tick = record.Tick;
             var channels = record.Channels;
             var playing = tick < TimelineTicks;
             Assert.True((channels.Live & 1) != 0);
-            var expectedFade = tick < 60 ? FadeInAndHold.Value.Evaluate(tick / 60f) : lastFadeValue;
+            var expectedFade = tick < 59 ? FadeInAndHold.Value.Evaluate(tick / 60f) : lastFadeValue;
             Assert.Equal(BitConverter.SingleToInt32Bits(expectedFade), BitConverter.SingleToInt32Bits(channels.Values.Get(0)));
             Assert.Equal(playing && Within(tick, 20, 40), (channels.Live & 2) != 0);
             if ((channels.Live & 2) != 0)

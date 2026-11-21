@@ -1,0 +1,11 @@
+{
+  "name": "Tl.Unity.UI.Editor",
+  "rootNamespace": "TlUi.Editor",
+  "references": [
+    "Tl.Unity.UI"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": true
+}

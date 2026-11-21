@@ -1,0 +1,21 @@
+{
+  "name": "Tl.Unity.UI.Tests",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.UI",
+    "Unity.Collections",
+    "Unity.Entities",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "autoReferenced": false
+}

@@ -29,7 +29,7 @@ namespace Tl.Ui
         public UiChannelValues Values;
     }
 
-    [TlKind]
+    [TlKind(Accepts = KindEntries.Both)]
     public struct UiChannelKind
     {
         public static void Combine(ref UiChannelFeed total, in UiChannelFeed next)

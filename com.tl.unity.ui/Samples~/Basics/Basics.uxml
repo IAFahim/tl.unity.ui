@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Basics.uss" />
+    <ui:VisualElement name="screen" class="screen">
+        <ui:Label name="title" text="Tl UI Basics" class="title start-hidden" />
+        <ui:Label name="hint" text="This hint hides for a second" class="card" />
+        <ui:Button name="go" text="Go" class="go" />
+        <ui:VisualElement name="badgeHolder" class="card glows">
+            <ui:Label text="Glows, then gets a badge" />
+        </ui:VisualElement>
+        <ui:VisualElement name="fader" class="card">
+            <ui:Label text="Fades in and stays" />
+        </ui:VisualElement>
+        <ui:Label name="caption" text="The caption written in UXML" class="caption" />
+        <ui:ProgressBar name="progress" low-value="0" high-value="1" title="Progress" class="progress" />
+    </ui:VisualElement>
+</ui:UXML>

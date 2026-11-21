@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Basics.uss" />
+    <ui:Label name="badge" text="New" class="badge" />
+</ui:UXML>
