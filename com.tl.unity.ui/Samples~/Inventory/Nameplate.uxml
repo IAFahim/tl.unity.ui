@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Inventory.uss" />
+    <ui:VisualElement name="nameplate" class="nameplate" picking-mode="Ignore">
+        <ui:Label name="nameplateName" class="nameplate-name" picking-mode="Ignore">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Name" binding-mode="ToTarget" source-to-ui-converters="tl-fixed-text" />
+            </Bindings>
+        </ui:Label>
+        <ui:Label name="nameplateHealth" class="nameplate-health" picking-mode="Ignore">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Health" binding-mode="ToTarget" source-to-ui-converters="tl-integer" />
+            </Bindings>
+        </ui:Label>
+    </ui:VisualElement>
+</ui:UXML>

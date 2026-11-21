@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Globalization;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -11,6 +13,7 @@ namespace TlUi
         public const string Clock = "tl-clock";
         public const string Visible = "tl-visible";
         public const string Hidden = "tl-hidden";
+        public const string FixedText = "tl-fixed-text";
         public const int CachedIntegers = 10000;
 
         static string IntegerText(string[] cache, int value)
@@ -34,6 +37,20 @@ namespace TlUi
             if (wholeSeconds >= cache.Length)
                 return (wholeSeconds / 60).ToString(CultureInfo.InvariantCulture) + ":" + (wholeSeconds % 60).ToString("00", CultureInfo.InvariantCulture);
             return cache[wholeSeconds] ??= (wholeSeconds / 60).ToString(CultureInfo.InvariantCulture) + ":" + (wholeSeconds % 60).ToString("00", CultureInfo.InvariantCulture);
+        }
+
+        static string TextOf(Dictionary<FixedString32Bytes, string> cache, FixedString32Bytes value)
+        {
+            if (!cache.TryGetValue(value, out var text))
+                cache.Add(value, text = value.ToString());
+            return text;
+        }
+
+        static string TextOf(Dictionary<FixedString64Bytes, string> cache, FixedString64Bytes value)
+        {
+            if (!cache.TryGetValue(value, out var text))
+                cache.Add(value, text = value.ToString());
+            return text;
         }
 
         static void RegisterOnce(ConverterGroup group)
@@ -64,6 +81,13 @@ namespace TlUi
             var visible = new ConverterGroup(Visible);
             visible.AddConverter((ref bool value) => new StyleEnum<DisplayStyle>(value ? DisplayStyle.Flex : DisplayStyle.None));
             RegisterOnce(visible);
+
+            var shortTexts = new Dictionary<FixedString32Bytes, string>();
+            var longTexts = new Dictionary<FixedString64Bytes, string>();
+            var fixedText = new ConverterGroup(FixedText);
+            fixedText.AddConverter((ref FixedString32Bytes value) => TextOf(shortTexts, value));
+            fixedText.AddConverter((ref FixedString64Bytes value) => TextOf(longTexts, value));
+            RegisterOnce(fixedText);
 
             var hidden = new ConverterGroup(Hidden);
             hidden.AddConverter((ref bool value) => new StyleEnum<DisplayStyle>(value ? DisplayStyle.None : DisplayStyle.Flex));

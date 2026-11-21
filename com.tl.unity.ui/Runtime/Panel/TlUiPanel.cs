@@ -18,6 +18,27 @@ namespace TlUi
     [HelpURL("https://github.com/IAFahim/tl.unity/tree/main/com.tl.unity.ui")]
     public sealed class TlUiPanel : MonoBehaviour
     {
+        sealed class ListState
+        {
+            public ListState(int list, UiListBinding binding, ITlUiRows rows, VisualElement target)
+            {
+                List = list;
+                Binding = binding;
+                Rows = rows;
+                Target = target;
+                View = target as ListView;
+            }
+
+            public readonly int List;
+            public readonly UiListBinding Binding;
+            public readonly ITlUiRows Rows;
+            public readonly VisualElement Target;
+            public readonly ListView View;
+            public readonly List<VisualElement> RowElements = new List<VisualElement>();
+            public long ShownCountVersion = -1;
+            public int ShownCount;
+        }
+
         sealed class ElementClasses : IUiClassList
         {
             public VisualElement Element;
@@ -53,6 +74,10 @@ namespace TlUi
         [Tooltip("What clicks, pointer moves, value changes and hotkeys do: start or stop UI timelines, send codes to game systems, or invoke events.")]
         public List<UiCommand> Commands = new List<UiCommand>();
 
+        [Header("Lists")]
+        [Tooltip("Rows from an asset list or an ECS buffer, shown in a ListView or a container, with row clicks and drags sent to game systems.")]
+        public List<UiListBinding> Lists = new List<UiListBinding>();
+
         [Header("Data")]
         [Tooltip("The data source of the whole screen: a ScriptableObject, or a Tl UI Data component that shows an ECS singleton. Bind fields to it in UI Builder.")]
         public UnityEngine.Object DataSource;
@@ -62,6 +87,7 @@ namespace TlUi
         readonly List<VisualElement> _matches = new List<VisualElement>();
         readonly List<Action> _unregisterCommands = new List<Action>();
         readonly List<int> _drainedCodes = new List<int>(16);
+        readonly List<ListState> _lists = new List<ListState>();
         readonly Dictionary<string, string[]> _revealPrefixes = new Dictionary<string, string[]>();
         readonly ElementClasses _classes = new ElementClasses();
         World _boundWorld;
@@ -87,6 +113,17 @@ namespace TlUi
         public UiSwitches ShownSwitches => _shownSwitches;
 
         public UiChannels ShownChannels => _shownChannels;
+
+        public VisualElement FirstElementOf(int id)
+        {
+            var idBit = id >= 0 && id <= UiIds.HighestId ? UiIds.BitOf((byte)id) : 0UL;
+            foreach (var state in _elements)
+                if ((state.Ids & idBit) != 0)
+                    return state.Element;
+            return null;
+        }
+
+        public IList<VisualElement> RowElementsOf(int list) => list >= 0 && list < _lists.Count ? _lists[list].RowElements : null;
 
         public void Bind(World world)
         {
@@ -238,11 +275,17 @@ namespace TlUi
             state.ShownChannels = look;
         }
 
-        void SendToGame(int code, int payload)
+        void SendToGame(int code, int payload, int target)
         {
             if (!TryFindHost(out var host))
                 return;
-            _boundWorld.EntityManager.GetBuffer<UiCommandInbox>(host).Add(new UiCommandInbox { Code = code, Payload = payload });
+            _boundWorld.EntityManager.GetBuffer<UiCommandInbox>(host).Add(new UiCommandInbox { Code = code, Payload = payload, Target = target });
+        }
+
+        public void SendRowDrag(int list, int fromRow, int toRow)
+        {
+            if (list >= 0 && list < _lists.Count && _lists[list].Binding.DragCode >= 0)
+                SendToGame(_lists[list].Binding.DragCode, fromRow, toRow);
         }
 
         bool TryFindHost(out Entity host)
@@ -301,7 +344,7 @@ namespace TlUi
                     command.OnInvoke?.Invoke();
                     break;
                 case UiCommandAction.SendToGame:
-                    SendToGame(command.GameCode, payload);
+                    SendToGame(command.GameCode, payload, -1);
                     break;
                 default:
                     RequestTimeline(command.Do, command.TimelineSlot);
@@ -345,6 +388,103 @@ namespace TlUi
             }
         }
 
+        VisualElement MakeRow(ListState list)
+        {
+            var row = list.Binding.RowTemplate.Instantiate();
+            var handle = new UiRowHandle(list.List);
+            row.userData = handle;
+            if (list.Binding.ClickCode >= 0)
+                row.RegisterCallback<ClickEvent>(_ => SendToGame(list.Binding.ClickCode, handle.Index, -1));
+            if (list.Binding.DragCode >= 0)
+                row.AddManipulator(new UiRowDrag(this, handle));
+            return row;
+        }
+
+        static void BindRow(ListState list, VisualElement row, int index)
+        {
+            ((UiRowHandle)row.userData).Index = index;
+            row.dataSource = list.Rows.Items[index];
+            row.dataSourcePath = list.Rows.PathToRow;
+        }
+
+        void ForgetLists()
+        {
+            foreach (var list in _lists)
+            {
+                if (list.View != null)
+                {
+                    list.View.itemsSource = null;
+                    continue;
+                }
+                foreach (var row in list.RowElements)
+                    row.RemoveFromHierarchy();
+            }
+            _lists.Clear();
+        }
+
+        void ResolveLists()
+        {
+            ForgetLists();
+            for (var index = 0; index < Lists.Count; index++)
+            {
+                var binding = Lists[index];
+                var target = FirstElementOf(binding.TargetId);
+                if (!(binding.Rows is ITlUiRows rows) || binding.RowTemplate == null || target == null)
+                {
+                    Debug.LogWarning("Tl UI Panel: list " + index + " needs Rows (Tl UI Asset Rows or a Tl UI Buffer Rows component), a Row Template and a Target Id that matches an element.", this);
+                    _lists.Add(new ListState(index, binding, null, null));
+                    continue;
+                }
+                var list = new ListState(index, binding, rows, target);
+                if (list.View != null)
+                {
+                    list.View.makeItem = () => MakeRow(list);
+                    list.View.bindItem = (row, rowIndex) => BindRow(list, row, rowIndex);
+                    list.View.itemsSource = rows.Items;
+                    list.ShownCountVersion = rows.CountVersion;
+                }
+                _lists.Add(list);
+            }
+        }
+
+        void UpdateLists()
+        {
+            foreach (var list in _lists)
+            {
+                if (list.Rows == null)
+                    continue;
+                var countVersion = list.Rows.CountVersion;
+                if (list.View != null)
+                {
+                    if (countVersion != list.ShownCountVersion)
+                    {
+                        list.View.RefreshItems();
+                        list.ShownCountVersion = countVersion;
+                    }
+                    continue;
+                }
+                if (countVersion == list.ShownCountVersion)
+                    continue;
+                var count = list.Rows.Items.Count;
+                while (list.RowElements.Count < count)
+                {
+                    var row = MakeRow(list);
+                    list.Target.Add(row);
+                    list.RowElements.Add(row);
+                }
+                for (var index = 0; index < list.RowElements.Count; index++)
+                {
+                    var row = list.RowElements[index];
+                    var visible = index < count;
+                    row.style.display = visible ? new StyleEnum<DisplayStyle>(StyleKeyword.Null) : new StyleEnum<DisplayStyle>(DisplayStyle.None);
+                    if (visible)
+                        BindRow(list, row, index);
+                }
+                list.ShownCount = count;
+                list.ShownCountVersion = countVersion;
+            }
+        }
+
         void Resolve(VisualElement root)
         {
             foreach (var unregister in _unregisterCommands)
@@ -385,6 +525,7 @@ namespace TlUi
             {
                 root.dataSource = DataSource;
             }
+            ResolveLists();
             _resolvedRoot = root;
             _resolveRequested = false;
             _applyEverything = true;
@@ -566,6 +707,7 @@ namespace TlUi
         {
             if (Panel != null && _onUiReloaded != null)
                 Panel.UnregisterUIReloadCallback(_onUiReloaded);
+            ForgetLists();
             foreach (var unregister in _unregisterCommands)
                 unregister();
             _unregisterCommands.Clear();
@@ -585,6 +727,7 @@ namespace TlUi
                 Resolve(_resolvedRoot);
             ApplySwitches(ReadSwitchesOfEveryHost());
             ApplyChannels(ReadChannelsOfEveryHost());
+            UpdateLists();
             DrainSignals();
             DrainFocus();
             RunHotkeys();

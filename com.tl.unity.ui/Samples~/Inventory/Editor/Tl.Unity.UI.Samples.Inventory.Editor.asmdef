@@ -1,0 +1,20 @@
+{
+  "name": "Tl.Unity.UI.Samples.Inventory.Editor",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.Tracks",
+    "Tl.Unity.Tracks.Editor",
+    "Tl.Unity.UI",
+    "Tl.Unity.UI.Samples.Inventory",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.Scenes",
+    "Unity.Timeline"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

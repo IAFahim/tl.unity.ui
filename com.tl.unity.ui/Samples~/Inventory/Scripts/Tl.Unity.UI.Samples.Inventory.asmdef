@@ -1,0 +1,16 @@
+{
+  "name": "Tl.Unity.UI.Samples.Inventory",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.UI",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.Mathematics",
+    "Unity.Transforms"
+  ],
+  "autoReferenced": false
+}

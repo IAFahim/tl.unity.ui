@@ -12,7 +12,8 @@
     "Unity.Entities.Hybrid",
     "Unity.InputSystem",
     "Unity.Mathematics",
-    "Unity.Timeline"
+    "Unity.Timeline",
+    "Unity.Transforms"
   ],
   "allowUnsafeCode": true,
   "autoReferenced": true

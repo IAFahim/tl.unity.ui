@@ -14,5 +14,6 @@ namespace TlUi
     {
         public int Code;
         public int Payload;
+        public int Target;
     }
 }

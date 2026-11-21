@@ -3,6 +3,7 @@ using Tl.Ui;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 
 namespace TlUi
 {
@@ -55,6 +56,26 @@ namespace TlUi
 
         [Tooltip("What happens when a Signal clip with this code starts: play a sound, start particles, call a method.")]
         public UnityEvent OnSignal = new UnityEvent();
+    }
+
+    [Serializable]
+    public sealed class UiListBinding
+    {
+        [Tooltip("The target Id of the element that shows the rows: a ListView (rows are virtualized) or any container (one row element per row, kept and reused).")]
+        [Range(0, UiIds.HighestId)]
+        public int TargetId;
+
+        [Tooltip("Where the rows come from: a Tl UI Asset Rows asset, or a component that shows an ECS buffer (a Tl UI Buffer Rows subclass).")]
+        public UnityEngine.Object Rows;
+
+        [Tooltip("The UXML made for each row. Its data source is the row, so bind the row's fields by name.")]
+        public VisualTreeAsset RowTemplate;
+
+        [Tooltip("Send To Game code for a click on a row, with the row number as the payload. -1 sends nothing.")]
+        public int ClickCode = -1;
+
+        [Tooltip("Send To Game code for dragging one row onto another, with the dragged row as the payload and the row it was dropped on as the target. -1 turns dragging off.")]
+        public int DragCode = -1;
     }
 
     public enum UiCommandEvent

@@ -35,6 +35,11 @@
       "displayName": "Hud",
       "description": "A Burst ISystem writes an unmanaged HudData singleton every frame; a one-line Hud View (Tl UI Data) shows it through UI Toolkit bindings with the tl-integer, tl-clock and tl-visible converters. Heal sends a code to the game's UI Command Inbox, Flash plays an Also Plays timeline. Tl UI > Samples > Build Hud, then Play. Builder and a PlayMode test that checks every binding, both buttons and the managed allocation while the data changes every frame.",
       "path": "Samples~/Hud"
+    },
+    {
+      "displayName": "Inventory",
+      "description": "Lists, drag and nameplates. Bag slots come from an ECS buffer (Bag Rows, a Tl UI Buffer Rows) into a container: click uses an item, dragging a slot onto another swaps them, both through the game's UI Command Inbox. The shop is a ListView of ShopItem assets (Tl UI Asset Rows): click buys. Three wandering enemies get nameplates (Nameplate Views, a Tl UI Entity Views) that follow them on screen. Tl UI > Samples > Build Inventory, then Play. Builder and a PlayMode test.",
+      "path": "Samples~/Inventory"
     }
   ]
 }

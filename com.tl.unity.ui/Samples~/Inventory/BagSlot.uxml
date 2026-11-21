@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Inventory.uss" />
+    <ui:VisualElement name="slot" class="slot">
+        <ui:Label name="itemName" class="slot-name">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Name" binding-mode="ToTarget" source-to-ui-converters="tl-fixed-text" />
+            </Bindings>
+        </ui:Label>
+        <ui:Label name="itemCount" class="slot-count">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Count" binding-mode="ToTarget" source-to-ui-converters="tl-integer" />
+            </Bindings>
+        </ui:Label>
+    </ui:VisualElement>
+</ui:UXML>
