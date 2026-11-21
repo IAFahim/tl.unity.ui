@@ -1,0 +1,57 @@
+.hud {
+    flex-grow: 1;
+    padding: 28px;
+    align-items: flex-start;
+}
+
+.title {
+    margin-bottom: 14px;
+    font-size: 34px;
+    color: rgb(240, 242, 248);
+}
+
+.start-hidden {
+    display: none;
+}
+
+.row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.caption {
+    min-width: 110px;
+    font-size: 20px;
+    color: rgb(170, 180, 200);
+}
+
+.value {
+    font-size: 24px;
+    color: rgb(240, 242, 248);
+}
+
+.health-bar {
+    min-width: 320px;
+}
+
+.banner {
+    margin-bottom: 10px;
+    padding: 8px 14px;
+    background-color: rgb(200, 48, 48);
+    border-radius: 6px;
+    color: rgb(255, 240, 240);
+    font-size: 20px;
+}
+
+.flash {
+    background-color: rgb(255, 196, 64);
+    color: rgb(30, 24, 8);
+}
+
+.button {
+    min-width: 140px;
+    height: 44px;
+    margin-right: 10px;
+    font-size: 20px;
+}
