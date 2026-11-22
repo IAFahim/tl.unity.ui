@@ -192,16 +192,19 @@ To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put 
 
 ## Status
 
-Preview, version `0.1.0-preview.5`. Checked on Unity 7000.0.0a16 on Linux, all on `0.1.0-preview.5` code:
+Preview, version `0.2.0-preview.1`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL (`com.tl.unity#765657a`):
+- Tl writes all 11 **+** menu entries itself.
 - 5 EditMode tests:
   - every block in the **+** menu;
   - **Tl UI Target** naming a clip;
   - new names skipping Ids already used by number;
   - scrubbing hiding and restoring Hello;
   - the element named hello hiding in Play mode.
-- 21 package PlayMode tests plus the Basics, Hud, Inventory and Menu sample tests, 26/26 in three full runs (one installed from GitHub).
-- 13 .NET tests from a fresh clone.
-- Linux CoreCLR and IL2CPP players, built from a GitHub install, run all four samples headless and pass 28 of 28 checks. Once warm, UI Toolkit's own panel update allocates 0 B while the Hud data changes every frame.
+- 21 package PlayMode tests plus the Basics, Hud, Inventory and Menu sample tests, 25/25 in two full runs.
+- 13 .NET tests.
+- Linux CoreCLR and IL2CPP players run all four samples headless and pass 28 of 28 checks (3 and 2 runs). Once warm (full health, every UI timeline finished), UI Toolkit's own panel update allocates 0 B while the Hud data changes every frame.
+
+For Unity 7000.0.0a16, use `0.1.0-preview.5`.
 
 Not checked yet:
 - other platforms;

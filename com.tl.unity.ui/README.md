@@ -227,14 +227,14 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 
 | Check | Result |
 |---|---|
-| Editor tests, `-batchmode -nographics` | 21 package PlayMode tests, 4 sample tests and 5 EditMode tests pass, in three full runs |
+| Editor tests, `-batchmode -nographics`, Unity 7000.0.0a20 | 21 package PlayMode tests, 4 sample tests and 5 EditMode tests pass, in two full runs from a Git URL install |
 | Engine-free rules | 13 .NET tests pass |
-| Linux player, CoreCLR | builds with 0 errors and 0 warnings; a smoke scene loads all four sample scenes headless and passes 28 checks |
-| Linux player, IL2CPP | builds (the only warnings are TextMeshPro's own IL2CPP notes) and passes the same 28 checks |
+| Linux player, CoreCLR | builds with 0 errors and 0 warnings; a smoke scene loads all four sample scenes headless and passes 28 checks (3 runs) |
+| Linux player, IL2CPP | builds with 0 errors and 0 warnings and passes the same 28 checks (2 runs) |
 | UXML in a player | TlTarget, TlSend, TlPlay, the three Tl bindings and Tl Radial Fill all load from UXML and work under both backends |
-| Allocation in a player | once warm, UI Toolkit's panel update allocates 0 B over 240 ticks while the Hud data changes every frame |
+| Allocation in a player | once warm (full health, every UI timeline finished), UI Toolkit's panel update allocates 0 B over 240 ticks while the Hud data changes every frame |
 | Allocation in the Editor | Tl UI Panel and Tl UI Data allocate 0 B per frame on a third play of the Basics sample and while the Hud data changes every frame |
-| Git URL install | a fresh project compiles with 0 warnings from these packages and passes every test above |
+| Git URL install | a fresh project compiles with 0 warnings from these packages, Tl writes the 11 menu entries, and every test above passes |
 | Static state | Unity 7 resets every static (`[AutoStaticsCleanup]` or `SubsystemRegistration`), so it is safe with domain reload off; 0 statics warnings |
 
 "Once warm" means after first-time costs, which UI Toolkit pays itself:
