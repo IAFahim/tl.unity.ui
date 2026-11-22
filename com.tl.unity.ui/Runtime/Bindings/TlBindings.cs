@@ -120,6 +120,7 @@ namespace TlUi
         float _to;
         float _shown;
         long _startedAt = -1;
+        bool _easing;
 
         public float Shown => _shown;
 
@@ -143,16 +144,17 @@ namespace TlUi
             }
         }
 
-        void Step(TimerState timer)
+        void StepWhileEasing(TimerState timer)
         {
+            if (!_easing)
+                return;
             if (_startedAt < 0)
                 _startedAt = timer.now;
             var progress = Mathf.Clamp01((timer.now - _startedAt) * 0.001f / Seconds);
             var eased = 1f - (1f - progress) * (1f - progress);
             _shown = Mathf.LerpUnclamped(_from, _to, eased);
             Show();
-            if (progress >= 1f)
-                _step.Pause();
+            _easing = progress < 1f;
         }
 
         protected override BindingResult UpdateUI<TValue>(in BindingContext context, ref TValue value)
@@ -164,6 +166,7 @@ namespace TlUi
             {
                 _step?.Pause();
                 _step = null;
+                _easing = false;
                 _target = element;
                 _from = _to = _shown = number;
                 Show();
@@ -180,10 +183,8 @@ namespace TlUi
                 Show();
                 return default;
             }
-            if (_step == null)
-                _step = element.schedule.Execute(Step).Every(0);
-            else
-                _step.Resume();
+            _easing = true;
+            _step ??= element.schedule.Execute(StepWhileEasing).Every(0);
             return default;
         }
     }

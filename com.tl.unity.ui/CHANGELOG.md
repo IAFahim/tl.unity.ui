@@ -9,6 +9,9 @@
   - The 11 hand-written menu tracks are gone; a new clip needs no new file (IAFahim/tl.unity#50).
 - **Scrub preview uses Tl's public preview API:** `TlPreview.Evaluated`, `Version` and `Record`. It no longer chains onto the preview hook or copies Tl's bake, system list and stepping (IAFahim/tl.unity#49).
 
+### Fixed
+- Tl Smooth Binding keeps its scheduled item running and returns at once when nothing eases, instead of pausing and resuming it. A pause and resume unregisters and re-registers two element callbacks in UI Toolkit.
+
 ## 0.1.0-preview.5
 
 ### Fixed
