@@ -2,7 +2,17 @@
   "name": "Tl.Unity.UI.Editor",
   "rootNamespace": "TlUi.Editor",
   "references": [
-    "Tl.Unity.UI"
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.Tracks",
+    "Tl.Unity.Tracks.Editor",
+    "Tl.Unity.UI",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.Scenes",
+    "Unity.Timeline",
+    "Unity.Timeline.Editor"
   ],
   "includePlatforms": [
     "Editor"

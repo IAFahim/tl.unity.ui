@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0-preview.3
+
+### Added
+- Every UI block is in the Timeline window's **+** menu under **UI**: Show, Hide, Enable, Disable, Add Class, Remove Class, Attach, Animate, Text, Signal and Focus. Picking one adds a Tl track whose clips are that block. Before, `com.tl.unity` made menu entries only for clips compiled from `Assets/`, so the UI blocks never showed and only the sample builders could add them.
+- **GameObject > Tl UI > Screen** builds a working screen in one click:
+  - a Panel Renderer with Tl UI Panel;
+  - a SubScene holding a Playable Director and Tl UI Timelines;
+  - a starter `Screen.uxml` whose Hello label is Id 0;
+  - an empty Tl timeline, which opens in the Timeline window.
+- EditMode tests for both, including a designer's whole flow: Screen, then **+ > UI > Hide**, then a clip, then Play, and the label hides while the clip is on.
+
+### Fixed
+- The 0.1.0-preview.2 lookup of the Tl UI Timelines object made the Basics sample allocate 192 B at the start of some replays when the full test suite ran. The panel again finds that object as 0.1.0-preview.1 did, and falls back to the inbox only when the Playable Director has no timeline.
+
 ## 0.1.0-preview.2
 
 ### Changed

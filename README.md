@@ -10,6 +10,22 @@ You make the screen the usual UI Toolkit way, with UXML, USS and UI Builder. The
 
 Game code never calls the UI and never holds a reference to it. Game code writes data and codes, and the UI reads them.
 
+## Designers: start here (no code)
+
+Make something hide, in four clicks:
+
+1. Save your scene. In the **Hierarchy**, right-click and pick **Tl UI > Screen**. A screen with a big **Hello** label appears, and the Timeline window opens.
+2. In the Timeline window, click **+** and pick **UI > Hide**.
+3. Right-click the new **Hide** track and pick **Add Tl Clip**. Drag the clip to where the hide should start, and drag its end to how long it lasts.
+4. Press **Play**. Hello disappears while the clip plays and comes back after it.
+
+The **UI** menu in the Timeline **+** button holds every block: Show, Hide, Enable, Disable, Add Class, Remove Class, Attach, Animate, Text, Signal and Focus. Each clip has an **Id** in the Inspector. The starter Hello label is Id 0, the default.
+
+To hide something else:
+1. Double-click `Screen.uxml` to open it in UI Builder, add an element, and give it a **Name**.
+2. Select the **Screen** GameObject. Under **Tl UI Panel > Targets**, click **+**, set **Id** to 1 and **Selector** to `#` plus the name.
+3. Set the clip's **Id** to 1.
+
 ## What is in this repo
 
 | Folder | Package | What it is |
@@ -25,8 +41,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.2",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.2"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.3",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.3"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against. Unity resolves Entities, Input System and Timeline for you.
@@ -175,17 +191,16 @@ To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put 
 
 ## Status
 
-Preview, version `0.1.0-preview.2`. Checked on Unity 7000.0.0a16 on Linux.
+Preview, version `0.1.0-preview.3`. Checked on Unity 7000.0.0a16 on Linux.
 
-On `0.1.0-preview.2`, installed by Git URL in a fresh project:
-- 21 package PlayMode tests;
-- the Hud sample's test;
-- the example above, built as the steps say;
+On `0.1.0-preview.3`:
+- 21 package PlayMode tests, plus the Basics, Hud, Inventory and Menu sample tests (two full runs, 26/26 each);
+- 2 EditMode tests: every block is in the Timeline **+** menu, and the designer flow above hides the label;
 - 13 .NET tests from a fresh clone.
 
-On `0.1.0-preview.1`, whose code differs only in the empty-Playable fix and the statics attributes:
-- the Basics, Inventory and Menu sample tests;
-- CoreCLR and IL2CPP players running all four samples headless.
+On `0.1.0-preview.2`: "Make your own screen" above, built as the steps say.
+
+On `0.1.0-preview.1`: CoreCLR and IL2CPP players running all four samples headless.
 
 Not checked yet: other platforms, how it looks on screen, and newer Unity alphas.
 

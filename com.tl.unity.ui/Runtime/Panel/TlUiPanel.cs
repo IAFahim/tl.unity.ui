@@ -109,6 +109,7 @@ namespace TlUi
         EntityQuery _signalsQuery;
         EntityQuery _focusQuery;
         EntityQuery _hostsQuery;
+        EntityQuery _hostsWithoutTimelineQuery;
         UiSwitches _shownSwitches;
         UiChannels _shownChannels;
         PanelRenderer.VersionedUIReloadCallback _onUiReloaded;
@@ -187,7 +188,8 @@ namespace TlUi
             _channelsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiChannels>());
             _signalsQuery = entityManager.CreateEntityQuery(ComponentType.ReadWrite<TimelineEvent<UiSignal>>());
             _focusQuery = entityManager.CreateEntityQuery(ComponentType.ReadWrite<TimelineEvent<UiFocus>>());
-            _hostsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>(), ComponentType.ReadWrite<UiCommandInbox>());
+            _hostsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>(), ComponentType.ReadWrite<TimelineRequest>());
+            _hostsWithoutTimelineQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>(), ComponentType.ReadWrite<UiCommandInbox>());
             _applyEverything = true;
         }
 
@@ -427,26 +429,22 @@ namespace TlUi
         bool TryFindHostQuietly(out Entity host)
         {
             host = Entity.Null;
-            if (_hostsQuery.IsEmptyIgnoreFilter)
+            var hostsQuery = _hostsQuery.IsEmptyIgnoreFilter ? _hostsWithoutTimelineQuery : _hostsQuery;
+            if (hostsQuery.IsEmptyIgnoreFilter)
                 return false;
-            _hostsQuery.CompleteDependency();
-            using var hosts = _hostsQuery.ToEntityArray(Allocator.Temp);
+            hostsQuery.CompleteDependency();
+            using var hosts = hostsQuery.ToEntityArray(Allocator.Temp);
             host = hosts[0];
             return true;
         }
 
         bool TryFindHost(out Entity host)
         {
+            if (BoundWorldIsUsable() && TryFindHostQuietly(out host))
+                return true;
             host = Entity.Null;
-            if (!BoundWorldIsUsable() || _hostsQuery.IsEmptyIgnoreFilter)
-            {
-                Debug.LogWarning("Tl UI Panel: no object in the SubScene has a Tl UI Timelines component, so commands have nowhere to go.", this);
-                return false;
-            }
-            _hostsQuery.CompleteDependency();
-            using var hosts = _hostsQuery.ToEntityArray(Allocator.Temp);
-            host = hosts[0];
-            return true;
+            Debug.LogWarning("Tl UI Panel: no object in the SubScene has a Tl UI Timelines component, so commands have nowhere to go.", this);
+            return false;
         }
 
         public void RequestTimeline(UiTimelineVerb verb, int slot)

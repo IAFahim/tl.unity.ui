@@ -1,0 +1,29 @@
+{
+  "name": "Tl.Unity.UI.Editor.Tests",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.Tracks",
+    "Tl.Unity.Tracks.Editor",
+    "Tl.Unity.UI",
+    "Tl.Unity.UI.Editor",
+    "Unity.Entities",
+    "Unity.Scenes",
+    "Unity.Timeline",
+    "Unity.Timeline.Editor",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "autoReferenced": false
+}
