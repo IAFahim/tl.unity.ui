@@ -1,0 +1,4 @@
+*.meta -whitespace
+*.asset -whitespace
+*.unity -whitespace
+*.playable -whitespace

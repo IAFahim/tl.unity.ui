@@ -10,23 +10,15 @@ The clips and their rules are engine-free and live in `com.tl.ui`; this package 
 
 ## Install
 
-The packages live on the tl.unity branch `feat/uitk-blocks` and are tested as local packages. Add all three to `Packages/manifest.json` with `file:` paths to a checkout of that branch:
+This package and `com.tl.ui` live in [IAFahim/tl.unity.ui](https://github.com/IAFahim/tl.unity.ui). `com.tl.unity` lives in [IAFahim/tl.unity](https://github.com/IAFahim/tl.unity). Add all three to `Packages/manifest.json`. List all three, because a Git package cannot pull another Git package:
 
 ```json
-"com.tl.unity": "file:/path/to/tl.unity/com.tl.unity",
-"com.tl.ui": "file:/path/to/tl.unity/com.tl.ui",
-"com.tl.unity.ui": "file:/path/to/tl.unity/com.tl.unity.ui"
+"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.1",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.1"
 ```
 
-Or install by Git URL. List all three, because a Git package cannot pull another Git package:
-
-```json
-"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#feat/uitk-blocks",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.ui#feat/uitk-blocks",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity.ui#feat/uitk-blocks"
-```
-
-A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 20 package tests. Change `#feat/uitk-blocks` to `#main` once the branch is merged.
+A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 20 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
 
 ## Set up a screen
 
@@ -232,7 +224,7 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 | Git URL install | a fresh project compiles and passes the package tests |
 | Static state | every static resets on `SubsystemRegistration`, so it is safe with domain reload off |
 
-The smoke scene and the build script live in the tl-ui project (`Assets/PlayerSmoke`, `Assets/Editor/TlUiPlayerBuild.cs`). They are not shipped in the package.
+The smoke scene and the player build script live in a separate test project. They are not shipped in the package.
 
 Not checked yet:
 - other platforms (Windows, macOS, mobile, consoles, WebGL);

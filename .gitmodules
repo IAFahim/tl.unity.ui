@@ -1,0 +1,3 @@
+[submodule "external/tl-kinds"]
+	path = external/tl-kinds
+	url = https://github.com/IAFahim/tl.git
