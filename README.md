@@ -12,20 +12,113 @@ Game code never calls the UI and never holds a reference to it. Game code writes
 
 ## Designers: start here (no code)
 
-Make something hide, and see it while you scrub:
+### 1. Your first screen, in one click
 
-1. Save your scene. In the **Hierarchy**, right-click and pick **Tl UI > Screen**. A big **Hello** label appears, and the Timeline window opens on it, ready to scrub.
-2. In the Timeline window, click **+** and pick **UI > Hide**.
-3. Right-click the new **Hide** track and pick **Add Tl Clip**. Drag the clip to where the hide should start, and drag its end to how long it lasts.
-4. Drag the playhead across the clip. Hello disappears in the Game view while the playhead is on the clip, with no Play needed. Press **Play** to see it run for real.
+1. Save your scene.
+2. In the **Hierarchy** (the list of objects, top left), right-click on empty space and pick **Tl UI > Screen**.
+3. Press **Play** (top middle). A blue **Hello** fades in and slides up.
 
-To hide something else:
-1. Double-click `Screen.uxml` to open it in UI Builder, add an element, and give it a **Name**.
-2. Right-click the clip and pick **Tl UI Target…**, then pick that name. The clip renames itself, for example **Hide title**.
+That's the whole loop. The rest of this section shows where that motion lives and how to change it.
 
-You never type a number. Every block is under **+ > UI**: Show, Hide, Enable, Disable, Add Class, Remove Class, Attach, Animate, Text, Signal and Focus.
+### 2. Find the motion: the Timeline window
 
-Names live on the **Screen Timelines** object, in **Tl UI Timelines > Target Names**, and are baked into ECS as fixed strings. A clip stores its name's position in that list, a byte, so Play mode still allocates nothing. A new name never takes a number that an older screen already uses by hand.
+When you made the screen, the **Timeline** window opened at the bottom. If you closed it, open **Window > Sequencing > Timeline**, then click the **Screen Timelines** object in the Hierarchy.
+
+Each row in the Timeline is a **track**, and each block on a track is a **clip**. A clip changes something on the screen from where it starts until where it ends. The starter has two clips:
+- **Fade hello**
+- **Move hello Y**
+
+Drag the white playhead (the vertical line) left and right. The Game view shows the screen at that moment, without pressing Play.
+
+### 3. Read a clip: the Inspector
+
+Click **Fade hello**. The **Inspector** (right side) shows, under **Tl Clip**:
+
+| Field | What it means | Fade hello |
+|---|---|---|
+| **Target** | which element on the screen changes. Pick it from the list; it shows every element you gave a **Name** in UI Builder | hello |
+| **Property** | what changes: Opacity, Move X, Move Y, Scale, Rotate, Width Percent, Height Percent, Reveal (typing) or Value (sliders, bars). The grey box under it says what the numbers mean | Opacity |
+| **From** | the value when the clip starts | 0 (invisible) |
+| **To** | the value when the clip ends | 1 (as designed) |
+| **Ease** | the shape of the change, from From at the left to To at the right | fast, then slow |
+| **Hold** | ticked: keep To after the clip ends. Unticked: go back to how the UXML looks | ticked |
+
+Try it: set **To** to 0.3, then drag the playhead. Hello only gets faint. If From and To are the same, the Inspector tells you that nothing moves.
+
+Change **timing** by dragging the clip left or right, or by dragging its right edge to make it longer or shorter.
+
+### 4. Add a block
+
+1. In the Timeline window, click **+** (top left of the track list) and open **UI**. Every block is there:
+
+| Block | What it does while the clip is on |
+|---|---|
+| **Show** | shows the target, even if the UXML hides it |
+| **Hide** | hides the target. **Keep Space** hides it but leaves its gap |
+| **Enable** / **Disable** | makes a button or field usable, or greys it out |
+| **Add Class** / **Remove Class** | adds or removes a USS class, so your stylesheet decides the look (glow, red, bigger) |
+| **Attach** | puts a small UXML template inside the target, like a badge |
+| **Animate** | moves one property from From to To (see the table above) |
+| **Text** | swaps the target's text for another text |
+| **Signal** | fires once at the clip's start: play a sound, start another timeline, tell the game |
+| **Focus** | moves keyboard and gamepad focus to the target |
+
+2. Right-click the new track and pick **Add Tl Clip**.
+3. Click the clip and pick its **Target** in the Inspector. The clip renames itself, for example **Hide title** or **Move title Y**.
+
+Class, Text and Template fields are lists too. Choose **New class name…** or **New text…** at the bottom to add one without leaving the Inspector.
+
+### 5. Add your own element
+
+1. In the Project window, double-click `Assets/Tl UI/Screen.uxml`. UI Builder opens.
+2. Drag a **Label**, **Button** or any element onto the screen, and type a **Name** for it in UI Builder's Inspector (for example `title`).
+3. Save. The name now shows in every clip's **Target** list.
+
+Names are stored on the **Screen Timelines** object (**Tl UI Timelines > Target Names**) and baked into ECS as fixed strings. Play mode allocates nothing for them. You never type a number.
+
+### 6. Cards, inventory, drag and drop
+
+Import the samples from **Window > Package Manager > Tl Unity UI > Samples**. After importing one, build it from the menu bar, for example **Tl UI > Samples > Build Cards**, then open its scene and press Play.
+
+**Cards** is a card table:
+- Hover a card and it lifts.
+- Drag it onto the green table to play it. That spends energy and adds score.
+- Drag it back to take it back, or drop it on another card in your hand to reorder.
+- **Draw** and **End turn** are buttons.
+- Try playing a card you can't afford: the energy box shakes.
+
+| To change | Open | Change |
+|---|---|---|
+| which cards, their cost, power and colour | `Card Set.asset` | the Cards list (Inspector) |
+| how cards look, lift and tilt | `Cards.uss` | `.card`, `.hand TemplateContainer:hover .card`, `.tl-drag-ghost .card` |
+| the shake when energy runs out | `Cards Not Enough Energy.playable` | Move energy X: From, To, Ease, length |
+| the "Your turn" banner | `Cards New Turn.playable` | Show banner, Scale banner, Fade banner |
+| the intro | `Cards Intro.playable` | Fade title, Move hand Y, … |
+| hand size, energy per turn, shuffle | **UI Sequence** object in `Cards Objects` | the **Cards** component |
+
+**Inventory** is a bag:
+- Click to use an item.
+- Drag an item onto another slot to swap them.
+- Drag a bag item onto **Equipment** (Weapon, Armor, Ring) to equip it, and drag it back to unequip.
+- Click a shop row to buy. Enemies carry nameplates.
+
+How dragging works:
+- Any list on the **Tl UI Panel** (**Lists**) can take part.
+- **Drag Code**: what to send when a row is dropped on another row of the same list, to swap or reorder.
+- **Drop Code**: what to send when a row from another list lands on this one, like hand → table or bag → equipment.
+- While you drag, a copy of the row follows the pointer. Style it in USS:
+  - `tl-drag-ghost`: the copy;
+  - `tl-dragging`: the row it came from;
+  - `tl-drop-target`: where it would land.
+- The game rules (energy, stacking, swapping) live in a small Burst system. A designer changes numbers and looks in the files in the table, not code.
+
+### 7. Nothing moves? Check these
+
+- **The clip's Target says "(no name: pick one)".** Pick a name.
+- **From and To are equal.** The Inspector says so under Property.
+- **The clip is outside the timeline's play range,** or the track is muted (the speaker icon on the track).
+- **Add Class: the class has no style in your USS.** The class is added, but nothing changes how it looks.
+- **Unity is older than 7000.0.0a20.** This version needs a20.
 
 ## What is in this repo
 
@@ -42,11 +135,11 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.2.0-preview.1",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.2.0-preview.1"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.1",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.1"
 ```
 
-You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. For Unity 7000.0.0a16, use `#v0.1.0-preview.5` and `com.tl.unity` at `#92c8c6c343bdbfc179e4d49f88dd9e77414e7346`. Unity resolves Entities, Input System and Timeline for you.
+You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. Unity resolves Entities, Input System and Timeline for you.
 
 ## Try it in five minutes
 
@@ -67,7 +160,8 @@ The other samples work the same way:
 |---|---|
 | **Basics** | every timeline clip on one screen |
 | **Hud** | ECS data on screen, buttons that reach game systems |
-| **Inventory** | a bag from an ECS buffer (click to use, drag to swap), a shop list, tooltips, and nameplates that follow enemies |
+| **Inventory** | a bag from an ECS buffer (click to use, drag to swap, drag onto Equipment to equip), a shop list, tooltips, and nameplates that follow enemies |
+| **Cards** | a hand and a table: drag to play, drag back, reorder, energy and score in Burst, timelines for the shake and the banner |
 | **Menu** | two screens that swap with no screen code, settings that write ECS, Escape to go back, and a pause hotkey |
 
 ## Make your own screen
@@ -183,7 +277,7 @@ public partial struct PlayerHudSystem : ISystem
 
 Press Play: the label shows 100, and each click on **Heal** adds 30.
 
-To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put UI clips with that Id on a Tl track in the Timeline window.
+To animate the screen, give elements a Name in UI Builder and pick that name on UI clips in the Timeline window (Designers: start here, above).
 
 ## Where to read next
 

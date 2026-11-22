@@ -23,7 +23,7 @@ A fresh 7000.0.0a20 project with exactly these lines compiles and passes all 21 
 ## Set up a screen
 
 **GameObject > Tl UI > Screen** (or right-click in the Hierarchy) does all four steps below. Save the scene first. You get:
-- a starter screen with a Hello label;
+- a starter screen with a Hello label, and a starter timeline whose **Fade hello** and **Move hello Y** clips play on Play;
 - `hello` as the first target name;
 - the timelines SubScene opened for editing, with its director bound in the Timeline window so scrubbing previews right away.
 
@@ -31,10 +31,10 @@ To build it by hand:
 
 1. **The timeline object.** In a SubScene, make a GameObject with a **Playable Director** and add **Tl UI Timelines**. Its Playable is timeline slot 0; its **Also Plays** list holds slots 1 and up, which buttons can play.
 2. **The screen.** In the main scene, make a GameObject with a **Panel Renderer** (Unity 7's UI Toolkit component; UI Document is Legacy) holding your Panel Settings and UXML, and add **Tl UI Panel**.
-3. **Targets.** Clips target elements by **name**. Right-click a UI clip in the Timeline window and pick **Tl UI Target…** to choose an element name from your screens' UXML. The name is added to **Tl UI Timelines > Target Names**, and the clip stores its position there.
+3. **Targets.** Clips target elements by **name**. Click a UI clip and pick its **Target** in the Inspector, or right-click clips in the Timeline window and pick **Tl UI Target…**: both list the element names in your screens' UXML. The name is added to **Tl UI Timelines > Target Names**, and the clip stores its position there.
    - Names are baked into ECS as `FixedString64Bytes` (`UiTargetName` on the timeline object), so every Tl UI Panel in the world finds the same elements.
    - To target by type or class instead, or from code, give an element an Id (0 to 63) another way: a **Target** component in UXML or UI Builder (see below), or a row in Tl UI Panel's **Targets** table with a selector. `#name` is one element, `.class` every element with that class, `Button` every button, and words combine (`.shop-card Button`).
-   - A new name takes the first Id that nothing in the open scenes uses by number: no Targets, Channels, Lists or Commands row, no UXML `TlTarget`, and no clip without a name. The positions it skips stay empty. Picking an existing name whose Id is also used by number logs a warning.
+   - A new name takes the first Id that nothing in the open scenes uses by number: no Targets, Lists or Commands row, no UXML `TlTarget`, and no clip without a name. The positions it skips stay empty. Picking an existing name whose Id is also used by number logs a warning.
 4. **Clips.** In the Timeline window, click **+**, pick a block under **UI** (Show, Hide, and so on), right-click the new track, and pick **Add Tl Clip**.
 
 **Preview while scrubbing.** With the director bound in the Timeline window, dragging the playhead previews every Tl UI Panel in the open scenes in Edit mode. Tl bakes the director and runs its real systems once per edit, recording the UI state for every tick, so scrubbing is a lookup and matches Play mode. Signals, focus and commands do not fire in preview. When preview ends, every element is back to what the UXML says.
@@ -48,10 +48,12 @@ To build it by hand:
 | Enable / Disable | the targets can or cannot be used |
 | Add Class / Remove Class | a USS class from the **Class Slots** list is added or removed; USS transitions animate the change |
 | Attach | a UXML template from **Template Slots** is shown inside the targets (created once, then shown and hidden) |
-| Animate | a curve drives a **channel** (0 to 15); the **Channels** table says which target and property: opacity, translate, scale, rotate, width, height, reveal, or the value of a slider, progress bar or custom element. **Hold** keeps the last key after the clip |
-| Text | a channel shows a text from **Text Slots** |
+| Animate | the target's **Property** goes **From** → **To**, shaped by **Ease** (a 0 to 1 curve): Opacity, Move X, Move Y (pixels), Scale, Rotate (degrees), Width Percent, Height Percent, Reveal (typing, 0 to 1) or Value (a slider, progress bar or custom element). **Hold** keeps To after the clip |
+| Text | the target shows a text from **Text Slots** |
 | Signal | once, at its start: the **Signals** table's reaction for its code: play, stop or restart a UI timeline, send a code to game systems, and a UnityEvent (sound, particles, any method) |
 | Focus | once, at its start: keyboard and gamepad focus moves to the target |
+
+The Inspector shows every clip's Target, Class, Text and Template as names, and explains what Animate's numbers mean for the chosen Property. Clips name themselves by what they do (**Hide title**, **Fade hello**, **Move hand Y**), and rename when the Property changes unless you typed a name.
 
 Rules when clips disagree: Hide beats Show, Disable beats Enable, Remove Class beats Add Class. With no clip on, a target is exactly what the UXML and USS made it. Clips with different Ids overlap freely; two clips that overlap on one track count only the first, so give overlapping work its own track.
 
@@ -156,7 +158,7 @@ Three binding types go in an element's Bindings, next to ordinary bindings. Each
 
 For enabled and disabled, bind `enabledSelf` directly, with `tl-not` to invert it.
 
-**Tl Radial Fill** (`<tl:TlRadialFill>`) is a ring drawn with Painter2D. Its `value` (0 to 1) is bindable, smoothable, and driven by the Animate Value channel. Style it with `--tl-fill-color`, `--tl-track-color` and `--tl-thickness`.
+**Tl Radial Fill** (`<tl:TlRadialFill>`) is a ring drawn with Painter2D. Its `value` (0 to 1) is bindable, smoothable, and driven by an Animate clip on Value. Style it with `--tl-fill-color`, `--tl-track-color` and `--tl-thickness`.
 
 A ScriptableObject works as the Data Source too, for settings and catalogs.
 
@@ -187,7 +189,15 @@ The **Lists** table shows rows in a target: a ListView (virtualized) or any cont
 - Submit chooses the selected row.
 - With a **Drag Code**, UI Toolkit's reordering drag (with its insertion line) sends the dragged row and the row it lands on. The ListView does not reorder the rows itself; your system does, and the rows follow.
 
-Container rows are focusable and get Tl UI's row drag, which adds `tl-dragging` and `tl-drop-target` while it runs. Style `:hover` and `:focus` in USS.
+Container rows are focusable. With a **Drag Code** on their list, or a **Drop Code** on any list of the panel, they get Tl UI's row drag:
+- The row lifts after 6 px, and a ghost made from the same row template and data follows the pointer on top of the screen.
+- Dropped on another row of its own list, it sends **Drag Code**.
+- Dropped on another list, or on a row of another list, it sends that list's **Drop Code**: payload is the dragged row, target is the row it lands on (-1 for empty space), and `UiCommandInbox.FromList` says which list it came from.
+- USS classes while it runs:
+  - `tl-drag-ghost`: the ghost. Style it by its own classes, because it sits at the top of the screen and not inside the list.
+  - `tl-dragging`: the row left behind.
+  - `tl-drop-target`: the row or list it would land on.
+- Style `:hover` and `:focus` in USS.
 
 Two-way controls need no Tl code: bind a slider or toggle with `binding-mode="TwoWay"`. With a ScriptableObject data source, UI Toolkit writes the asset. With a Tl UI Data source, the next frame writes the ECS singleton, and game writes still reach the control.
 
@@ -207,7 +217,7 @@ public sealed class NameplateViews : TlUiEntityViews<Nameplate>
 
 ## Monitor
 
-**Window > Tl UI > Monitor** shows, while playing, every enabled Tl UI Panel's dump: switches, channels, and each target's display, visibility, usable state, opacity, classes and text. `TlUiPanel.DumpEveryPanel()` returns the same text for tests.
+**Window > Tl UI > Monitor** shows, while playing, every enabled Tl UI Panel's dump: switches, what is animating (target, property and value), and each target's display, visibility, usable state, opacity, classes and text. `TlUiPanel.DumpEveryPanel()` returns the same text for tests.
 
 ## Measured
 
@@ -216,7 +226,7 @@ Measured on Unity 7000.0.0a16 with 0.1.x, `-batchmode -nographics`, PlayMode tes
 - Basics: every block matches its clip to the tick (a 0 to 1 s clip at 60 Hz is on for ticks 0 to 59). On the third play the Tl UI Panel's code allocates 0 B (over 19,025 to 34,369 frames, depending on the run).
 - Hud: Tl UI Data and Tl UI Panel allocate 0 B over 240 frames in which the singleton changes every frame; the whole main thread allocated 158,776 B in those frames against 157,440 B with the data paused, so the binding updates add about 6 B per frame.
 - Inventory: rows show the ECS buffer through `tl-fixed-text` and `tl-integer`; a row click uses an item, a synthesized drag swaps two slots, a shop row click buys. Nameplates follow their entities within 3 px, and a destroyed entity's view is hidden for reuse. Bag Rows, Nameplate Views and the panel allocate 0 B over 240 frames while two nameplates move and change every frame.
-- Package tests: selectors for one element, a class and a type; Hide with Keep Space, Enable on an authored-disabled button, Remove Class; translate, scale, rotate and width channels; Pointer Enter, Pointer Leave and Value Changed commands into the inbox; Play, Stop, Pause and Resume clicks into the request buffer; a ScriptableObject data source through `tl-percent` and `tl-hidden`; every component added from code and authored in UXML, with every attribute set to a non-default value.
+- Package tests: selectors for one element, a class and a type; Hide with Keep Space, Enable on an authored-disabled button, Remove Class; Move X, Move Y, Scale, Rotate and Width Percent written by target and property; Pointer Enter, Pointer Leave and Value Changed commands into the inbox; Play, Stop, Pause and Resume clicks into the request buffer; a ScriptableObject data source through `tl-percent` and `tl-hidden`; every component added from code and authored in UXML, with every attribute set to a non-default value.
 - UI Toolkit components: 1,000 rounds of `GetComponent`, `HasComponent`, a click through a static handler and `MarkComponentDirty` allocate 0 B once warm.
 - UI Toolkit's own panel update (`UIElementsUpdatePanels`, measured by `UiToolkitTickProbe`): 0 B over 239 ticks while the Hud data changes every frame, with its smooth, trigger and radial bindings, and 0 B over 120 frames of the Menu.
 - Every UI Toolkit call the panel makes (style display, set enabled, label text, progress value, focus, attach, detach) allocates 0 B once warm.
@@ -252,7 +262,8 @@ Not checked yet:
 ## Limits
 
 - Scrub preview and the Timeline **+** menu use `com.tl.unity`'s own hooks: `TlPreview.Evaluated`, `Version` and `Record`, and `[assembly: TlMenuEntries]`. Both come from IAFahim/tl.unity#51; until it is merged, the pin points at its commit `765657a`.
-- 64 Ids (or names), 16 channels and 8 slots of each kind per screen.
+- 64 Ids (or names) and 8 slots of each kind per screen; at most 16 properties animate at once (held ones count).
+- Every MonoBehaviour (a Tl UI Buffer Rows or Tl UI Data subclass too) goes in a file named after it. On 7000.0.0a20, one declared in a file named after another class saves without a script reference and is missing when the scene loads.
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
 - One timeline object (Tl UI Timelines) per World receives commands.
@@ -267,7 +278,8 @@ Not checked yet:
 
 - **Basics**: every time block on one screen, with a test that checks each against its clip.
 - **Hud**: ECS data binding, converters, the command inbox and a button that plays a timeline, all authored in UXML with Target, Send and Play components.
-- **Inventory**: a bag from an ECS buffer (click to use, drag to swap), a shop ListView from ScriptableObjects (click to buy) with tooltips bound per row, and nameplates that follow three moving enemies.
+- **Inventory**: a bag from an ECS buffer (click to use, drag to swap, drag onto Equipment to equip and back to unequip), a shop ListView from ScriptableObjects (click to buy) with tooltips bound per row, and nameplates that follow three moving enemies.
+- **Cards**: a hand and a table from ECS buffers. Drag a card onto the table to play it, back to take it back, onto another card to reorder; energy and score in a Burst system; a Card Set asset is the deck; hover lift and ghost tilt in USS; a refused play raises a signal whose timeline shakes the energy box; End Turn plays a banner timeline.
 - **Menu**: screen flow with no screen C#. Two screens are Tl timelines on one channel (End Hold), so buttons swap them. Settings bind TwoWay to an ECS singleton; Cancel goes back; a hotkey pauses.
 
-Import a sample, run **Tl UI > Samples > Build Basics** (or **Build Hud**, **Build Inventory**, **Build Menu**), open the built scene and press Play.
+Import a sample, run **Tl UI > Samples > Build Basics** (or **Build Hud**, **Build Inventory**, **Build Cards**, **Build Menu**), open the built scene and press Play.

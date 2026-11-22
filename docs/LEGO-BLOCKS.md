@@ -83,7 +83,7 @@ Every screen is built from these. **UITK** means UI Toolkit already does it on U
 | Need | Use |
 |---|---|
 | A ring or radial cooldown | **Tl** `<tl:TlRadialFill>`: Painter2D, bindable `value`, `--tl-fill-color` / `--tl-track-color` / `--tl-thickness` |
-| Other custom drawing | **UITK** `[UxmlElement]` + `INotifyValueChanged<float>` gets the Animate Value channel, bindings and smoothing for free |
+| Other custom drawing | **UITK** `[UxmlElement]` + `INotifyValueChanged<float>` gets Animate on Value, bindings and smoothing for free |
 | See every screen's state while playing | **Tl** Window > Tl UI > Monitor |
 | Measure UI Toolkit's own allocation | **Tl** `UiToolkitTickProbe` around `UIElementsUpdatePanels` |
 

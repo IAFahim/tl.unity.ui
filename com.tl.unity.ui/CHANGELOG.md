@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.0-preview.1
+
+Made for designers who never read code. Breaking: timelines made with 0.2 lose their UI clip values (the fields changed) and the panel's Channels table is gone; rebuild the samples.
+
+### Added
+- **Animate says what it moves.** It has **Target**, **Property** (Opacity, Move X, Move Y, Scale, Rotate, Width Percent, Height Percent, Reveal, Value), **From**, **To**, **Ease** (a 0 to 1 curve) and **Hold**. No Channels table and no channel numbers. Text has Target and Text.
+- **The Inspector shows names.** Target, Class, Text and Template fields are dropdowns of element names, USS class names, texts and templates. **New class name…** and **New text…** add one in place. The Property field explains its numbers and warns when From equals To, so nothing moves.
+- **Clips name themselves by what they do,** for example **Fade hello**, **Move hand Y** or **Hide title**. They rename when the Property changes, unless you typed a name.
+- **The starter screen teaches by example.** **Tl UI > Screen** comes with **Fade hello** and **Move hello Y** clips that play on Play and preview while you scrub.
+- **Drag between lists, with a ghost.** In a container list, a row lifts after 6 px and a ghost copy follows the pointer on top of the screen (`tl-drag-ghost`; the source gets `tl-dragging`). A list's new **Drop Code** receives rows dragged in from another list: payload is the row, target is the row landed on (-1 for empty space), and the new `UiCommandInbox.FromList` says which list it came from.
+- **Cards sample:** drag a card onto the table to play it, back to take it back, onto another card to reorder; energy and score in Burst; a Card Set asset is the deck; signal and banner timelines.
+- **Inventory sample:** Equipment slots you drag bag items onto, and back.
+- `UiChannelSlots.Write(ref UiChannels, UiChannelKey.Of(target, property), value, hold)` lets game systems animate any property from code.
+
+### Fixed
+- **A Hide clip that ends where the timeline ends no longer leaves its target hidden while you scrub or play the Timeline window to the end.** 0.2's preview records the state after the last tick, and a test now scrubs to exactly that end. 0.1.0-preview.5 showed the last tick there, which is the "hello stays hidden until it loops" report.
+- The scrub preview asks Unity for a player-loop update after it changes the screen and after it stops, so the Game view redraws in Edit mode.
+- A disabled Tl UI Panel stops its preview.
+- A list targeted by a name no longer warns before the names arrive from ECS; it resolves once they do.
+- Sample builders drop older-version sample scenes that no longer exist from the build list, and sample tests open the scene that exists.
+- Every sample MonoBehaviour is in a file named after it, so scenes keep their script references on a20.
+
 ## 0.2.0-preview.1
 
 ### Changed

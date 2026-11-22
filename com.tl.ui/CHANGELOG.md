@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-preview.1
+
+### Changed
+- Breaking: every UI clip names its target with `UiTargetRef Target` instead of `byte Id`. Class, Template and Text slots are `UiClassRef`, `UiTemplateRef` and `UiTextRef`. These are one-byte structs, so editors can draw them as names.
+- Breaking: Animate is `Target`, `Property` (`UiProperty`), `From`, `To`, `Ease`, `Hold`. It writes `From + (To - From) * Ease(progress)`.
+- Breaking: `UiChannels` holds 16 slots keyed by (target, property) (`UiChannelKey`, `UiChannelKeys`), not 16 numbered channels. `UiRules.TouchedTargetsOfChannels` replaces `TouchedChannels`. `UiChannelSlots.Write` sets one from code.
+
 ## 0.2.0-preview.1
 
 ### Changed

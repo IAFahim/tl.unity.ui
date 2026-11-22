@@ -6,7 +6,7 @@ Two UPM packages that let a Unity 7 game drive UI Toolkit screens from Tl timeli
 
 - **Who uses it.** Designers build screens in UXML, USS and UI Builder, and timelines in the Timeline window. Programmers write unmanaged ECS structs and Burst systems.
 - **How data moves.**
-  - Time: Tl UI clips on a timeline write two Tl columns, `UiSwitches` (bit masks per Id) and `UiChannels` (16 float channels). The panel applies only what changed.
+  - Time: Tl UI clips on a timeline write two Tl columns, `UiSwitches` (bit masks per Id) and `UiChannels` (16 slots, each a target, a property and a float). The panel applies only what changed.
   - Game to UI: an unmanaged singleton is shown through UI Toolkit data binding (`TlUiData<T>`), and Burst systems raise `UiSignal` codes.
   - UI to game: clicks, values, text and hotkeys become integer codes in the `UiCommandInbox` and `UiTextInbox` buffers, or timeline requests. Game code never references the UI.
 
