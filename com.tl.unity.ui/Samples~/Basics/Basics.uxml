@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Style src="Basics.uss" />
-    <ui:VisualElement name="screen" class="screen">
+    <ui:VisualElement name="screen" class="screen" picking-mode="Ignore">
         <ui:Label name="title" text="Tl UI Basics" class="title start-hidden" />
         <ui:Label name="hint" text="This hint hides for a second" class="card" />
         <ui:Button name="go" text="Go" class="go" />

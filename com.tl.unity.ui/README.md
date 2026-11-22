@@ -120,7 +120,7 @@ Bind in UI Builder or UXML with paths relative to the struct (`Health`, `Coins`)
 | `tl-invisible` | bool | `visibility` (keeps the space) |
 | `tl-not` | bool | bool, for `enabledSelf` and the like |
 
-Three binding types go in an element's Bindings next to ordinary bindings, and UI Builder lists them too. Each reads a bool, int or float without boxing:
+Three binding types go in an element's Bindings, next to ordinary bindings. Each reads a bool, int or float without boxing:
 
 ```xml
 <ui:Label name="lowHealth" text="Low health">
@@ -150,8 +150,8 @@ A ScriptableObject works as the Data Source too, for settings and catalogs.
 
 ## Player input the game needs to know about
 
-- **UiInputState** on the timeline object says whether the pointer is over UI and whether the player is typing, so Burst gameplay can ignore clicks and keys the UI took.
-- **`<tl:TlSendText code="5"/>`** on a TextField sends its text to the `UiTextInbox` buffer (`FixedString128Bytes`, truncated) when it changes; set `is-delayed` on the field to send only on Enter or blur.
+- **UiInputState** on the timeline object says whether the pointer is over UI and whether the player is typing, so Burst gameplay can ignore clicks and keys the UI took. "Over UI" means over any pickable element, so give full-screen layout containers `picking-mode="Ignore"`, as the samples do; otherwise the whole screen counts as UI.
+- **`<tl:TlSendText code="5"/>`** on a TextField sends its text to the `UiTextInbox` buffer (`FixedString128Bytes`, truncated) each time the field's value changes.
 - **TlSendValue** on a DropdownField sends the chosen index. A dropdown's `index` also binds TwoWay directly.
 
 ## Game moments
@@ -220,6 +220,7 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 - Ids are shared by the whole World, so a timeline cannot play per list row or per entity. Per-entity motion belongs in ECS data shown by Tl UI Entity Views.
 - Tl timelines run in `FixedStepSimulationSystemGroup`, so `Time.timeScale = 0` freezes UI timelines too. Pause the game with an ECS flag instead (see the Menu sample).
 - An element can hold one component of each type, so one TlTarget and one TlSend per element.
+- A TwoWay binding inside a Tl UI Entity Views template writes the view's copy only; nothing carries it back to the entity.
 - UI Toolkit shows tooltips and context menus only in Editor panels. Tl UI Tooltips covers tooltips at runtime; context menus are not covered.
 - Ids come from the panel's own UXML. A `TlTarget` inside a row, Attach or entity-view template does nothing and logs one warning; `TlSend` and `TlPlay` work anywhere under the panel.
 

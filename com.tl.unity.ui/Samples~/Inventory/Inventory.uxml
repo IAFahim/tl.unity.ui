@@ -1,16 +1,16 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:tl="TlUi">
     <ui:Style src="Inventory.uss" />
-    <ui:VisualElement name="screen" class="screen">
+    <ui:VisualElement name="screen" class="screen" picking-mode="Ignore">
         <ui:VisualElement name="nameplates" class="nameplates" picking-mode="Ignore">
             <tl:TlTarget id="3" />
         </ui:VisualElement>
         <ui:Label name="title" text="Tl UI Inventory" class="title start-hidden" />
-        <ui:VisualElement class="columns">
-            <ui:VisualElement class="column">
+        <ui:VisualElement class="columns" picking-mode="Ignore">
+            <ui:VisualElement class="column" picking-mode="Ignore">
                 <ui:Label text="Bag: click to use, drag onto another slot to swap" class="heading" />
                 <ui:VisualElement name="bag" class="bag" />
             </ui:VisualElement>
-            <ui:VisualElement class="column">
+            <ui:VisualElement class="column" picking-mode="Ignore">
                 <ui:Label text="Shop: click to buy" class="heading" />
                 <ui:ListView name="shop" fixed-item-height="40" class="shop" />
             </ui:VisualElement>

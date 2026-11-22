@@ -9,6 +9,8 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Properties;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
@@ -180,6 +182,79 @@ namespace TlUiPackage.Tests
             CollectionAssert.AreEqual(new[] { RequestOp.Stop, RequestOp.Start, RequestOp.Pause }, Requests(), "the falling edge pauses it");
         }
 #endif
+
+        [UnityTest]
+        public IEnumerator ABurstSystemRaisesASignalThatPlaysAUiTimeline()
+        {
+            yield return BuildScreen(panel => panel.Signals.Add(new UiSignalReaction { Code = 9, Do = UiCommandAction.PlayTimeline, TimelineSlot = 0 }), root => { });
+            var gameEvents = _world.EntityManager.CreateEntity(typeof(LevelUpEvents));
+            _world.EntityManager.SetComponentData(gameEvents, new LevelUpEvents { Code = 9 });
+            _world.EntityManager.AddBuffer<Tl.Unity.TimelineEvent<UiSignal>>(gameEvents);
+            var raise = _world.CreateSystem<RaiseLevelUpSystem>();
+            raise.Update(_world.Unmanaged);
+            yield return Frames(2);
+            CollectionAssert.AreEqual(new[] { RequestOp.Start }, Requests(), "the Burst system's UiSignals.Raise reaches the Signals table, which plays UI timeline slot 0");
+        }
+
+        [UnityTest]
+        public IEnumerator PointerOverUiCountsPickableElementsNotIgnoredLayoutContainers()
+        {
+            var settings = InputSystem.settings;
+            var testSettings = ScriptableObject.CreateInstance<InputSettings>();
+            testSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            testSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            InputSystem.settings = testSettings;
+            var mouse = InputSystem.AddDevice<Mouse>("Tl UI Test Mouse");
+            mouse.MakeCurrent();
+            try
+            {
+                var layout = new VisualElement { name = "layout", pickingMode = PickingMode.Ignore };
+                layout.style.position = Position.Absolute;
+                layout.style.left = 0;
+                layout.style.top = 0;
+                layout.style.width = 600;
+                layout.style.height = 400;
+                var corner = new Button { name = "corner", text = "corner" };
+                corner.style.position = Position.Absolute;
+                corner.style.left = 10;
+                corner.style.top = 10;
+                corner.style.width = 120;
+                corner.style.height = 40;
+                layout.Add(corner);
+                yield return BuildScreen(panel => { }, root => root.Add(layout));
+                yield return Frames(2);
+
+                void PointAt(Vector2 panelPosition)
+                {
+                    var origin = RuntimePanelUtils.ScreenToPanel(_panel.Root.panel, Vector2.zero);
+                    var scale = (RuntimePanelUtils.ScreenToPanel(_panel.Root.panel, new Vector2(100f, 100f)) - origin) / 100f;
+                    var topLeftScreen = new Vector2((panelPosition.x - origin.x) / scale.x, (panelPosition.y - origin.y) / scale.y);
+                    InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(topLeftScreen.x, Screen.height - topLeftScreen.y) });
+                    InputSystem.Update();
+                }
+
+                PointAt(corner.worldBound.center);
+                yield return Frames(2);
+                Debug.Log("PointerOverUi: screen " + Screen.width + "x" + Screen.height + ", corner " + corner.worldBound + ", mouse " + mouse.position.ReadValue());
+                Assert.IsTrue(_world.EntityManager.GetComponentData<UiInputState>(_host).PointerOverUi, "the pointer over a button near the top-left corner is over UI (screen y is flipped into panel space)");
+
+                var emptySpot = new Vector2(corner.worldBound.xMax + 200f, corner.worldBound.yMax + 200f);
+                Assert.IsTrue(layout.worldBound.Contains(emptySpot), "the empty spot lies inside the layout container (" + layout.worldBound + ")");
+                PointAt(emptySpot);
+                yield return Frames(2);
+                Assert.IsFalse(_world.EntityManager.GetComponentData<UiInputState>(_host).PointerOverUi, "empty space inside a picking-mode Ignore layout container is not over UI");
+
+                layout.pickingMode = PickingMode.Position;
+                yield return Frames(2);
+                Assert.IsTrue(_world.EntityManager.GetComponentData<UiInputState>(_host).PointerOverUi, "a pickable full-screen container counts, so set picking-mode Ignore on layout containers");
+            }
+            finally
+            {
+                InputSystem.RemoveDevice(mouse);
+                if (settings != null)
+                    InputSystem.settings = settings;
+            }
+        }
 
         [UnityTest]
         public IEnumerator TwoWayKeepsAGameWriteMadeInTheSameFrame()

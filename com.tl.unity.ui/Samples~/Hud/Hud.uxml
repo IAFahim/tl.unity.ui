@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:tl="TlUi">
     <ui:Style src="Hud.uss" />
-    <ui:VisualElement name="hud" class="hud">
+    <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
         <ui:Label name="title" text="Tl UI HUD" class="title start-hidden">
             <tl:TlTarget id="0" />
         </ui:Label>
@@ -14,7 +14,7 @@
         <ui:Label name="flashBanner" text="Flash timeline" class="banner flash start-hidden">
             <tl:TlTarget id="1" />
         </ui:Label>
-        <ui:VisualElement class="row">
+        <ui:VisualElement class="row" picking-mode="Ignore">
             <ui:Label text="Health" class="caption" />
             <ui:Label name="health" class="value">
                 <Bindings>
@@ -22,7 +22,7 @@
                 </Bindings>
             </ui:Label>
         </ui:VisualElement>
-        <ui:VisualElement class="row">
+        <ui:VisualElement class="row" picking-mode="Ignore">
             <ui:ProgressBar name="healthBar" low-value="0" high-value="1" class="health-bar">
                 <Bindings>
                     <tl:TlSmoothBinding property="value" data-source-path="HealthFraction" seconds="0.3" />
@@ -34,7 +34,7 @@
                 </Bindings>
             </tl:TlRadialFill>
         </ui:VisualElement>
-        <ui:VisualElement class="row">
+        <ui:VisualElement class="row" picking-mode="Ignore">
             <ui:Label text="Coins" class="caption" />
             <ui:Label name="coins" class="value">
                 <Bindings>
@@ -42,7 +42,7 @@
                 </Bindings>
             </ui:Label>
         </ui:VisualElement>
-        <ui:VisualElement class="row">
+        <ui:VisualElement class="row" picking-mode="Ignore">
             <ui:Label text="Time" class="caption" />
             <ui:Label name="clock" class="value">
                 <Bindings>
@@ -50,7 +50,7 @@
                 </Bindings>
             </ui:Label>
         </ui:VisualElement>
-        <ui:VisualElement class="row">
+        <ui:VisualElement class="row" picking-mode="Ignore">
             <ui:Button name="heal" text="Heal" class="button">
                 <tl:TlSend code="1" />
             </ui:Button>

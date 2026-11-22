@@ -5,6 +5,7 @@
     "Tl.Ui",
     "Tl.Unity",
     "Tl.Unity.UI",
+    "Unity.Burst",
     "Unity.Collections",
     "Unity.Entities",
     "Unity.InputSystem",
