@@ -155,6 +155,7 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
 - One timeline object (Tl UI Timelines) per World receives commands.
+- Ids come from the panel's own UXML. A `TlTarget` inside a row, Attach or entity-view template does nothing and logs one warning; `TlSend` and `TlPlay` work anywhere under the panel.
 
 ## Samples
 

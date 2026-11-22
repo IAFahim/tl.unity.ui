@@ -20,7 +20,7 @@ namespace TlUi
             public Vector2 ShownPosition = new Vector2(float.NaN, float.NaN);
         }
 
-        [Tooltip("The Tl UI Panel whose Targets table names the container the views go in.")]
+        [Tooltip("The Tl UI Panel whose Ids name the container the views go in (a Targets row or a TlTarget component in its UXML).")]
         public TlUiPanel Panel;
 
         [Tooltip("The target Id of the container element; give it position: absolute and full size in USS so views can be placed anywhere.")]
@@ -45,6 +45,7 @@ namespace TlUi
         int[] _releasedSlots = new int[16];
         World _boundWorld;
         EntityQuery _entityQuery;
+        bool _warnedAboutTargets;
 
         public World BoundWorld => _boundWorld;
 
@@ -79,6 +80,11 @@ namespace TlUi
             if (view.Element != null)
                 return view;
             view.Element = ViewTemplate.Instantiate();
+            if (!_warnedAboutTargets && TlUiPanel.HasTargetComponentUnder(view.Element))
+            {
+                _warnedAboutTargets = true;
+                Debug.LogWarning("Tl UI Entity Views: " + ViewTemplate.name + " has a TlTarget component inside. Ids come only from the panel's own UXML, so that TlTarget does nothing; TlSend and TlPlay do work inside views.", this);
+            }
             view.Element.dataSource = view.Data;
             view.Element.dataSourcePath = _pathToData;
             if (Camera != null)

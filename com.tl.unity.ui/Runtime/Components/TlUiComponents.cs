@@ -123,6 +123,9 @@ namespace TlUi
 
         static VisualElement s_HoveredRow;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ForgetTheHoveredRowOfThePreviousPlay() => s_HoveredRow = null;
+
         static VisualElement RowUnder(VisualElement dragged, Vector2 panelPosition)
         {
             var list = dragged.GetComponent<TlRow>().List;
@@ -157,6 +160,13 @@ namespace TlUi
                 return;
             var row = RowUnder(owner, move.position);
             Hover(row == owner ? null : row);
+        }
+
+        [RegisterCallback(typeof(PointerCaptureOutEvent))]
+        static void StopDraggingWhenCaptureIsLost(ref TlRowDrag self, VisualElement owner, PointerCaptureOutEvent lost)
+        {
+            owner.RemoveFromClassList(DraggingClass);
+            Hover(null);
         }
 
         [RegisterCallback(typeof(PointerUpEvent))]

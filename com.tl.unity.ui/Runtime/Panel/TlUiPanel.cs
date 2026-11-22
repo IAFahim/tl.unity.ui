@@ -92,6 +92,7 @@ namespace TlUi
         readonly List<ListState> _lists = new List<ListState>();
         readonly Dictionary<string, string[]> _revealPrefixes = new Dictionary<string, string[]>();
         readonly ElementClasses _classes = new ElementClasses();
+        readonly HashSet<VisualTreeAsset> _templatesWarnedAbout = new HashSet<VisualTreeAsset>();
         World _boundWorld;
         EntityQuery _switchesQuery;
         EntityQuery _channelsQuery;
@@ -126,6 +127,24 @@ namespace TlUi
                     if (panel._resolvedRoot == ancestor)
                         return panel;
             return null;
+        }
+
+        public static bool HasTargetComponentUnder(VisualElement subtree)
+        {
+            if (subtree.HasComponent<TlTarget>())
+                return true;
+            for (var child = 0; child < subtree.hierarchy.childCount; child++)
+                if (HasTargetComponentUnder(subtree.hierarchy[child]))
+                    return true;
+            return false;
+        }
+
+        void WarnAboutTargetsInside(VisualTreeAsset template, VisualElement instance, string usedAs)
+        {
+            if (template == null || _templatesWarnedAbout.Contains(template) || !HasTargetComponentUnder(instance))
+                return;
+            _templatesWarnedAbout.Add(template);
+            Debug.LogWarning("Tl UI Panel: " + template.name + " is used as " + usedAs + " and has a TlTarget component inside. Ids come only from the panel's own UXML, so that TlTarget does nothing; TlSend and TlPlay do work inside templates.", this);
         }
 
         public VisualElement FirstElementOf(int id)
@@ -263,7 +282,10 @@ namespace TlUi
         {
             var instance = state.Attached[slot];
             if (attached && instance == null && TemplateSlots[slot] != null)
+            {
                 instance = state.Attached[slot] = TemplateSlots[slot].Instantiate();
+                WarnAboutTargetsInside(TemplateSlots[slot], instance, "an Attach template");
+            }
             if (instance == null)
                 return;
             if (attached && instance.hierarchy.parent != state.Element)
@@ -450,6 +472,7 @@ namespace TlUi
         VisualElement MakeRow(ListState list)
         {
             var row = list.Binding.RowTemplate.Instantiate();
+            WarnAboutTargetsInside(list.Binding.RowTemplate, row, "a row template");
             row.AddComponent(new TlRow { List = list.List, Index = -1 });
             if (list.Binding.DragCode >= 0)
                 row.AddComponent(new TlRowDrag());

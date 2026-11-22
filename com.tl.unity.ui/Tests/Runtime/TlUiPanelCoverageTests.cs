@@ -205,6 +205,10 @@ namespace TlUiPackage.Tests
                 foreach (var button in verbButtons)
                     root.Add(button);
             });
+            var rowClicks = 0;
+            row.RegisterCallback<ClickEvent>(_ => rowClicks++);
+            var bubbledClicks = 0;
+            _panel.Root.RegisterCallback<ClickEvent>(_ => bubbledClicks++);
             Assert.AreSame(lamp, _panel.FirstElementOf(6), "a Target component puts its element in that Id with no selector");
             Assert.AreSame(_panel, TlUiPanel.Owning(sell), "a component finds its Tl UI Panel by walking up to the panel root");
             yield return Show(new UiSwitches { Hide = UiIds.BitOf(6) }, default);
@@ -218,6 +222,8 @@ namespace TlUiPackage.Tests
                 Send<ClickEvent>(button);
             yield return null;
             CollectionAssert.AreEqual(new[] { (20, 7), (21, 25), (22, 1), (23, 4) }, Inbox(), "Send sends code and payload; Send Value sends the scaled new value; Row As Payload sends the row index");
+            Assert.AreEqual(0, rowClicks, "a TlSend button inside a row stops the click, so the row does not also get it");
+            Assert.AreEqual(0, bubbledClicks, "TlSend and TlPlay stop every click they handle at the button");
             var ops = _world.EntityManager.GetBuffer<Tl.Unity.TimelineRequest>(_host).AsNativeArray().ToArray().Select(request => request.Op).ToArray();
             CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop, RequestOp.Pause, RequestOp.Resume, RequestOp.Stop, RequestOp.Start }, ops, "Play components send every verb; Restart is Stop then Start");
         }
@@ -228,7 +234,11 @@ namespace TlUiPackage.Tests
         {
             var screen = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.tl.unity.ui/Tests/Runtime/AuthoredComponents.uxml");
             Assert.IsNotNull(screen, "the test UXML imports");
-            yield return BuildScreen(panel => panel.Panel.visualTreeAsset = screen, root => root.Q("row").AddComponent(new TlRow { List = 0, Index = 2 }));
+            yield return BuildScreen(panel =>
+            {
+                panel.Panel.visualTreeAsset = screen;
+                panel.TemplateSlots.Add(screen);
+            }, root => root.Q("row").AddComponent(new TlRow { List = 0, Index = 2 }));
             var root = _panel.Root;
             Assert.AreEqual(5, root.Q("title").GetComponent<TlTarget>().Id, "id=\"5\" parses");
             Assert.AreSame(root.Q("title"), _panel.FirstElementOf(5), "a Target authored in UXML puts its element in the Id");
@@ -251,6 +261,12 @@ namespace TlUiPackage.Tests
             CollectionAssert.AreEqual(new[] { (1, 9), (4, 50), (5, 1), (6, 2) }, Inbox(), "authored Send, Send Value and Row As Payload reach the inbox");
             var ops = _world.EntityManager.GetBuffer<Tl.Unity.TimelineRequest>(_host).AsNativeArray().ToArray().Select(request => request.Op).ToArray();
             CollectionAssert.AreEqual(new[] { RequestOp.Stop, RequestOp.Start }, ops, "an authored Play with verb Restart stops then starts slot 0");
+
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("AuthoredComponents is used as an Attach template and has a TlTarget component inside"));
+            yield return Show(new UiSwitches { Attach0 = UiIds.BitOf(5) }, default);
+            Assert.AreEqual(2, root.Query<Label>("title").ToList().Count, "the template is attached inside the title");
+            Assert.AreSame(root.Q("title"), _panel.FirstElementOf(5), "the attached copy's TlTarget adds no element to Id 5");
+            LogAssert.NoUnexpectedReceived();
         }
 #endif
 
