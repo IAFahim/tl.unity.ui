@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:tl="TlUi">
+    <ui:Label name="title" text="Shop">
+        <tl:TlTarget id="5" />
+    </ui:Label>
+    <ui:Button name="heal" text="Heal">
+        <tl:TlSend code="1" payload="9" />
+    </ui:Button>
+    <ui:Button name="flash" text="Flash">
+        <tl:TlPlay timeline="0" verb="Restart" />
+    </ui:Button>
+    <ui:Button name="later" text="Later">
+        <tl:TlPlay timeline="3" verb="Pause" />
+    </ui:Button>
+    <ui:Slider name="volume" low-value="0" high-value="1">
+        <tl:TlSendValue code="4" scale="100" />
+    </ui:Slider>
+    <ui:Toggle name="mute">
+        <tl:TlSendValue code="5" />
+    </ui:Toggle>
+    <ui:VisualElement name="row">
+        <ui:Button name="sell" text="Sell">
+            <tl:TlSend code="6" row-as-payload="true" />
+        </ui:Button>
+    </ui:VisualElement>
+</ui:UXML>

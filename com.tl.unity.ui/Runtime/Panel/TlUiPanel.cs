@@ -82,6 +82,8 @@ namespace TlUi
         [Tooltip("The data source of the whole screen: a ScriptableObject, or a Tl UI Data component that shows an ECS singleton. Bind fields to it in UI Builder.")]
         public UnityEngine.Object DataSource;
 
+        static readonly List<TlUiPanel> s_Enabled = new List<TlUiPanel>(4);
+
         readonly List<UiElementState> _elements = new List<UiElementState>();
         readonly Dictionary<VisualElement, UiElementState> _stateOf = new Dictionary<VisualElement, UiElementState>();
         readonly List<VisualElement> _matches = new List<VisualElement>();
@@ -113,6 +115,18 @@ namespace TlUi
         public UiSwitches ShownSwitches => _shownSwitches;
 
         public UiChannels ShownChannels => _shownChannels;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ForgetPanelsOfThePreviousPlay() => s_Enabled.Clear();
+
+        public static TlUiPanel Owning(VisualElement element)
+        {
+            for (var ancestor = element; ancestor != null; ancestor = ancestor.hierarchy.parent)
+                foreach (var panel in s_Enabled)
+                    if (panel._resolvedRoot == ancestor)
+                        return panel;
+            return null;
+        }
 
         public VisualElement FirstElementOf(int id)
         {
@@ -175,6 +189,33 @@ namespace TlUi
                 if (MatchesWithAncestors(root, element, steps))
                     _matches.Add(element);
                 CollectMatchesUnder(root, element, steps);
+            }
+        }
+
+        void AddToId(VisualElement element, int id)
+        {
+            if (id < 0 || id > UiIds.HighestId)
+            {
+                Debug.LogWarning("Tl UI Panel: Id " + id + " on " + element.GetType().Name + " #" + element.name + " is outside 0 to " + UiIds.HighestId + ".", this);
+                return;
+            }
+            if (!_stateOf.TryGetValue(element, out var state))
+            {
+                state = CaptureAuthoredState(element);
+                _stateOf.Add(element, state);
+                _elements.Add(state);
+            }
+            state.Ids |= UiIds.BitOf((byte)id);
+        }
+
+        void CollectAuthoredTargetsUnder(VisualElement parent)
+        {
+            for (var child = 0; child < parent.hierarchy.childCount; child++)
+            {
+                var element = parent.hierarchy[child];
+                if (element.HasComponent<TlTarget>())
+                    AddToId(element, element.GetComponent<TlTarget>().Id);
+                CollectAuthoredTargetsUnder(element);
             }
         }
 
@@ -275,11 +316,17 @@ namespace TlUi
             state.ShownChannels = look;
         }
 
-        void SendToGame(int code, int payload, int target)
+        public void SendToGame(int code, int payload, int target)
         {
             if (!TryFindHost(out var host))
                 return;
             _boundWorld.EntityManager.GetBuffer<UiCommandInbox>(host).Add(new UiCommandInbox { Code = code, Payload = payload, Target = target });
+        }
+
+        public void SendRowClick(int list, int row)
+        {
+            if (list >= 0 && list < _lists.Count && _lists[list].Binding.ClickCode >= 0)
+                SendToGame(_lists[list].Binding.ClickCode, row, -1);
         }
 
         public void SendRowDrag(int list, int fromRow, int toRow)
@@ -302,7 +349,7 @@ namespace TlUi
             return true;
         }
 
-        void RequestTimeline(UiCommandAction action, int slot)
+        public void RequestTimeline(UiTimelineVerb verb, int slot)
         {
             if (!TryFindHost(out var host))
                 return;
@@ -315,21 +362,21 @@ namespace TlUi
             }
             var timeline = slots[slot].Timeline;
             var requests = entityManager.GetBuffer<TimelineRequest>(host);
-            switch (action)
+            switch (verb)
             {
-                case UiCommandAction.PlayTimeline:
+                case UiTimelineVerb.Play:
                     requests.Start(timeline);
                     break;
-                case UiCommandAction.StopTimeline:
+                case UiTimelineVerb.Stop:
                     requests.Stop(timeline);
                     break;
-                case UiCommandAction.PauseTimeline:
+                case UiTimelineVerb.Pause:
                     requests.Pause(timeline);
                     break;
-                case UiCommandAction.ResumeTimeline:
+                case UiTimelineVerb.Resume:
                     requests.Resume(timeline);
                     break;
-                case UiCommandAction.RestartTimeline:
+                case UiTimelineVerb.Restart:
                     requests.Stop(timeline);
                     requests.Start(timeline);
                     break;
@@ -346,8 +393,20 @@ namespace TlUi
                 case UiCommandAction.SendToGame:
                     SendToGame(command.GameCode, payload, -1);
                     break;
-                default:
-                    RequestTimeline(command.Do, command.TimelineSlot);
+                case UiCommandAction.PlayTimeline:
+                    RequestTimeline(UiTimelineVerb.Play, command.TimelineSlot);
+                    break;
+                case UiCommandAction.StopTimeline:
+                    RequestTimeline(UiTimelineVerb.Stop, command.TimelineSlot);
+                    break;
+                case UiCommandAction.PauseTimeline:
+                    RequestTimeline(UiTimelineVerb.Pause, command.TimelineSlot);
+                    break;
+                case UiCommandAction.ResumeTimeline:
+                    RequestTimeline(UiTimelineVerb.Resume, command.TimelineSlot);
+                    break;
+                case UiCommandAction.RestartTimeline:
+                    RequestTimeline(UiTimelineVerb.Restart, command.TimelineSlot);
                     break;
             }
         }
@@ -391,18 +450,15 @@ namespace TlUi
         VisualElement MakeRow(ListState list)
         {
             var row = list.Binding.RowTemplate.Instantiate();
-            var handle = new UiRowHandle(list.List);
-            row.userData = handle;
-            if (list.Binding.ClickCode >= 0)
-                row.RegisterCallback<ClickEvent>(_ => SendToGame(list.Binding.ClickCode, handle.Index, -1));
+            row.AddComponent(new TlRow { List = list.List, Index = -1 });
             if (list.Binding.DragCode >= 0)
-                row.AddManipulator(new UiRowDrag(this, handle));
+                row.AddComponent(new TlRowDrag());
             return row;
         }
 
         static void BindRow(ListState list, VisualElement row, int index)
         {
-            ((UiRowHandle)row.userData).Index = index;
+            row.GetComponent<TlRow>().Index = index;
             row.dataSource = list.Rows.Items[index];
             row.dataSourcePath = list.Rows.PathToRow;
         }
@@ -502,16 +558,9 @@ namespace TlUi
                 _matches.Clear();
                 CollectMatchesUnder(root, root, steps);
                 foreach (var element in _matches)
-                {
-                    if (!_stateOf.TryGetValue(element, out var state))
-                    {
-                        state = CaptureAuthoredState(element);
-                        _stateOf.Add(element, state);
-                        _elements.Add(state);
-                    }
-                    state.Ids |= UiIds.BitOf((byte)target.Id);
-                }
+                    AddToId(element, target.Id);
             }
+            CollectAuthoredTargetsUnder(root);
             foreach (var command in Commands)
                 foreach (var state in _elements)
                     if (command.On != UiCommandEvent.HotkeyOnly && (state.Ids & UiIds.BitOf((byte)command.TargetId)) != 0)
@@ -698,6 +747,8 @@ namespace TlUi
             foreach (var command in Commands)
                 if (command.Hotkey != null && command.Hotkey.action != null)
                     command.Hotkey.action.Enable();
+            if (!s_Enabled.Contains(this))
+                s_Enabled.Add(this);
             _onUiReloaded ??= OnUiReloaded;
             if (Panel != null)
                 Panel.RegisterUIReloadCallback(_onUiReloaded);
@@ -705,6 +756,7 @@ namespace TlUi
 
         void OnDisable()
         {
+            s_Enabled.Remove(this);
             if (Panel != null && _onUiReloaded != null)
                 Panel.UnregisterUIReloadCallback(_onUiReloaded);
             ForgetLists();

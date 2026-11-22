@@ -146,7 +146,6 @@ public static class InventoryBuilder
         uiPanel.Targets.Add(new UiTarget { Id = 0, Selector = "#title" });
         uiPanel.Targets.Add(new UiTarget { Id = 1, Selector = "#bag" });
         uiPanel.Targets.Add(new UiTarget { Id = 2, Selector = "#shop" });
-        uiPanel.Targets.Add(new UiTarget { Id = 3, Selector = "#nameplates" });
         uiPanel.Lists.Clear();
         uiPanel.Lists.Add(new UiListBinding { TargetId = 1, Rows = bagRows, RowTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(folder + "/" + BagSlotFile), ClickCode = 1, DragCode = 2 });
         uiPanel.Lists.Add(new UiListBinding { TargetId = 2, Rows = shopRows, RowTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(folder + "/" + ShopRowFile), ClickCode = 3 });

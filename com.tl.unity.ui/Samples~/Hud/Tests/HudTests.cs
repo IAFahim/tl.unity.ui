@@ -80,6 +80,10 @@ namespace HudSample.Tests
             Assert.AreEqual("10", health.text);
             Assert.AreEqual(DisplayStyle.Flex, lowHealth.resolvedStyle.display, "the low-health banner binds LowHealth through tl-visible");
 
+            Assert.IsTrue(root.Q<Button>("heal").HasComponent<TlSend>(), "Hud.uxml authors a Send component on the Heal button");
+            Assert.AreEqual(1, root.Q<Button>("heal").GetComponent<TlSend>().Code, "the UXML attribute code=1 reaches the Send component");
+            Assert.AreEqual(1, root.Q<Button>("flash").GetComponent<TlPlay>().Timeline, "Hud.uxml authors Play timeline 1 on the Flash button");
+            Assert.AreEqual(0, uiPanel.Targets.Count + uiPanel.Commands.Count, "the Hud screen needs no selector or command table: Target, Send and Play are authored in UXML");
             Click(root.Q<Button>("heal"));
             yield return Frames(5);
             var healed = entityManager.GetComponentData<HudData>(hud);

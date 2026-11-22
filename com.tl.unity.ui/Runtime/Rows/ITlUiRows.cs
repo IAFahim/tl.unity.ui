@@ -11,15 +11,4 @@ namespace TlUi
 
         long CountVersion { get; }
     }
-
-    public sealed class UiRowHandle
-    {
-        public UiRowHandle(int list)
-        {
-            List = list;
-        }
-
-        public readonly int List;
-        public int Index = -1;
-    }
 }

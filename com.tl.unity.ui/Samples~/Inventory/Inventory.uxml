@@ -1,7 +1,9 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:tl="TlUi">
     <ui:Style src="Inventory.uss" />
     <ui:VisualElement name="screen" class="screen">
-        <ui:VisualElement name="nameplates" class="nameplates" picking-mode="Ignore" />
+        <ui:VisualElement name="nameplates" class="nameplates" picking-mode="Ignore">
+            <tl:TlTarget id="3" />
+        </ui:VisualElement>
         <ui:Label name="title" text="Tl UI Inventory" class="title start-hidden" />
         <ui:VisualElement class="columns">
             <ui:VisualElement class="column">

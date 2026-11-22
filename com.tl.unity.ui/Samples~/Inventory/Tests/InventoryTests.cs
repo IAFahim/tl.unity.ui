@@ -86,7 +86,7 @@ namespace InventorySample.Tests
             Debug.Log("Inventory drag from " + from + " onto " + onto + "; bag " + Describe(beforeDrag));
             SendPointer<PointerDownEvent>(rows[0], EventType.MouseDown, from);
             SendPointer<PointerMoveEvent>(rows[0], EventType.MouseDrag, onto);
-            var hoveredWhileDragging = rows[2].ClassListContains(UiRowDrag.DropTargetClass);
+            var hoveredWhileDragging = rows[2].ClassListContains(TlRowDrag.DropTargetClass);
             SendPointer<PointerUpEvent>(rows[0], EventType.MouseUp, onto);
             yield return Frames(5);
             var afterDrag = SlotsOf(entityManager, bag);
@@ -97,7 +97,7 @@ namespace InventorySample.Tests
             Assert.AreEqual(TextOf(afterDrag[0].Name), rows[0].Q<Label>("itemName").text);
 
             var shop = uiPanel.Root.Q<ListView>("shop");
-            var shopRows = shop.Query<TemplateContainer>().ToList().Where(row => row.userData is UiRowHandle).OrderBy(row => ((UiRowHandle)row.userData).Index).ToList();
+            var shopRows = shop.Query<TemplateContainer>().ToList().Where(row => row.HasComponent<TlRow>()).OrderBy(row => row.GetComponent<TlRow>().Index).ToList();
             Debug.Log("Inventory shop rows bound: " + shopRows.Count + ", list height " + shop.resolvedStyle.height);
             Assert.GreaterOrEqual(shopRows.Count, 3, "the shop ListView binds a row per shop item");
             Assert.AreEqual("Shield", shopRows[1].Q<Label>("shopName").text, "shop rows bind the ShopItem asset's DisplayName");

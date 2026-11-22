@@ -171,6 +171,90 @@ namespace TlUiPackage.Tests
         }
 
         [UnityTest]
+        public IEnumerator UiToolkitComponentsTargetSendAndPlayWithNoTableRows()
+        {
+            var lamp = new VisualElement { name = "lamp" };
+            lamp.AddComponent(new TlTarget { Id = 6 });
+            var send = new Button { text = "send" };
+            send.AddComponent(new TlSend { Code = 20, Payload = 7 });
+            var volume = new Slider(0f, 1f);
+            volume.AddComponent(new TlSendValue { Code = 21, Scale = 100f });
+            var mute = new Toggle();
+            var muteValue = TlSendValue.ScaledByOne();
+            muteValue.Code = 22;
+            mute.AddComponent(muteValue);
+            var row = new VisualElement { name = "row" };
+            row.AddComponent(new TlRow { List = 0, Index = 4 });
+            var sell = new Button { text = "sell" };
+            sell.AddComponent(new TlSend { Code = 23, RowAsPayload = true });
+            row.Add(sell);
+            var verbs = new[] { UiTimelineVerb.Play, UiTimelineVerb.Stop, UiTimelineVerb.Pause, UiTimelineVerb.Resume, UiTimelineVerb.Restart };
+            var verbButtons = verbs.Select(verb =>
+            {
+                var button = new Button { text = verb.ToString() };
+                button.AddComponent(new TlPlay { Timeline = 0, Verb = verb });
+                return button;
+            }).ToArray();
+            yield return BuildScreen(panel => { }, root =>
+            {
+                root.Add(lamp);
+                root.Add(send);
+                root.Add(volume);
+                root.Add(mute);
+                root.Add(row);
+                foreach (var button in verbButtons)
+                    root.Add(button);
+            });
+            Assert.AreSame(lamp, _panel.FirstElementOf(6), "a Target component puts its element in that Id with no selector");
+            Assert.AreSame(_panel, TlUiPanel.Owning(sell), "a component finds its Tl UI Panel by walking up to the panel root");
+            yield return Show(new UiSwitches { Hide = UiIds.BitOf(6) }, default);
+            Assert.AreEqual(DisplayStyle.None, lamp.resolvedStyle.display, "a Hide clip on Id 6 hides the element its Target component names");
+
+            Send<ClickEvent>(send);
+            volume.value = 0.25f;
+            mute.value = true;
+            Send<ClickEvent>(sell);
+            foreach (var button in verbButtons)
+                Send<ClickEvent>(button);
+            yield return null;
+            CollectionAssert.AreEqual(new[] { (20, 7), (21, 25), (22, 1), (23, 4) }, Inbox(), "Send sends code and payload; Send Value sends the scaled new value; Row As Payload sends the row index");
+            var ops = _world.EntityManager.GetBuffer<Tl.Unity.TimelineRequest>(_host).AsNativeArray().ToArray().Select(request => request.Op).ToArray();
+            CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop, RequestOp.Pause, RequestOp.Resume, RequestOp.Stop, RequestOp.Start }, ops, "Play components send every verb; Restart is Stop then Start");
+        }
+
+#if UNITY_EDITOR
+        [UnityTest]
+        public IEnumerator EveryComponentAuthoredInUxmlAttachesWithItsAttributesAndActs()
+        {
+            var screen = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.tl.unity.ui/Tests/Runtime/AuthoredComponents.uxml");
+            Assert.IsNotNull(screen, "the test UXML imports");
+            yield return BuildScreen(panel => panel.Panel.visualTreeAsset = screen, root => root.Q("row").AddComponent(new TlRow { List = 0, Index = 2 }));
+            var root = _panel.Root;
+            Assert.AreEqual(5, root.Q("title").GetComponent<TlTarget>().Id, "id=\"5\" parses");
+            Assert.AreSame(root.Q("title"), _panel.FirstElementOf(5), "a Target authored in UXML puts its element in the Id");
+            Assert.AreEqual(1, root.Q("heal").GetComponent<TlSend>().Code);
+            Assert.AreEqual(9, root.Q("heal").GetComponent<TlSend>().Payload, "payload=\"9\" parses");
+            Assert.AreEqual(3, root.Q("later").GetComponent<TlPlay>().Timeline, "timeline=\"3\" parses (UXML reserves slot, so the field is Timeline)");
+            Assert.AreEqual(UiTimelineVerb.Restart, root.Q("flash").GetComponent<TlPlay>().Verb, "verb=\"Restart\" parses into the enum");
+            Assert.AreEqual(100f, root.Q("volume").GetComponent<TlSendValue>().Scale, "scale=\"100\" parses");
+            Assert.AreEqual(1f, root.Q("mute").GetComponent<TlSendValue>().Scale, "with no scale attribute Send Value starts at 1 through its create-instance method");
+            Assert.IsTrue(root.Q("sell").GetComponent<TlSend>().RowAsPayload, "row-as-payload=\"true\" parses");
+
+            yield return Show(new UiSwitches { Hide = UiIds.BitOf(5) }, default);
+            Assert.AreEqual(DisplayStyle.None, root.Q("title").resolvedStyle.display);
+            Send<ClickEvent>(root.Q("heal"));
+            root.Q<Slider>("volume").value = 0.5f;
+            root.Q<Toggle>("mute").value = true;
+            Send<ClickEvent>(root.Q("sell"));
+            Send<ClickEvent>(root.Q("flash"));
+            yield return null;
+            CollectionAssert.AreEqual(new[] { (1, 9), (4, 50), (5, 1), (6, 2) }, Inbox(), "authored Send, Send Value and Row As Payload reach the inbox");
+            var ops = _world.EntityManager.GetBuffer<Tl.Unity.TimelineRequest>(_host).AsNativeArray().ToArray().Select(request => request.Op).ToArray();
+            CollectionAssert.AreEqual(new[] { RequestOp.Stop, RequestOp.Start }, ops, "an authored Play with verb Restart stops then starts slot 0");
+        }
+#endif
+
+        [UnityTest]
         public IEnumerator AScriptableObjectDataSourceBindsThroughThePercentAndHiddenConverters()
         {
             var settings = ScriptableObject.CreateInstance<UiTestSettings>();

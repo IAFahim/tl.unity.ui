@@ -95,13 +95,7 @@ public static class HudBuilder
     static void ConfigurePanel(TlUiPanel uiPanel, HudView hudView)
     {
         uiPanel.Targets.Clear();
-        uiPanel.Targets.Add(new UiTarget { Id = 0, Selector = "#title" });
-        uiPanel.Targets.Add(new UiTarget { Id = 1, Selector = "#flashBanner" });
-        uiPanel.Targets.Add(new UiTarget { Id = 2, Selector = "#heal" });
-        uiPanel.Targets.Add(new UiTarget { Id = 3, Selector = "#flash" });
         uiPanel.Commands.Clear();
-        uiPanel.Commands.Add(new UiCommand { TargetId = 2, On = UiCommandEvent.Click, Do = UiCommandAction.SendToGame, GameCode = 1 });
-        uiPanel.Commands.Add(new UiCommand { TargetId = 3, On = UiCommandEvent.Click, Do = UiCommandAction.PlayTimeline, TimelineSlot = 1 });
         uiPanel.DataSource = hudView;
     }
 
@@ -129,6 +123,14 @@ public static class HudBuilder
         EditorBuildSettings.scenes = scenes.ToArray();
     }
 
+    static bool UxmlAuthorsTheButtons(VisualTreeAsset screen)
+    {
+        var clone = screen.Instantiate();
+        var heal = clone.Q<Button>("heal");
+        var flash = clone.Q<Button>("flash");
+        return heal != null && heal.HasComponent<TlSend>() && flash != null && flash.HasComponent<TlPlay>();
+    }
+
     static void CheckWhatWasSaved(string scenePath)
     {
         EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
@@ -137,7 +139,7 @@ public static class HudBuilder
         var problem = uiPanel == null ? "no Tl UI Panel"
             : uiPanel.Panel == null || uiPanel.Panel.panelSettings == null || uiPanel.Panel.visualTreeAsset == null ? "the Panel Renderer is not wired"
             : !(uiPanel.DataSource is HudView) ? "the Tl UI Panel's data source is not the Hud View"
-            : uiPanel.Commands.Count != 2 ? "the Heal and Flash commands are missing"
+            : !UxmlAuthorsTheButtons(uiPanel.Panel.visualTreeAsset) ? "Hud.uxml does not author Send on Heal and Play on Flash"
             : subScene == null || subScene.SceneAsset == null ? "the SubScene has no scene"
             : null;
         if (problem != null)
