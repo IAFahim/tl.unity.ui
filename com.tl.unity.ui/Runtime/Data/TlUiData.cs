@@ -9,6 +9,7 @@ namespace TlUi
     public abstract class TlUiData<T> : MonoBehaviour, ITlUiDataSource where T : unmanaged, IComponentData
     {
         readonly TlUiValue<T> _shown = new TlUiValue<T>();
+        T _fromGame;
         readonly PropertyPath _pathToData = new PropertyPath(nameof(TlUiValue<T>.Value));
         World _boundWorld;
         EntityQuery _singletonQuery;
@@ -27,7 +28,7 @@ namespace TlUi
         public void Bind(World world)
         {
             _boundWorld = world;
-            _singletonQuery = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<T>());
+            _singletonQuery = world.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<T>());
             _anythingShown = false;
         }
 
@@ -54,10 +55,18 @@ namespace TlUi
             if (!BoundWorldIsUsable() || _singletonQuery.IsEmptyIgnoreFilter)
                 return;
             _singletonQuery.CompleteDependency();
+            if (_anythingShown && !SameBytes(_shown.Value, _fromGame))
+            {
+                _singletonQuery.SetSingleton(_shown.Value);
+                _fromGame = _shown.Value;
+                _shown.Version++;
+                return;
+            }
             var latest = _singletonQuery.GetSingleton<T>();
             if (_anythingShown && SameBytes(latest, _shown.Value))
                 return;
             _shown.Value = latest;
+            _fromGame = latest;
             _shown.Version++;
             _anythingShown = true;
         }

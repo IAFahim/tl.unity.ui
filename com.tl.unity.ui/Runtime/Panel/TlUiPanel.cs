@@ -7,6 +7,7 @@ using Tl.Unity;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace TlUi
@@ -92,6 +93,7 @@ namespace TlUi
         readonly Dictionary<VisualElement, UiElementState> _stateOf = new Dictionary<VisualElement, UiElementState>();
         readonly List<VisualElement> _matches = new List<VisualElement>();
         readonly List<Action> _unregisterCommands = new List<Action>();
+        readonly List<(InputAction Action, Action<InputAction.CallbackContext> OnPerformed)> _hotkeys = new List<(InputAction, Action<InputAction.CallbackContext>)>();
         readonly List<int> _drainedCodes = new List<int>(16);
         readonly List<ListState> _lists = new List<ListState>();
         readonly Dictionary<string, string[]> _revealPrefixes = new Dictionary<string, string[]>();
@@ -123,6 +125,18 @@ namespace TlUi
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ForgetPanelsOfThePreviousPlay() => s_Enabled.Clear();
+
+        public static IReadOnlyList<TlUiPanel> EnabledPanels => s_Enabled;
+
+        public static string DumpEveryPanel()
+        {
+            if (s_Enabled.Count == 0)
+                return "No Tl UI Panel is enabled. Enter Play mode in a scene with one.";
+            var dump = new StringBuilder();
+            foreach (var panel in s_Enabled)
+                dump.Append("== ").Append(panel.name).Append(panel._resolvedRoot == null ? " (no UI loaded yet)" : "").Append('\n').Append(panel.Dump());
+            return dump.ToString();
+        }
 
         public static TlUiPanel Owning(VisualElement element)
         {
@@ -809,11 +823,25 @@ namespace TlUi
                     }
         }
 
-        void RunHotkeys()
+        void ListenToHotkeys()
         {
             foreach (var command in Commands)
-                if (command.Hotkey != null && command.Hotkey.action != null && command.Hotkey.action.WasPerformedThisFrame())
-                    Run(command, command.GamePayload);
+            {
+                var action = command.Hotkey != null ? command.Hotkey.action : null;
+                if (action == null)
+                    continue;
+                Action<InputAction.CallbackContext> onPerformed = _ => Run(command, command.GamePayload);
+                action.performed += onPerformed;
+                action.Enable();
+                _hotkeys.Add((action, onPerformed));
+            }
+        }
+
+        void StopListeningToHotkeys()
+        {
+            foreach (var (action, onPerformed) in _hotkeys)
+                action.performed -= onPerformed;
+            _hotkeys.Clear();
         }
 
         public string Dump()
@@ -855,9 +883,7 @@ namespace TlUi
         {
             if (Panel == null)
                 Panel = GetComponent<PanelRenderer>();
-            foreach (var command in Commands)
-                if (command.Hotkey != null && command.Hotkey.action != null)
-                    command.Hotkey.action.Enable();
+            ListenToHotkeys();
             if (!s_Enabled.Contains(this))
                 s_Enabled.Add(this);
             _onUiReloaded ??= OnUiReloaded;
@@ -868,6 +894,7 @@ namespace TlUi
         void OnDisable()
         {
             s_Enabled.Remove(this);
+            StopListeningToHotkeys();
             if (Panel != null && _onUiReloaded != null)
                 Panel.UnregisterUIReloadCallback(_onUiReloaded);
             ForgetLists();
@@ -893,7 +920,6 @@ namespace TlUi
             UpdateLists();
             DrainSignals();
             DrainFocus();
-            RunHotkeys();
             _applyEverything = false;
         }
     }

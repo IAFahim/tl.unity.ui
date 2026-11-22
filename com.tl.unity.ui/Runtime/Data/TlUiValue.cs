@@ -24,13 +24,11 @@ namespace TlUi
         {
             public override string Name => nameof(TlUiValue<T>.Value);
 
-            public override bool IsReadOnly => true;
+            public override bool IsReadOnly => false;
 
             public override T GetValue(ref TlUiValue<T> container) => container.Value;
 
-            public override void SetValue(ref TlUiValue<T> container, T value)
-            {
-            }
+            public override void SetValue(ref TlUiValue<T> container, T value) => container.Value = value;
         }
 
         public TlUiValuePropertyBag()

@@ -45,7 +45,7 @@ Rules when clips disagree: Hide beats Show, Disable beats Enable, Remove Class b
 
 ## Commands
 
-Every click in Tl UI also answers **Submit** (Enter, or gamepad South while the element has focus), because UI Toolkit raises `ClickEvent` only for pointers; a Button turns Submit into `clicked`, never into `ClickEvent`. The **Commands** table turns a target's Click (pointer or Submit), Pointer Enter, Pointer Leave or Value Changed event, or an Input Action **Hotkey** (built, not yet covered by a test), into one action: play, stop, pause, resume or restart a timeline slot, **Send To Game** (a code and payload appended to the timeline object's `UiCommandInbox` buffer, read and cleared by your Burst systems), or a UnityEvent.
+Every click in Tl UI also answers **Submit** (Enter, or gamepad South while the element has focus), because UI Toolkit raises `ClickEvent` only for pointers; a Button turns Submit into `clicked`, never into `ClickEvent`. The **Commands** table turns a target's Click (pointer or Submit), Pointer Enter, Pointer Leave or Value Changed event, or an Input Action **Hotkey** (heard through the action's `performed` event, not polled), into one action: play, stop, pause, resume or restart a timeline slot, **Send To Game** (a code and payload appended to the timeline object's `UiCommandInbox` buffer, read and cleared by your Burst systems), or a UnityEvent.
 
 ```csharp
 foreach (var inbox in SystemAPI.Query<DynamicBuffer<UiCommandInbox>>())
@@ -141,7 +141,7 @@ The **Lists** table shows rows in a target: a ListView (virtualized) or any cont
 
 Container rows are focusable and get Tl UI's row drag, which adds `tl-dragging` and `tl-drop-target` while it runs. Style `:hover` and `:focus` in USS.
 
-Two-way controls need no Tl code: bind a slider or toggle with `binding-mode="TwoWay"` to a ScriptableObject data source, and moving it writes the asset.
+Two-way controls need no Tl code: bind a slider or toggle with `binding-mode="TwoWay"`. With a ScriptableObject data source, UI Toolkit writes the asset. With a Tl UI Data source, the next frame writes the ECS singleton, and game writes still reach the control.
 
 ```csharp
 public sealed class BagRows : TlUiBufferRows<InventorySlot>
@@ -156,6 +156,10 @@ public sealed class NameplateViews : TlUiEntityViews<Nameplate>
 {
 }
 ```
+
+## Monitor
+
+**Window > Tl UI > Monitor** shows, while playing, every enabled Tl UI Panel's dump: switches, channels, and each target's display, visibility, usable state, opacity, classes and text. `TlUiPanel.DumpEveryPanel()` returns the same text for tests.
 
 ## Measured
 

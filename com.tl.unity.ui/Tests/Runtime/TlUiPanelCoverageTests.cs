@@ -359,6 +359,49 @@ namespace TlUiPackage.Tests
         }
 
         [UnityTest]
+        public IEnumerator ATwoWayBindingWritesAnEcsSingletonBackThroughTlUiData()
+        {
+            TestSettingsView view = null;
+            Entity settings = Entity.Null;
+            var volume = new Slider(0f, 1f) { name = "volume" };
+            var mute = new Toggle { name = "mute" };
+            yield return BuildScreen(panel =>
+            {
+                settings = _world.EntityManager.CreateEntity(typeof(TestSettingsData));
+                _world.EntityManager.SetComponentData(settings, new TestSettingsData { Volume = 0.45f, Muted = true });
+                view = panel.gameObject.AddComponent<TestSettingsView>();
+                view.Bind(_world);
+                panel.DataSource = view;
+            }, root =>
+            {
+                volume.SetBinding("value", new DataBinding { dataSourcePath = new PropertyPath(nameof(TestSettingsData.Volume)), bindingMode = BindingMode.TwoWay });
+                mute.SetBinding("value", new DataBinding { dataSourcePath = new PropertyPath(nameof(TestSettingsData.Muted)), bindingMode = BindingMode.TwoWay });
+                root.Add(volume);
+                root.Add(mute);
+            });
+            yield return null;
+            yield return null;
+            Assert.AreEqual(0.45f, volume.value, 0.0001f, "the slider shows the ECS singleton");
+            StringAssert.Contains("== Screen", TlUiPanel.DumpEveryPanel(), "the monitor's text names every enabled panel");
+            Assert.IsTrue(mute.value);
+
+            volume.value = 0.8f;
+            mute.value = false;
+            yield return null;
+            yield return null;
+            yield return null;
+            var written = _world.EntityManager.GetComponentData<TestSettingsData>(settings);
+            Assert.AreEqual(0.8f, written.Volume, 0.0001f, "moving the slider writes the ECS singleton through Tl UI Data, with no pointer into ECS");
+            Assert.IsFalse(written.Muted, "the toggle writes it too");
+
+            _world.EntityManager.SetComponentData(settings, new TestSettingsData { Volume = 0.3f, Muted = true });
+            yield return null;
+            yield return null;
+            Assert.AreEqual(0.3f, volume.value, 0.0001f, "a game write still reaches the slider afterwards");
+            Assert.IsTrue(mute.value);
+        }
+
+        [UnityTest]
         public IEnumerator AScriptableObjectDataSourceBindsThroughThePercentAndHiddenConverters()
         {
             var settings = ScriptableObject.CreateInstance<UiTestSettings>();
