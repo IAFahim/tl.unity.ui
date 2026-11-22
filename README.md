@@ -286,24 +286,21 @@ To animate the screen, give elements a Name in UI Builder and pick that name on 
 
 ## Status
 
-Preview, version `0.2.0-preview.1`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL (`com.tl.unity#765657a`):
-- Tl writes all 11 **+** menu entries itself.
+Preview, version `0.3.0-preview.1`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL (`com.tl.unity#765657a`, this repo at `32ddb79`, the tagged code):
+- 0 compile errors and 0 warnings from these packages; Tl writes all 11 **+** menu entries itself.
 - 5 EditMode tests:
   - every block in the **+** menu;
-  - **Tl UI Target** naming a clip;
+  - naming clips, Animate included, and renaming on a property change;
   - new names skipping Ids already used by number;
-  - scrubbing hiding and restoring Hello;
+  - scrubbing: hide and restore, the playhead exactly at the end, and the starter's fade and move;
   - the element named hello hiding in Play mode.
-- 21 package PlayMode tests plus the Basics, Hud, Inventory and Menu sample tests, 25/25 in two full runs.
-- 13 .NET tests.
-- Linux CoreCLR and IL2CPP players run all four samples headless and pass 28 of 28 checks (3 and 2 runs). Once warm (full health, every UI timeline finished), UI Toolkit's own panel update allocates 0 B while the Hud data changes every frame.
-
-For Unity 7000.0.0a16, use `0.1.0-preview.5`.
+- 21 package PlayMode tests plus the Basics, Hud, Inventory, Cards and Menu sample tests: 26/26 in two full runs. Basics, Hud, Inventory and Menu measure 0 B of managed allocation per frame once warm.
+- 15 .NET tests.
+- Linux CoreCLR and IL2CPP players run all five samples headless and pass 34 of 34 checks (3 and 2 runs). The checks include names resolving from ECS, a card dragged onto the table, and 0 B in UI Toolkit's panel update once warm.
 
 Not checked yet:
 - other platforms;
-- how it looks on screen;
-- scrub preview drawn in a windowed Editor's Game view (proven headless);
+- how it looks on screen, and the Inspector dropdowns drawn in a windowed Editor (the tests run headless);
 - newer Unity alphas.
 
 ## Develop
