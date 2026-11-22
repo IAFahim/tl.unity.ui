@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using Tl;
 using Tl.Ui;
+using Tl.Unity;
 using TlUi;
 using Unity.Entities;
 using Unity.Properties;
@@ -332,6 +333,30 @@ namespace TlUiPackage.Tests
             Assert.AreSame(rows.Items[0], rowElements[0].dataSource, "the ListView did not reorder the rows itself: the game decides");
         }
 #endif
+
+        [UnityTest]
+        public IEnumerator AGameSystemRaisesASignalAndTheSignalsTablePlaysAUiTimelineAndSendsACode()
+        {
+            var invoked = 0;
+            yield return BuildScreen(panel =>
+            {
+                var levelUp = new UiSignalReaction { Code = 7, Do = UiCommandAction.RestartTimeline, TimelineSlot = 0 };
+                levelUp.OnSignal.AddListener(() => invoked++);
+                panel.Signals.Add(levelUp);
+                panel.Signals.Add(new UiSignalReaction { Code = 8, Do = UiCommandAction.SendToGame, GameCode = 40 });
+            }, root => { });
+            var gameplay = _world.EntityManager.CreateEntity();
+            var signals = _world.EntityManager.AddBuffer<TimelineEvent<UiSignal>>(gameplay);
+            signals.Raise(7);
+            signals.Raise(8);
+            yield return null;
+            yield return null;
+            var ops = _world.EntityManager.GetBuffer<Tl.Unity.TimelineRequest>(_host).AsNativeArray().ToArray().Select(request => request.Op).ToArray();
+            CollectionAssert.AreEqual(new[] { RequestOp.Stop, RequestOp.Start }, ops, "signal 7 from a game system restarts UI timeline slot 0");
+            CollectionAssert.AreEqual(new[] { (40, 8) }, Inbox(), "signal 8 sends code 40 with the signal code as payload");
+            Assert.AreEqual(1, invoked, "On Signal runs too");
+            Assert.AreEqual(0, _world.EntityManager.GetBuffer<TimelineEvent<UiSignal>>(gameplay).Length, "the panel drains the game's signal buffer");
+        }
 
         [UnityTest]
         public IEnumerator AScriptableObjectDataSourceBindsThroughThePercentAndHiddenConverters()

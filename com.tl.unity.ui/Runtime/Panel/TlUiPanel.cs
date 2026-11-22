@@ -415,6 +415,31 @@ namespace TlUi
             }
         }
 
+        void React(UiSignalReaction reaction)
+        {
+            switch (reaction.Do)
+            {
+                case UiCommandAction.InvokeEvent:
+                    break;
+                case UiCommandAction.SendToGame:
+                    SendToGame(reaction.GameCode, reaction.Code, -1);
+                    break;
+                default:
+                    RequestTimeline(VerbOf(reaction.Do), reaction.TimelineSlot);
+                    break;
+            }
+            reaction.OnSignal?.Invoke();
+        }
+
+        static UiTimelineVerb VerbOf(UiCommandAction action) => action switch
+        {
+            UiCommandAction.StopTimeline => UiTimelineVerb.Stop,
+            UiCommandAction.PauseTimeline => UiTimelineVerb.Pause,
+            UiCommandAction.ResumeTimeline => UiTimelineVerb.Resume,
+            UiCommandAction.RestartTimeline => UiTimelineVerb.Restart,
+            _ => UiTimelineVerb.Play,
+        };
+
         void Run(UiCommand command, int payload)
         {
             switch (command.Do)
@@ -425,20 +450,8 @@ namespace TlUi
                 case UiCommandAction.SendToGame:
                     SendToGame(command.GameCode, payload, -1);
                     break;
-                case UiCommandAction.PlayTimeline:
-                    RequestTimeline(UiTimelineVerb.Play, command.TimelineSlot);
-                    break;
-                case UiCommandAction.StopTimeline:
-                    RequestTimeline(UiTimelineVerb.Stop, command.TimelineSlot);
-                    break;
-                case UiCommandAction.PauseTimeline:
-                    RequestTimeline(UiTimelineVerb.Pause, command.TimelineSlot);
-                    break;
-                case UiCommandAction.ResumeTimeline:
-                    RequestTimeline(UiTimelineVerb.Resume, command.TimelineSlot);
-                    break;
-                case UiCommandAction.RestartTimeline:
-                    RequestTimeline(UiTimelineVerb.Restart, command.TimelineSlot);
+                default:
+                    RequestTimeline(VerbOf(command.Do), command.TimelineSlot);
                     break;
             }
         }
@@ -767,7 +780,7 @@ namespace TlUi
             foreach (var code in _drainedCodes)
                 foreach (var reaction in Signals)
                     if (reaction.Code == code)
-                        reaction.OnSignal?.Invoke();
+                        React(reaction);
         }
 
         void DrainFocus()

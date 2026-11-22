@@ -50,11 +50,21 @@ namespace TlUi
     [Serializable]
     public sealed class UiSignalReaction
     {
-        [Tooltip("The code Signal clips raise.")]
+        [Tooltip("The code a Signal clip, or a game system through UiSignals.Raise, raises.")]
         [Range(0, 255)]
         public int Code;
 
-        [Tooltip("What happens when a Signal clip with this code starts: play a sound, start particles, call a method.")]
+        [Tooltip("What the signal does besides On Signal: play, stop, pause, resume or restart a UI timeline slot, or send a code back to game systems. Invoke Event runs On Signal only.")]
+        public UiCommandAction Do = UiCommandAction.InvokeEvent;
+
+        [Tooltip("The UI timeline slot the play, stop, pause, resume and restart actions use: 0 is the director's Playable, 1 and up its Also Plays list.")]
+        [Min(0)]
+        public int TimelineSlot;
+
+        [Tooltip("The code Send To Game appends to the UI Command Inbox.")]
+        public int GameCode;
+
+        [Tooltip("Runs for every signal with this code: play a sound, start particles, call a method.")]
         public UnityEvent OnSignal = new UnityEvent();
     }
 

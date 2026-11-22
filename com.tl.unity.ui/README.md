@@ -38,7 +38,7 @@ Once the branch is merged, each also installs by Git URL (`https://github.com/IA
 | Attach | a UXML template from **Template Slots** is shown inside the targets (created once, then shown and hidden) |
 | Animate | a curve drives a **channel** (0 to 15); the **Channels** table says which target and property: opacity, translate, scale, rotate, width, height, reveal, or the value of a slider, progress bar or custom element. **Hold** keeps the last key after the clip |
 | Text | a channel shows a text from **Text Slots** |
-| Signal | once, at its start: the **Signals** table's UnityEvent for its code (sound, particles, any method) |
+| Signal | once, at its start: the **Signals** table's reaction for its code: play, stop or restart a UI timeline, send a code to game systems, and a UnityEvent (sound, particles, any method) |
 | Focus | once, at its start: keyboard and gamepad focus moves to the target |
 
 Rules when clips disagree: Hide beats Show, Disable beats Enable, Remove Class beats Add Class. With no clip on, a target is exactly what the UXML and USS made it. Clips with different Ids overlap freely; two clips that overlap on one track count only the first, so give overlapping work its own track.
@@ -118,6 +118,20 @@ Bind in UI Builder or UXML with paths relative to the struct (`Health`, `Coins`)
 
 A ScriptableObject works as the Data Source too, for settings and catalogs.
 
+## Game moments
+
+Game code never calls the UI. When something happens that the UI should react to (level up, quest done, low health), a Burst system raises a signal code on any entity, the same event a Signal clip raises:
+
+```csharp
+SystemAPI.GetBuffer<TimelineEvent<UiSignal>>(gameEvents).Raise(LevelUpCode);
+```
+
+The Signals table decides what the code does: play the Level Up UI timeline, send a code back, call a UnityEvent. The game knows only codes; it holds no reference, pointer or callback into managed UI code, and the panel drains the buffer every frame.
+
+## Tooltips
+
+UI Toolkit keeps a `tooltip` string on every element (the Tooltip field in UI Builder) but shows it only in the Editor. Add **Tl UI Tooltips** next to the Panel Renderer to show it at runtime: after **Delay Ms** of hovering an element or any child, or at once when keyboard or gamepad focus lands on it. One label with the `tl-tooltip` class is made per panel; style it in USS. Moving between tooltips allocates nothing.
+
 ## Lists and entity views
 
 The **Lists** table shows rows in a target: a ListView (virtualized) or any container (rows pooled and hidden when unused). Rows come from a **Tl UI Asset Rows** asset (a list of ScriptableObjects, for shops and catalogs) or a **Tl UI Buffer Rows** component that copies an ECS buffer, and each row binds its UXML template with paths relative to the row (`Name`, `Count`). A row is chosen by a click or by Submit, which sends **Click Code** with the row index. A ListView keeps all of UI Toolkit's own interaction:
@@ -162,7 +176,7 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
 - One timeline object (Tl UI Timelines) per World receives commands.
-- UI Toolkit shows tooltips and context menus only in Editor panels; runtime panels get neither.
+- UI Toolkit shows tooltips and context menus only in Editor panels. Tl UI Tooltips covers tooltips at runtime; context menus are not covered.
 - Ids come from the panel's own UXML. A `TlTarget` inside a row, Attach or entity-view template does nothing and logs one warning; `TlSend` and `TlPlay` work anywhere under the panel.
 
 ## Samples
