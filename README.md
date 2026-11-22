@@ -175,9 +175,16 @@ To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put 
 
 ## Status
 
-Preview, version `0.1.0-preview.2`. Checked on Unity 7000.0.0a16 on Linux:
-- Editor PlayMode tests: 21 package tests, 4 sample tests, and the example above;
-- 13 .NET tests;
+Preview, version `0.1.0-preview.2`. Checked on Unity 7000.0.0a16 on Linux.
+
+On `0.1.0-preview.2`, installed by Git URL in a fresh project:
+- 21 package PlayMode tests;
+- the Hud sample's test;
+- the example above, built as the steps say;
+- 13 .NET tests from a fresh clone.
+
+On `0.1.0-preview.1`, whose code differs only in the empty-Playable fix and the statics attributes:
+- the Basics, Inventory and Menu sample tests;
 - CoreCLR and IL2CPP players running all four samples headless.
 
 Not checked yet: other platforms, how it looks on screen, and newer Unity alphas.
