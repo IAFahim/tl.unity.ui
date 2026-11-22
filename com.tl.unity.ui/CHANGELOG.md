@@ -15,7 +15,7 @@ Made for designers who never read code. Breaking: timelines made with 0.2 lose t
 - `UiChannelSlots.Write(ref UiChannels, UiChannelKey.Of(target, property), value, hold)` lets game systems animate any property from code.
 
 ### Fixed
-- **A Hide clip that ends where the timeline ends no longer leaves its target hidden while you scrub or play the Timeline window to the end.** 0.2's preview records the state after the last tick, and a test now scrubs to exactly that end. 0.1.0-preview.5 showed the last tick there, which is the "hello stays hidden until it loops" report.
+- **A Hide clip that ends where the timeline ends no longer leaves its target hidden while you scrub or play the Timeline window to the end.** 0.2's preview records the state after the last tick, and a test now scrubs to exactly that end. 0.1.0-preview.5 showed the last tick there, which matches the "hello stays hidden until it loops" report.
 - The scrub preview asks Unity for a player-loop update after it changes the screen and after it stops, so the Game view redraws in Edit mode.
 - A disabled Tl UI Panel stops its preview.
 - A list targeted by a name no longer warns before the names arrive from ECS; it resolves once they do.
