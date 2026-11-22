@@ -292,17 +292,18 @@ To animate the screen, give elements a Name in UI Builder and pick that name on 
 
 ## Status
 
-Preview, version `0.3.0-preview.1`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL (`com.tl.unity#765657a`, this repo at `32ddb79`, the tagged code):
+Preview, version `0.3.0-preview.2`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL (`com.tl.unity#765657a`):
 - 0 compile errors and 0 warnings from these packages; Tl writes all 11 **+** menu entries itself.
-- 5 EditMode tests:
+- 6 EditMode tests (at `17d95a3`, the tagged code):
   - every block in the **+** menu;
   - naming clips, Animate included, and renaming on a property change;
   - new names skipping Ids already used by number;
   - scrubbing: hide and restore, the playhead exactly at the end, and the starter's fade and move;
-  - the element named hello hiding in Play mode.
-- 21 package PlayMode tests plus the Basics, Hud, Inventory, Cards and Menu sample tests: 26/26 in two full runs. Basics, Hud, Inventory and Menu measure 0 B of managed allocation per frame once warm.
+  - the element named hello hiding in Play mode;
+  - a slot picked from a dropdown reaching the clip.
+- 21 package PlayMode tests plus the Basics, Hud, Inventory, Cards and Menu sample tests: 26/26 at `17d95a3`, and in two full runs at `32ddb79`. Basics, Hud, Inventory and Menu measure 0 B of managed allocation per frame once warm.
 - 15 .NET tests.
-- Linux CoreCLR and IL2CPP players run all five samples headless and pass 34 of 34 checks (3 and 2 runs). The checks include names resolving from ECS, a card dragged onto the table, and 0 B in UI Toolkit's panel update once warm.
+- Linux CoreCLR and IL2CPP players run all five samples headless and pass 34 of 34 checks (3 and 2 runs, at `32ddb79`; preview.2 changed only Editor code and docs). The checks include names resolving from ECS, a card dragged onto the table, and 0 B in UI Toolkit's panel update once warm.
 
 Not checked yet:
 - other platforms;
