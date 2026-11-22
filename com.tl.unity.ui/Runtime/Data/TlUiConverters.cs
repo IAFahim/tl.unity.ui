@@ -14,13 +14,17 @@ namespace TlUi
         public const string Visible = "tl-visible";
         public const string Hidden = "tl-hidden";
         public const string FixedText = "tl-fixed-text";
+        public const string Not = "tl-not";
+        public const string Invisible = "tl-invisible";
         public const int CachedIntegers = 10000;
 
-        static string IntegerText(string[] cache, int value)
+        static readonly string[] s_Integers = new string[CachedIntegers];
+
+        public static string IntegerText(int value)
         {
-            if (value < 0 || value >= cache.Length)
+            if (value < 0 || value >= s_Integers.Length)
                 return value.ToString(CultureInfo.InvariantCulture);
-            return cache[value] ??= value.ToString(CultureInfo.InvariantCulture);
+            return s_Integers[value] ??= value.ToString(CultureInfo.InvariantCulture);
         }
 
         static string PercentText(string[] cache, float fraction)
@@ -61,10 +65,9 @@ namespace TlUi
 
         public static void Register()
         {
-            var integerCache = new string[CachedIntegers];
             var integer = new ConverterGroup(Integer);
-            integer.AddConverter((ref int value) => IntegerText(integerCache, value));
-            integer.AddConverter((ref float value) => IntegerText(integerCache, Mathf.RoundToInt(value)));
+            integer.AddConverter((ref int value) => IntegerText(value));
+            integer.AddConverter((ref float value) => IntegerText(Mathf.RoundToInt(value)));
             RegisterOnce(integer);
 
             var percentCache = new string[1001];
@@ -92,6 +95,14 @@ namespace TlUi
             var hidden = new ConverterGroup(Hidden);
             hidden.AddConverter((ref bool value) => new StyleEnum<DisplayStyle>(value ? DisplayStyle.None : DisplayStyle.Flex));
             RegisterOnce(hidden);
+
+            var not = new ConverterGroup(Not);
+            not.AddConverter((ref bool value) => !value);
+            RegisterOnce(not);
+
+            var invisible = new ConverterGroup(Invisible);
+            invisible.AddConverter((ref bool value) => new StyleEnum<Visibility>(value ? Visibility.Hidden : Visibility.Visible));
+            RegisterOnce(invisible);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

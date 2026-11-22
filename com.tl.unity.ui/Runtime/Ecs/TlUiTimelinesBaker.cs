@@ -18,6 +18,8 @@ namespace TlUi
                 foreach (var timeline in alsoPlays.Timelines)
                     slots.Add(new UiTimelineSlot { Timeline = TlBaking.GetTimeline(this, timeline) });
             AddBuffer<UiCommandInbox>(host);
+            AddBuffer<UiTextInbox>(host);
+            AddComponent<UiInputState>(host);
         }
     }
 }

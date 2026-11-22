@@ -97,7 +97,8 @@ namespace TlUi
         PointerEnter,
         PointerLeave,
         ValueChanged,
-        HotkeyOnly
+        HotkeyOnly,
+        Cancel
     }
 
     public enum UiCommandAction

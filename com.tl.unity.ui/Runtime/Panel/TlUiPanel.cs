@@ -112,6 +112,8 @@ namespace TlUi
         int _resolvedVersion = -1;
         bool _resolveRequested;
         bool _applyEverything = true;
+        UiInputState _shownInput;
+        bool _inputReported;
 
         public World BoundWorld => _boundWorld;
 
@@ -241,6 +243,8 @@ namespace TlUi
                 state = CaptureAuthoredState(element);
                 _stateOf.Add(element, state);
                 _elements.Add(state);
+                if (element.HasBinding("style.display") || element.HasBinding("enabledSelf"))
+                    Debug.LogWarning("Tl UI Panel: " + element.GetType().Name + " #" + element.name + " has an Id and a data binding on style.display or enabledSelf. Show, Hide, Enable and Disable clips write the same property, so whichever writes last wins.", this);
             }
             state.Ids |= UiIds.BitOf((byte)id);
         }
@@ -345,7 +349,7 @@ namespace TlUi
                 element.style.width = look.Has(UiChannelProperty.WidthPercent) ? new StyleLength(Length.Percent(look.Width)) : new StyleLength(StyleKeyword.Null);
             if (look.Has(UiChannelProperty.HeightPercent) != shown.Has(UiChannelProperty.HeightPercent) || look.Height != shown.Height)
                 element.style.height = look.Has(UiChannelProperty.HeightPercent) ? new StyleLength(Length.Percent(look.Height)) : new StyleLength(StyleKeyword.Null);
-            if (element is TextElement textElement)
+            if (element is TextElement textElement && (look.Has(UiChannelProperty.Text) || look.Has(UiChannelProperty.Reveal) || shown.Has(UiChannelProperty.Text) || shown.Has(UiChannelProperty.Reveal)))
             {
                 var text = ShownText(state, look);
                 if (!ReferenceEquals(textElement.text, text))
@@ -361,6 +365,44 @@ namespace TlUi
             if (!TryFindHost(out var host))
                 return;
             _boundWorld.EntityManager.GetBuffer<UiCommandInbox>(host).Add(new UiCommandInbox { Code = code, Payload = payload, Target = target });
+        }
+
+        public bool SomeoneIsTyping()
+        {
+            var focused = _resolvedRoot?.focusController?.focusedElement as VisualElement;
+            return focused != null && (focused is TextField || focused.GetFirstAncestorOfType<TextField>() != null);
+        }
+
+        public void SendText(int code, string text)
+        {
+            if (!TryFindHost(out var host) || !_boundWorld.EntityManager.HasBuffer<UiTextInbox>(host))
+                return;
+            var fixedText = default(FixedString128Bytes);
+            fixedText.CopyFromTruncated(text ?? "");
+            _boundWorld.EntityManager.GetBuffer<UiTextInbox>(host).Add(new UiTextInbox { Code = code, Text = fixedText });
+        }
+
+        bool PointerIsOverUi()
+        {
+            var pointer = Pointer.current;
+            var panel = _resolvedRoot?.panel;
+            if (pointer == null || panel == null)
+                return false;
+            var screen = pointer.position.ReadValue();
+            var picked = panel.Pick(RuntimePanelUtils.ScreenToPanel(panel, new Vector2(screen.x, Screen.height - screen.y)));
+            return picked != null && picked != _resolvedRoot && _resolvedRoot.Contains(picked);
+        }
+
+        void ReportInputState()
+        {
+            var latest = new UiInputState { PointerOverUi = PointerIsOverUi(), Typing = SomeoneIsTyping() };
+            if (latest.PointerOverUi == _shownInput.PointerOverUi && latest.Typing == _shownInput.Typing && _inputReported)
+                return;
+            if (!TryFindHostQuietly(out var host) || !_boundWorld.EntityManager.HasComponent<UiInputState>(host))
+                return;
+            _boundWorld.EntityManager.SetComponentData(host, latest);
+            _shownInput = latest;
+            _inputReported = true;
         }
 
         public void SendRowClick(int list, int row)
@@ -379,6 +421,17 @@ namespace TlUi
         {
             if (list >= 0 && list < _lists.Count && _lists[list].Binding.DragCode >= 0)
                 SendToGame(_lists[list].Binding.DragCode, fromRow, toRow);
+        }
+
+        bool TryFindHostQuietly(out Entity host)
+        {
+            host = Entity.Null;
+            if (_hostsQuery.IsEmptyIgnoreFilter)
+                return false;
+            _hostsQuery.CompleteDependency();
+            using var hosts = _hostsQuery.ToEntityArray(Allocator.Temp);
+            host = hosts[0];
+            return true;
         }
 
         bool TryFindHost(out Entity host)
@@ -508,6 +561,15 @@ namespace TlUi
                         element.UnregisterCallback(onInt);
                         element.UnregisterCallback(onBool);
                     });
+                    break;
+                case UiCommandEvent.Cancel:
+                    EventCallback<NavigationCancelEvent> onCancel = cancel =>
+                    {
+                        Run(command, command.GamePayload);
+                        cancel.StopPropagation();
+                    };
+                    element.RegisterCallback(onCancel);
+                    _unregisterCommands.Add(() => element.UnregisterCallback(onCancel));
                     break;
             }
         }
@@ -830,7 +892,11 @@ namespace TlUi
                 var action = command.Hotkey != null ? command.Hotkey.action : null;
                 if (action == null)
                     continue;
-                Action<InputAction.CallbackContext> onPerformed = _ => Run(command, command.GamePayload);
+                Action<InputAction.CallbackContext> onPerformed = _ =>
+                {
+                    if (!SomeoneIsTyping())
+                        Run(command, command.GamePayload);
+                };
                 action.performed += onPerformed;
                 action.Enable();
                 _hotkeys.Add((action, onPerformed));
@@ -920,6 +986,7 @@ namespace TlUi
             UpdateLists();
             DrainSignals();
             DrainFocus();
+            ReportInputState();
             _applyEverything = false;
         }
     }

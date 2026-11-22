@@ -9,6 +9,7 @@ namespace TlUiPackage.Tests
     {
         public float Volume;
         public bool Muted;
+        public int Coins;
     }
 
     public sealed class TestSettingsView : TlUiData<TestSettingsData>

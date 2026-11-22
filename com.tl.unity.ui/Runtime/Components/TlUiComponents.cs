@@ -77,6 +77,29 @@ namespace TlUi
 
         [RegisterCallback(typeof(ChangeEvent<bool>))]
         static void SendTheNewToggle(ref TlSendValue self, VisualElement owner, ChangeEvent<bool> change) => Send(self.Code, owner, change.newValue ? 1 : 0);
+
+        [RegisterCallback(typeof(ChangeEvent<string>))]
+        static void SendTheChosenIndex(ref TlSendValue self, VisualElement owner, ChangeEvent<string> change)
+        {
+            if (owner is DropdownField dropdown)
+                Send(self.Code, owner, dropdown.index);
+        }
+    }
+
+    [VisualElementComponent]
+    [RequiresElementOfType(typeof(TextField))]
+    public partial struct TlSendText
+    {
+        [UxmlAttribute]
+        public int Code;
+
+        [RegisterCallback(typeof(ChangeEvent<string>))]
+        static void SendTheText(ref TlSendText self, TextField owner, ChangeEvent<string> change)
+        {
+            var panel = TlUiPanel.Owning(owner);
+            if (panel != null)
+                panel.SendText(self.Code, change.newValue);
+        }
     }
 
     [VisualElementComponent]

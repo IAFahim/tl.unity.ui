@@ -57,8 +57,10 @@ namespace TlUi
             _singletonQuery.CompleteDependency();
             if (_anythingShown && !SameBytes(_shown.Value, _fromGame))
             {
-                _singletonQuery.SetSingleton(_shown.Value);
-                _fromGame = _shown.Value;
+                var merged = UiFields<T>.TakeChangedFields(_singletonQuery.GetSingleton<T>(), _shown.Value, _fromGame);
+                _singletonQuery.SetSingleton(merged);
+                _shown.Value = merged;
+                _fromGame = merged;
                 _shown.Version++;
                 return;
             }
