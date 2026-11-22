@@ -18,35 +18,6 @@ namespace TlUi
         public string Selector;
     }
 
-    public enum UiChannelProperty
-    {
-        Opacity,
-        TranslateX,
-        TranslateY,
-        Scale,
-        Rotate,
-        WidthPercent,
-        HeightPercent,
-        Text,
-        Reveal,
-        Value
-    }
-
-    [Serializable]
-    public struct UiChannelBinding
-    {
-        [Tooltip("The channel Animate and Text clips write, 0 to 15.")]
-        [Range(0, UiChannelValues.Count - 1)]
-        public int Channel;
-
-        [Tooltip("The target Id whose elements this channel moves.")]
-        [Range(0, UiIds.HighestId)]
-        public int TargetId;
-
-        [Tooltip("What the channel value drives. Opacity 0 to 1, Translate in pixels, Scale as a factor, Rotate in degrees, Width and Height in percent, Text as a text slot number, Reveal 0 to 1 of the shown text, Value for sliders, progress bars and custom elements.")]
-        public UiChannelProperty Property;
-    }
-
     [Serializable]
     public sealed class UiSignalReaction
     {

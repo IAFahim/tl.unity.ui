@@ -42,19 +42,44 @@ public sealed class UiRulesTests
     }
 
     [Fact]
-    public void TouchedChannelsNamesLiveChangesAndNewValuesOfLiveChannelsOnly()
+    public void TouchedTargetsOfChannelsNamesTheTargetsWhosePropertiesStartStopOrChange()
     {
-        var before = new UiChannels { Live = 0b011 };
+        var before = default(UiChannels);
+        before.Live = 0b011;
+        before.Keys.Set(0, UiChannelKey.Of(new UiTargetRef { Id = 1 }, UiProperty.Opacity));
         before.Values.Set(0, 1f);
+        before.Keys.Set(1, UiChannelKey.Of(new UiTargetRef { Id = 2 }, UiProperty.Scale));
         before.Values.Set(1, 2f);
         var after = before;
         after.Live = 0b110;
         after.Values.Set(1, 3f);
+        after.Keys.Set(2, UiChannelKey.Of(new UiTargetRef { Id = 5 }, UiProperty.MoveY));
         after.Values.Set(2, 9f);
-        Assert.Equal((ushort)0b111, UiRules.TouchedChannels(before, after));
+        Assert.Equal(1UL << 1 | 1UL << 2 | 1UL << 5, UiRules.TouchedTargetsOfChannels(before, after));
         var quietChange = after;
         quietChange.Values.Set(0, 42f);
-        Assert.Equal((ushort)0, UiRules.TouchedChannels(after, quietChange));
+        Assert.Equal(0UL, UiRules.TouchedTargetsOfChannels(after, quietChange));
+    }
+
+    [Fact]
+    public void MergingTwoHostsKeepsOnePropertyPerTargetAndBothHostsValues()
+    {
+        var first = default(UiChannels);
+        first.Live = 1;
+        first.Held = 1;
+        first.Keys.Set(0, UiChannelKey.Of(new UiTargetRef { Id = 3 }, UiProperty.Opacity));
+        first.Values.Set(0, 0.25f);
+        var second = default(UiChannels);
+        second.Live = 0b100;
+        second.Keys.Set(2, UiChannelKey.Of(new UiTargetRef { Id = 4 }, UiProperty.Rotate));
+        second.Values.Set(2, 90f);
+        var total = default(UiChannels);
+        UiRules.MergeChannels(ref total, first);
+        UiRules.MergeChannels(ref total, second);
+        Assert.Equal((ushort)0b11, total.Live);
+        Assert.Equal((ushort)0b01, total.Held);
+        Assert.Equal(0.25f, total.Values.Get(UiChannelSlots.Find(total.Live, total.Keys, UiChannelKey.Of(new UiTargetRef { Id = 3 }, UiProperty.Opacity))));
+        Assert.Equal(90f, total.Values.Get(UiChannelSlots.Find(total.Live, total.Keys, UiChannelKey.Of(new UiTargetRef { Id = 4 }, UiProperty.Rotate))));
     }
 
     [Fact]

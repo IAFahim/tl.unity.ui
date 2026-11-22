@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using MenuSample;
 using Tl.Generated;
+using Tl.Ui;
 using Tl.Unity;
 using Tl.Unity.Editor;
 using TlUi;
@@ -53,7 +54,7 @@ public static class MenuBuilder
         clip.displayName = "Screen shows";
         clip.start = 0.0;
         clip.duration = 0.5;
-        ((Tl_Ui_ShowClip_TlData)((TlClip)clip.asset).Data).Id = screenId;
+        ((Tl_Ui_ShowClip_TlData)((TlClip)clip.asset).Data).Target = new UiTargetRef { Id = screenId };
         timeline.CreateMarkerTrack();
         var settings = timeline.markerTrack.CreateMarker<TlTimelineSettings>(0.0);
         settings.End = TlEnd.Hold;
@@ -146,7 +147,7 @@ public static class MenuBuilder
 
     static void AddToBuildList(string scenePath)
     {
-        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath).ToList();
+        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath && !(Path.GetFileName(scene.path) == Path.GetFileName(scenePath) && !File.Exists(scene.path))).ToList();
         scenes.Add(new EditorBuildSettingsScene(scenePath, true));
         EditorBuildSettings.scenes = scenes.ToArray();
     }

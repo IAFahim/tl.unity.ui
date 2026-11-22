@@ -287,7 +287,6 @@ namespace TlUiPackage.Tests
             {
                 panel.Targets.Add(new UiTarget { Id = 0, Selector = "#price" });
                 panel.Targets.Add(new UiTarget { Id = 1, Selector = "#settingsScreen" });
-                panel.Channels.Add(new UiChannelBinding { Channel = 0, TargetId = 0, Property = UiChannelProperty.Opacity });
                 panel.Commands.Add(new UiCommand { TargetId = 1, On = UiCommandEvent.Cancel, Do = UiCommandAction.SendToGame, GameCode = 52 });
             }, root =>
             {
@@ -303,8 +302,8 @@ namespace TlUiPackage.Tests
             });
             yield return Frames(2);
             Assert.AreEqual("100", price.text);
-            var channels = new UiChannels { Live = 1 };
-            channels.Values.Set(0, 0.5f);
+            var channels = default(UiChannels);
+            UiChannelSlots.Write(ref channels, UiChannelKey.Of(new UiTargetRef { Id = 0 }, UiProperty.Opacity), 0.5f, false);
             _world.EntityManager.SetComponentData(_host, channels);
             yield return Frames(2);
             Assert.AreEqual(0.5f, price.resolvedStyle.opacity, 0.001f, "the opacity channel reaches the bound label");

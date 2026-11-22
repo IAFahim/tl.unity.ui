@@ -57,7 +57,7 @@ namespace TlUi
         public PanelRenderer Panel;
 
         [Header("Address")]
-        [Tooltip("What each Id points at. Clips, channels and commands name Ids; this table turns them into elements.")]
+        [Tooltip("Optional: Ids by selector, for many elements at once (.card, Button). Clips usually name their target instead, by the element's Name in UI Builder.")]
         public List<UiTarget> Targets = new List<UiTarget>();
 
         [Tooltip("USS classes Add Class and Remove Class clips name by slot, 0 to 7.")]
@@ -69,9 +69,6 @@ namespace TlUi
         [Tooltip("Texts Text clips show, by slot.")]
         [TextArea]
         public List<string> TextSlots = new List<string>();
-
-        [Tooltip("What each channel moves: Animate and Text clips write channels, this table says which target and property.")]
-        public List<UiChannelBinding> Channels = new List<UiChannelBinding>();
 
         [Header("Events")]
         [Tooltip("What happens when a Signal clip starts, by code.")]
@@ -428,8 +425,8 @@ namespace TlUi
         string ShownText(UiElementState state, in UiChannelLook look)
         {
             var slot = look.TextSlot;
-            var text = look.Has(UiChannelProperty.Text) && slot >= 0 && slot < TextSlots.Count ? TextSlots[slot] : state.AuthoredText;
-            if (text == null || !look.Has(UiChannelProperty.Reveal))
+            var text = look.HasText && slot >= 0 && slot < TextSlots.Count ? TextSlots[slot] : state.AuthoredText;
+            if (text == null || !look.Has(UiProperty.Reveal))
                 return text;
             return PrefixOf(text, UiRules.RevealedLength(text.Length, look.Reveal));
         }
@@ -469,28 +466,28 @@ namespace TlUi
         {
             var element = state.Element;
             var shown = state.ShownChannels;
-            if (look.Has(UiChannelProperty.Opacity) != shown.Has(UiChannelProperty.Opacity) || look.Opacity != shown.Opacity)
-                element.style.opacity = look.Has(UiChannelProperty.Opacity) ? new StyleFloat(look.Opacity) : new StyleFloat(StyleKeyword.Null);
-            var translated = look.Has(UiChannelProperty.TranslateX) || look.Has(UiChannelProperty.TranslateY);
-            var wasTranslated = shown.Has(UiChannelProperty.TranslateX) || shown.Has(UiChannelProperty.TranslateY);
+            if (look.Has(UiProperty.Opacity) != shown.Has(UiProperty.Opacity) || look.Opacity != shown.Opacity)
+                element.style.opacity = look.Has(UiProperty.Opacity) ? new StyleFloat(look.Opacity) : new StyleFloat(StyleKeyword.Null);
+            var translated = look.Has(UiProperty.MoveX) || look.Has(UiProperty.MoveY);
+            var wasTranslated = shown.Has(UiProperty.MoveX) || shown.Has(UiProperty.MoveY);
             if (translated != wasTranslated || look.TranslateX != shown.TranslateX || look.TranslateY != shown.TranslateY)
                 element.style.translate = translated ? new StyleTranslate(new Translate(new Length(look.TranslateX), new Length(look.TranslateY))) : new StyleTranslate(StyleKeyword.Null);
-            if (look.Has(UiChannelProperty.Scale) != shown.Has(UiChannelProperty.Scale) || look.Scale != shown.Scale)
-                element.style.scale = look.Has(UiChannelProperty.Scale) ? new StyleScale(new Scale(new Vector2(look.Scale, look.Scale))) : new StyleScale(StyleKeyword.Null);
-            if (look.Has(UiChannelProperty.Rotate) != shown.Has(UiChannelProperty.Rotate) || look.Rotate != shown.Rotate)
-                element.style.rotate = look.Has(UiChannelProperty.Rotate) ? new StyleRotate(new Rotate(new Angle(look.Rotate, AngleUnit.Degree))) : new StyleRotate(StyleKeyword.Null);
-            if (look.Has(UiChannelProperty.WidthPercent) != shown.Has(UiChannelProperty.WidthPercent) || look.Width != shown.Width)
-                element.style.width = look.Has(UiChannelProperty.WidthPercent) ? new StyleLength(Length.Percent(look.Width)) : new StyleLength(StyleKeyword.Null);
-            if (look.Has(UiChannelProperty.HeightPercent) != shown.Has(UiChannelProperty.HeightPercent) || look.Height != shown.Height)
-                element.style.height = look.Has(UiChannelProperty.HeightPercent) ? new StyleLength(Length.Percent(look.Height)) : new StyleLength(StyleKeyword.Null);
-            if (element is TextElement textElement && (look.Has(UiChannelProperty.Text) || look.Has(UiChannelProperty.Reveal) || shown.Has(UiChannelProperty.Text) || shown.Has(UiChannelProperty.Reveal)))
+            if (look.Has(UiProperty.Scale) != shown.Has(UiProperty.Scale) || look.Scale != shown.Scale)
+                element.style.scale = look.Has(UiProperty.Scale) ? new StyleScale(new Scale(new Vector2(look.Scale, look.Scale))) : new StyleScale(StyleKeyword.Null);
+            if (look.Has(UiProperty.Rotate) != shown.Has(UiProperty.Rotate) || look.Rotate != shown.Rotate)
+                element.style.rotate = look.Has(UiProperty.Rotate) ? new StyleRotate(new Rotate(new Angle(look.Rotate, AngleUnit.Degree))) : new StyleRotate(StyleKeyword.Null);
+            if (look.Has(UiProperty.WidthPercent) != shown.Has(UiProperty.WidthPercent) || look.Width != shown.Width)
+                element.style.width = look.Has(UiProperty.WidthPercent) ? new StyleLength(Length.Percent(look.Width)) : new StyleLength(StyleKeyword.Null);
+            if (look.Has(UiProperty.HeightPercent) != shown.Has(UiProperty.HeightPercent) || look.Height != shown.Height)
+                element.style.height = look.Has(UiProperty.HeightPercent) ? new StyleLength(Length.Percent(look.Height)) : new StyleLength(StyleKeyword.Null);
+            if (element is TextElement textElement && (look.HasText || look.Has(UiProperty.Reveal) || shown.HasText || shown.Has(UiProperty.Reveal)))
             {
                 var text = ShownText(state, look);
                 if (!ReferenceEquals(textElement.text, text))
                     textElement.text = text;
             }
-            if (element is INotifyValueChanged<float> valued && (look.Has(UiChannelProperty.Value) != shown.Has(UiChannelProperty.Value) || look.Value != shown.Value))
-                valued.SetValueWithoutNotify(look.Has(UiChannelProperty.Value) ? look.Value : state.AuthoredValue);
+            if (element is INotifyValueChanged<float> valued && (look.Has(UiProperty.Value) != shown.Has(UiProperty.Value) || look.Value != shown.Value))
+                valued.SetValueWithoutNotify(look.Has(UiProperty.Value) ? look.Value : state.AuthoredValue);
             state.ShownChannels = look;
         }
 
@@ -934,24 +931,25 @@ namespace TlUi
             _shownSwitches = latest;
         }
 
-        UiChannelLook ChannelLookOf(UiElementState state, in UiChannels channels)
+        static UiChannelLook ChannelLookOf(UiElementState state, in UiChannels channels)
         {
             var look = default(UiChannelLook);
-            foreach (var binding in Channels)
-                if ((channels.Live & (1 << binding.Channel)) != 0 && (state.Ids & UiIds.BitOf((byte)binding.TargetId)) != 0)
-                    look.Set(binding.Property, channels.Values.Get(binding.Channel));
+            for (var slot = 0; slot < UiChannelValues.Count; slot++)
+            {
+                if ((channels.Live & (1 << slot)) == 0)
+                    continue;
+                var key = channels.Keys.Get(slot);
+                if ((state.Ids & UiIds.BitOf(UiChannelKey.TargetOf(key))) != 0)
+                    look.Set(UiChannelKey.PropertyOf(key), channels.Values.Get(slot));
+            }
             return look;
         }
 
         void ApplyChannels(in UiChannels latest)
         {
-            var touchedChannels = _applyEverything ? ushort.MaxValue : UiRules.TouchedChannels(_shownChannels, latest);
-            if (touchedChannels == 0)
+            var touchedIds = _applyEverything ? ulong.MaxValue : UiRules.TouchedTargetsOfChannels(_shownChannels, latest);
+            if (touchedIds == 0)
                 return;
-            var touchedIds = 0UL;
-            foreach (var binding in Channels)
-                if ((touchedChannels & (1 << binding.Channel)) != 0)
-                    touchedIds |= UiIds.BitOf((byte)binding.TargetId);
             foreach (var state in _elements)
             {
                 if ((state.Ids & touchedIds) == 0)
@@ -1042,7 +1040,19 @@ namespace TlUi
             var dump = new StringBuilder();
             dump.Append("switches show ").Append(_shownSwitches.Show).Append(" hide ").Append(_shownSwitches.Hide)
                 .Append(" enable ").Append(_shownSwitches.Enable).Append(" disable ").Append(_shownSwitches.Disable)
-                .Append(" | channels live ").Append(_shownChannels.Live).Append(" held ").Append(_shownChannels.Held).Append('\n');
+                .Append(" | animating");
+            for (var slot = 0; slot < UiChannelValues.Count; slot++)
+            {
+                if ((_shownChannels.Live & (1 << slot)) == 0)
+                    continue;
+                var key = _shownChannels.Keys.Get(slot);
+                var target = UiChannelKey.TargetOf(key);
+                var property = UiChannelKey.PropertyOf(key);
+                dump.Append(' ').Append(target < _targetNames.Count && !string.IsNullOrEmpty(_targetNames[target]) ? _targetNames[target] : "Id " + target)
+                    .Append(' ').Append(property == UiChannelKey.TextProperty ? "Text" : ((UiProperty)property).ToString()).Append('=').Append(_shownChannels.Values.Get(slot))
+                    .Append((_shownChannels.Held & (1 << slot)) != 0 ? " (held)" : "");
+            }
+            dump.Append('\n');
             foreach (var state in _elements)
             {
                 var element = state.Element;
@@ -1086,6 +1096,7 @@ namespace TlUi
 
         void OnDisable()
         {
+            StopPreview();
             PanelsEnabledNow.Remove(this);
             StopListeningToHotkeys();
             if (Panel != null && _onUiReloaded != null)

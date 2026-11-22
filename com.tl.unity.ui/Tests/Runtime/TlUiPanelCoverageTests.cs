@@ -110,11 +110,6 @@ namespace TlUiPackage.Tests
                 panel.Targets.Add(new UiTarget { Id = 5, Selector = "#mover" });
                 panel.ClassSlots.Add("lit");
                 panel.ClassSlots.Add("tag");
-                panel.Channels.Add(new UiChannelBinding { Channel = 1, TargetId = 5, Property = UiChannelProperty.TranslateX });
-                panel.Channels.Add(new UiChannelBinding { Channel = 2, TargetId = 5, Property = UiChannelProperty.TranslateY });
-                panel.Channels.Add(new UiChannelBinding { Channel = 3, TargetId = 5, Property = UiChannelProperty.Scale });
-                panel.Channels.Add(new UiChannelBinding { Channel = 4, TargetId = 5, Property = UiChannelProperty.Rotate });
-                panel.Channels.Add(new UiChannelBinding { Channel = 5, TargetId = 5, Property = UiChannelProperty.WidthPercent });
             }, root =>
             {
                 locked.SetEnabled(false);
@@ -123,12 +118,13 @@ namespace TlUiPackage.Tests
                 root.Add(tagged);
                 root.Add(mover);
             });
-            var moved = new UiChannels { Live = 0b111110 };
-            moved.Values.Set(1, 10f);
-            moved.Values.Set(2, 20f);
-            moved.Values.Set(3, 1.5f);
-            moved.Values.Set(4, 45f);
-            moved.Values.Set(5, 50f);
+            var mover5 = new UiTargetRef { Id = 5 };
+            var moved = default(UiChannels);
+            UiChannelSlots.Write(ref moved, UiChannelKey.Of(mover5, UiProperty.MoveX), 10f, false);
+            UiChannelSlots.Write(ref moved, UiChannelKey.Of(mover5, UiProperty.MoveY), 20f, false);
+            UiChannelSlots.Write(ref moved, UiChannelKey.Of(mover5, UiProperty.Scale), 1.5f, false);
+            UiChannelSlots.Write(ref moved, UiChannelKey.Of(mover5, UiProperty.Rotate), 45f, false);
+            UiChannelSlots.Write(ref moved, UiChannelKey.Of(mover5, UiProperty.WidthPercent), 50f, false);
             yield return Show(new UiSwitches { Invisible = 1UL << 5, Enable = 1UL << 3, Remove1 = 1UL << 4 }, moved);
             Assert.AreEqual(Visibility.Hidden, mover.resolvedStyle.visibility, "Hide with Keep Space hides in place");
             Assert.AreEqual(DisplayStyle.Flex, mover.resolvedStyle.display);

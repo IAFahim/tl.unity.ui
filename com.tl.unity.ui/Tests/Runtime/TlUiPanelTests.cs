@@ -41,7 +41,6 @@ namespace TlUiPackage.Tests
             _panel.Targets.Add(new UiTarget { Id = 1, Selector = ".card" });
             _panel.Targets.Add(new UiTarget { Id = 2, Selector = "Button" });
             _panel.ClassSlots.Add("lit");
-            _panel.Channels.Add(new UiChannelBinding { Channel = 0, TargetId = 0, Property = UiChannelProperty.Opacity });
             _panel.Bind(_world);
             _screen.SetActive(true);
             var rootDeadline = Time.realtimeSinceStartup + 10f;
@@ -74,8 +73,8 @@ namespace TlUiPackage.Tests
 
         static UiChannels BoxOpacity(float opacity)
         {
-            var channels = new UiChannels { Live = 1 };
-            channels.Values.Set(0, opacity);
+            var channels = default(UiChannels);
+            UiChannelSlots.Write(ref channels, UiChannelKey.Of(new UiTargetRef { Id = 0 }, UiProperty.Opacity), opacity, false);
             return channels;
         }
 

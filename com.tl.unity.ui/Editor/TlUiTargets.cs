@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Tl.Ui;
 using Tl.Unity;
 using Tl.Unity.Editor;
 using UnityEditor;
@@ -15,14 +16,70 @@ namespace TlUi.Editor
 {
     public static class TlUiTargets
     {
-        const string TargetField = "Id";
+        const string TargetField = "Target";
+        const string PropertyField = "Property";
 
         static FieldInfo TargetFieldOf(TlClipData data)
         {
-            if (data == null || !data.MenuName.StartsWith("UI/", System.StringComparison.Ordinal))
+            if (data == null)
                 return null;
             var field = data.GetType().GetField(TargetField, BindingFlags.Public | BindingFlags.Instance);
-            return field != null && field.FieldType == typeof(byte) ? field : null;
+            return field != null && field.FieldType == typeof(UiTargetRef) ? field : null;
+        }
+
+        static int IdIn(TlClipData data) => ((UiTargetRef)TargetFieldOf(data).GetValue(data)).Id;
+
+        public static TimelineClip TimelineClipOf(TlClip clipAsset)
+        {
+            var timeline = TimelineEditor.inspectedAsset;
+            if (clipAsset == null || timeline == null)
+                return null;
+            foreach (var track in timeline.GetOutputTracks())
+                foreach (var clip in track.GetClips())
+                    if (clip.asset == clipAsset)
+                        return clip;
+            return null;
+        }
+
+        public static string ClipNameFor(TlClipData data, string targetName)
+        {
+            var shortName = TlMenu.ShortName(data.MenuName);
+            if (data.ClipType == typeof(Tl.Ui.TextClip))
+                return "Text on " + targetName;
+            if (data.ClipType != typeof(Tl.Ui.AnimateClip))
+                return shortName + " " + targetName;
+            var property = data.GetType().GetField(PropertyField, BindingFlags.Public | BindingFlags.Instance);
+            switch (property != null ? (UiProperty)property.GetValue(data) : UiProperty.Opacity)
+            {
+                case UiProperty.Opacity: return "Fade " + targetName;
+                case UiProperty.MoveX: return "Move " + targetName + " X";
+                case UiProperty.MoveY: return "Move " + targetName + " Y";
+                case UiProperty.Scale: return "Scale " + targetName;
+                case UiProperty.Rotate: return "Rotate " + targetName;
+                case UiProperty.WidthPercent: return "Width of " + targetName;
+                case UiProperty.HeightPercent: return "Height of " + targetName;
+                case UiProperty.Reveal: return "Type out " + targetName;
+                case UiProperty.Value: return "Fill " + targetName;
+                default: return shortName + " " + targetName;
+            }
+        }
+
+        public static void RenameIfNamedByTlUi(TimelineClip clip, string nameBeforeTheChange, TlUiTimelines timelinesObject)
+        {
+            if (!(clip?.asset is TlClip tl) || TargetFieldOf(tl.Data) == null || timelinesObject == null)
+                return;
+            var targetName = TargetNameOf(clip, timelinesObject);
+            if (string.IsNullOrEmpty(targetName))
+                return;
+            if (clip.displayName != nameBeforeTheChange && clip.displayName != TlMenu.ShortName(tl.Data.MenuName))
+                return;
+            var track = clip.GetParentTrack();
+            if (track == null)
+                return;
+            Undo.RecordObject(track, "Rename Tl UI Clip");
+            clip.displayName = ClipNameFor(tl.Data, targetName);
+            EditorUtility.SetDirty(track);
+            TimelineEditor.Refresh(RefreshReason.ContentsModified);
         }
 
         public static bool TakesATarget(TimelineClip clip) => clip?.asset is TlClip tl && TargetFieldOf(tl.Data) != null;
@@ -58,7 +115,7 @@ namespace TlUi.Editor
 
         static ulong BitOf(int id) => id >= 0 && id < TlUiTimelines.MostTargetNames ? 1UL << id : 0UL;
 
-        static int IdOf(TlClip clip) => (byte)TargetFieldOf(clip.Data).GetValue(clip.Data);
+        static int IdOf(TlClip clip) => IdIn(clip.Data);
 
         static ulong TlTargetIdsUnder(VisualElement parent)
         {
@@ -80,8 +137,6 @@ namespace TlUi.Editor
             {
                 foreach (var target in panel.Targets)
                     used |= BitOf(target.Id);
-                foreach (var binding in panel.Channels)
-                    used |= BitOf(binding.TargetId);
                 foreach (var list in panel.Lists)
                     used |= BitOf(list.TargetId);
                 foreach (var command in panel.Commands)
@@ -121,10 +176,9 @@ namespace TlUi.Editor
         {
             if (!(clip?.asset is TlClip tl) || timelinesObject == null)
                 return null;
-            var field = TargetFieldOf(tl.Data);
-            if (field == null)
+            if (TargetFieldOf(tl.Data) == null)
                 return null;
-            var id = (byte)field.GetValue(tl.Data);
+            var id = IdIn(tl.Data);
             return id < timelinesObject.TargetNames.Count ? timelinesObject.TargetNames[id] : null;
         }
 
@@ -137,7 +191,7 @@ namespace TlUi.Editor
             var usedByNumber = IdsUsedByNumber(timelinesObject, clipsToName);
             var id = names.IndexOf(name);
             if (id >= 0 && (usedByNumber & BitOf(id)) != 0)
-                Debug.LogWarning("Tl UI: the name " + name + " is at position " + id + ", and Id " + id + " is also used by number (a Targets, Channels, Lists or Commands row, a TlTarget, or a clip with no name), so clips on it drive both. Move one of them to another Id.", timelinesObject);
+                Debug.LogWarning("Tl UI: the name " + name + " is at position " + id + ", and Id " + id + " is also used by number (a Targets, Lists or Commands row, a TlTarget, or a clip with no name), so clips on it drive both. Move one of them to another Id.", timelinesObject);
             if (id < 0)
             {
                 id = FreePosition(names, usedByNumber);
@@ -165,13 +219,13 @@ namespace TlUi.Editor
                 if (field == null)
                     continue;
                 Undo.RecordObject(tl, "Pick Tl UI Target");
-                field.SetValue(tl.Data, (byte)id);
+                field.SetValue(tl.Data, new UiTargetRef { Id = (byte)id });
                 EditorUtility.SetDirty(tl);
                 var track = clip.GetParentTrack();
                 if (track != null)
                 {
                     Undo.RecordObject(track, "Pick Tl UI Target");
-                    clip.displayName = TlMenu.ShortName(tl.Data.MenuName) + " " + name;
+                    clip.displayName = ClipNameFor(tl.Data, name);
                     EditorUtility.SetDirty(track);
                 }
             }

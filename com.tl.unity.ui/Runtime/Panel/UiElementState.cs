@@ -18,23 +18,29 @@ namespace TlUi
         public float Value;
         public int TextSlot;
 
-        public bool Has(UiChannelProperty property) => (Present & (1 << (int)property)) != 0;
+        public bool Has(UiProperty property) => (Present & (1 << (int)property)) != 0;
 
-        public void Set(UiChannelProperty property, float value)
+        public bool HasText => (Present & (1 << UiChannelKey.TextProperty)) != 0;
+
+        public void Set(byte propertyOfTheKey, float value)
         {
-            Present |= (ushort)(1 << (int)property);
-            switch (property)
+            Present |= (ushort)(1 << propertyOfTheKey);
+            if (propertyOfTheKey == UiChannelKey.TextProperty)
             {
-                case UiChannelProperty.Opacity: Opacity = value; break;
-                case UiChannelProperty.TranslateX: TranslateX = value; break;
-                case UiChannelProperty.TranslateY: TranslateY = value; break;
-                case UiChannelProperty.Scale: Scale = value; break;
-                case UiChannelProperty.Rotate: Rotate = value; break;
-                case UiChannelProperty.WidthPercent: Width = value; break;
-                case UiChannelProperty.HeightPercent: Height = value; break;
-                case UiChannelProperty.Text: TextSlot = (int)value; break;
-                case UiChannelProperty.Reveal: Reveal = value; break;
-                case UiChannelProperty.Value: Value = value; break;
+                TextSlot = (int)value;
+                return;
+            }
+            switch ((UiProperty)propertyOfTheKey)
+            {
+                case UiProperty.Opacity: Opacity = value; break;
+                case UiProperty.MoveX: TranslateX = value; break;
+                case UiProperty.MoveY: TranslateY = value; break;
+                case UiProperty.Scale: Scale = value; break;
+                case UiProperty.Rotate: Rotate = value; break;
+                case UiProperty.WidthPercent: Width = value; break;
+                case UiProperty.HeightPercent: Height = value; break;
+                case UiProperty.Reveal: Reveal = value; break;
+                case UiProperty.Value: Value = value; break;
             }
         }
 

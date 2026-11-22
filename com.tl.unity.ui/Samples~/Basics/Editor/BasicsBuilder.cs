@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Tl.Generated;
+using Tl.Ui;
 using Tl.Unity;
 using Tl.Unity.Editor;
 using TlUi;
@@ -58,16 +59,16 @@ public static class BasicsBuilder
         AssetDatabase.CreateAsset(timeline, path);
         timeline.durationMode = TimelineAsset.DurationMode.FixedLength;
         timeline.fixedDuration = 3.5;
-        AddClip<Tl_Ui_ShowClip_TlData>(timeline, "Title shows", 0.0, 2.5, data => data.Id = 0);
-        AddClip<Tl_Ui_HideClip_TlData>(timeline, "Hint hides", 0.5, 1.0, data => data.Id = 1);
-        AddClip<Tl_Ui_DisableClip_TlData>(timeline, "Go locked", 0.0, 1.0, data => data.Id = 2);
-        AddClip<Tl_Ui_FocusClip_TlData>(timeline, "Go focused", 1.0, 0.1, data => data.Id = 2);
-        AddClip<Tl_Ui_AddClassClip_TlData>(timeline, "Badge holder glows", 1.0, 1.0, data => { data.Id = 3; data.ClassSlot = 0; });
-        AddClip<Tl_Ui_AttachClip_TlData>(timeline, "Badge attached", 1.5, 1.5, data => { data.Id = 3; data.TemplateSlot = 0; });
-        AddClip<Tl_Ui_AnimateClip_TlData>(timeline, "Fader fades in", 0.0, 1.0, data => { data.Channel = 0; data.Value = AnimationCurve.Linear(0f, 0f, 1f, 1f); data.Hold = true; });
-        AddClip<Tl_Ui_TextClip_TlData>(timeline, "Caption text", 2.0, 1.0, data => { data.Channel = 1; data.TextSlot = 0; });
-        AddClip<Tl_Ui_AnimateClip_TlData>(timeline, "Caption reveal", 2.0, 0.5, data => { data.Channel = 2; data.Value = AnimationCurve.Linear(0f, 0f, 1f, 1f); data.Hold = false; });
-        AddClip<Tl_Ui_AnimateClip_TlData>(timeline, "Progress fills", 0.0, 3.0, data => { data.Channel = 3; data.Value = AnimationCurve.Linear(0f, 0f, 1f, 1f); data.Hold = true; });
+        AddClip<Tl_Ui_ShowClip_TlData>(timeline, "Title shows", 0.0, 2.5, data => data.Target = new UiTargetRef { Id = 0 });
+        AddClip<Tl_Ui_HideClip_TlData>(timeline, "Hint hides", 0.5, 1.0, data => data.Target = new UiTargetRef { Id = 1 });
+        AddClip<Tl_Ui_DisableClip_TlData>(timeline, "Go locked", 0.0, 1.0, data => data.Target = new UiTargetRef { Id = 2 });
+        AddClip<Tl_Ui_FocusClip_TlData>(timeline, "Go focused", 1.0, 0.1, data => data.Target = new UiTargetRef { Id = 2 });
+        AddClip<Tl_Ui_AddClassClip_TlData>(timeline, "Badge holder glows", 1.0, 1.0, data => { data.Target = new UiTargetRef { Id = 3 }; data.Class = new UiClassRef { Slot = 0 }; });
+        AddClip<Tl_Ui_AttachClip_TlData>(timeline, "Badge attached", 1.5, 1.5, data => { data.Target = new UiTargetRef { Id = 3 }; data.Template = new UiTemplateRef { Slot = 0 }; });
+        AddClip<Tl_Ui_AnimateClip_TlData>(timeline, "Fader fades in", 0.0, 1.0, data => { data.Target = new UiTargetRef { Id = 4 }; data.Property = UiProperty.Opacity; data.From = 0f; data.To = 1f; data.Ease = AnimationCurve.Linear(0f, 0f, 1f, 1f); data.Hold = true; });
+        AddClip<Tl_Ui_TextClip_TlData>(timeline, "Caption text", 2.0, 1.0, data => { data.Target = new UiTargetRef { Id = 5 }; data.Text = new UiTextRef { Slot = 0 }; });
+        AddClip<Tl_Ui_AnimateClip_TlData>(timeline, "Caption reveal", 2.0, 0.5, data => { data.Target = new UiTargetRef { Id = 5 }; data.Property = UiProperty.Reveal; data.From = 0f; data.To = 1f; data.Ease = AnimationCurve.Linear(0f, 0f, 1f, 1f); data.Hold = false; });
+        AddClip<Tl_Ui_AnimateClip_TlData>(timeline, "Progress fills", 0.0, 3.0, data => { data.Target = new UiTargetRef { Id = 6 }; data.Property = UiProperty.Value; data.From = 0f; data.To = 1f; data.Ease = AnimationCurve.Linear(0f, 0f, 1f, 1f); data.Hold = true; });
         AddClip<Tl_Ui_SignalClip_TlData>(timeline, "Ping", 1.0, 0.1, data => data.Code = 1);
         EditorUtility.SetDirty(timeline);
         AssetDatabase.SaveAssets();
@@ -102,31 +103,20 @@ public static class BasicsBuilder
         var director = sequence.AddComponent<PlayableDirector>();
         director.playableAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(folder + "/" + TimelineFile);
         director.playOnAwake = true;
-        sequence.AddComponent<TlUiTimelines>();
+        var timelinesObject = sequence.AddComponent<TlUiTimelines>();
+        timelinesObject.TargetNames.AddRange(new[] { "title", "hint", "go", "badgeHolder", "fader", "caption", "progress" });
         EditorSceneManager.SaveScene(objects, folder + "/" + ObjectsSceneFile);
     }
 
     static void ConfigurePanel(TlUiPanel panel, VisualTreeAsset badge, GameObject signalLight)
     {
         panel.Targets.Clear();
-        panel.Targets.Add(new UiTarget { Id = 0, Selector = "#title" });
-        panel.Targets.Add(new UiTarget { Id = 1, Selector = "#hint" });
-        panel.Targets.Add(new UiTarget { Id = 2, Selector = "#go" });
-        panel.Targets.Add(new UiTarget { Id = 3, Selector = "#badgeHolder" });
-        panel.Targets.Add(new UiTarget { Id = 4, Selector = "#fader" });
-        panel.Targets.Add(new UiTarget { Id = 5, Selector = "#caption" });
-        panel.Targets.Add(new UiTarget { Id = 6, Selector = "#progress" });
         panel.ClassSlots.Clear();
         panel.ClassSlots.Add("is-glowing");
         panel.TemplateSlots.Clear();
         panel.TemplateSlots.Add(badge);
         panel.TextSlots.Clear();
         panel.TextSlots.Add("Text clips swap this caption while they are on.");
-        panel.Channels.Clear();
-        panel.Channels.Add(new UiChannelBinding { Channel = 0, TargetId = 4, Property = UiChannelProperty.Opacity });
-        panel.Channels.Add(new UiChannelBinding { Channel = 1, TargetId = 5, Property = UiChannelProperty.Text });
-        panel.Channels.Add(new UiChannelBinding { Channel = 2, TargetId = 5, Property = UiChannelProperty.Reveal });
-        panel.Channels.Add(new UiChannelBinding { Channel = 3, TargetId = 6, Property = UiChannelProperty.Value });
         panel.Signals.Clear();
         var ping = new UiSignalReaction { Code = 1 };
         UnityEventTools.AddBoolPersistentListener(ping.OnSignal, new UnityAction<bool>(signalLight.SetActive), true);
@@ -154,7 +144,7 @@ public static class BasicsBuilder
 
     static void AddToBuildList(string scenePath)
     {
-        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath).ToList();
+        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath && !(Path.GetFileName(scene.path) == Path.GetFileName(scenePath) && !File.Exists(scene.path))).ToList();
         scenes.Add(new EditorBuildSettingsScene(scenePath, true));
         EditorBuildSettings.scenes = scenes.ToArray();
     }

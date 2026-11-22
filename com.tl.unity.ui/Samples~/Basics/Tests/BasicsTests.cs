@@ -108,7 +108,7 @@ namespace BasicsSample.Tests
         [UnityTest]
         public IEnumerator EveryBlockFollowsItsClipAndTheUiCodeAllocatesNothingOnASecondPlay()
         {
-            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Basics.unity"));
+            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Basics.unity") && System.IO.File.Exists(path));
             Assert.IsNotNull(scenePath, "Run Tl UI > Samples > Build Basics first.");
             var timeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(scenePath.Replace("/Basics.unity", "/Basics.playable"));
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
@@ -192,15 +192,15 @@ namespace BasicsSample.Tests
             Debug.Log("Basics dump after the first play:\n" + uiPanel.Dump());
 
             Assert.IsTrue(started, "the Basics timeline plays");
-            AssertWindow("title shown", titleShown, ClipTicks<Tl_Ui_ShowClip_TlData>(timeline, ticksPerSecond, data => data.Id == 0));
-            AssertWindow("hint hidden", hintHidden, ClipTicks<Tl_Ui_HideClip_TlData>(timeline, ticksPerSecond, data => data.Id == 1));
-            AssertWindow("go locked", goLocked, ClipTicks<Tl_Ui_DisableClip_TlData>(timeline, ticksPerSecond, data => data.Id == 2));
-            AssertWindow("badge holder glowing", badgeGlowing, ClipTicks<Tl_Ui_AddClassClip_TlData>(timeline, ticksPerSecond, data => data.Id == 3));
-            AssertWindow("badge attached", badgeAttached, ClipTicks<Tl_Ui_AttachClip_TlData>(timeline, ticksPerSecond, data => data.Id == 3));
-            AssertWindow("caption swapped", captionSwapped, ClipTicks<Tl_Ui_TextClip_TlData>(timeline, ticksPerSecond, data => data.Channel == 1));
+            AssertWindow("title shown", titleShown, ClipTicks<Tl_Ui_ShowClip_TlData>(timeline, ticksPerSecond, data => data.Target.Id == 0));
+            AssertWindow("hint hidden", hintHidden, ClipTicks<Tl_Ui_HideClip_TlData>(timeline, ticksPerSecond, data => data.Target.Id == 1));
+            AssertWindow("go locked", goLocked, ClipTicks<Tl_Ui_DisableClip_TlData>(timeline, ticksPerSecond, data => data.Target.Id == 2));
+            AssertWindow("badge holder glowing", badgeGlowing, ClipTicks<Tl_Ui_AddClassClip_TlData>(timeline, ticksPerSecond, data => data.Target.Id == 3));
+            AssertWindow("badge attached", badgeAttached, ClipTicks<Tl_Ui_AttachClip_TlData>(timeline, ticksPerSecond, data => data.Target.Id == 3));
+            AssertWindow("caption swapped", captionSwapped, ClipTicks<Tl_Ui_TextClip_TlData>(timeline, ticksPerSecond, data => data.Target.Id == 5));
             var pingStart = ClipTicks<Tl_Ui_SignalClip_TlData>(timeline, ticksPerSecond, data => data.Code == 1).StartTick;
             Assert.That(signalLit.FirstTick, Is.InRange(pingStart - 1, pingStart + 1), "the Ping signal turns the light on when its clip starts");
-            var focusStart = ClipTicks<Tl_Ui_FocusClip_TlData>(timeline, ticksPerSecond, data => data.Id == 2).StartTick;
+            var focusStart = ClipTicks<Tl_Ui_FocusClip_TlData>(timeline, ticksPerSecond, data => data.Target.Id == 2).StartTick;
             Assert.That(goFocused.FirstTick, Is.InRange(focusStart - 1, focusStart + 1), "the Focus clip focuses the Go button when it starts");
             Assert.AreEqual(0, fadeErrors, "the fader's opacity follows its curve, then holds 1");
             Assert.AreEqual(0, progressErrors, "the progress bar follows its curve, then holds 1");

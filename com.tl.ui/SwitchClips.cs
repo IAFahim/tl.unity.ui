@@ -5,20 +5,20 @@ namespace Tl.Ui
     [TlClip("UI/Show")]
     public struct ShowClip
     {
-        public byte Id;
+        public UiTargetRef Target;
     }
 
     public struct ShowTrack : ITlTrack<ShowClip>
     {
         [Feeds(typeof(While<UiSwitches>))]
         public static UiSwitches ShowTheTargetWhileOn(in TlFrame<ShowClip> frame)
-            => new UiSwitches { Show = UiIds.BitOf(frame.Clip.Id) };
+            => new UiSwitches { Show = frame.Clip.Target.Bit };
     }
 
     [TlClip("UI/Hide")]
     public struct HideClip
     {
-        public byte Id;
+        public UiTargetRef Target;
         public bool KeepSpace;
     }
 
@@ -27,41 +27,41 @@ namespace Tl.Ui
         [Feeds(typeof(While<UiSwitches>))]
         public static UiSwitches HideTheTargetWhileOn(in TlFrame<HideClip> frame)
             => frame.Clip.KeepSpace
-                ? new UiSwitches { Invisible = UiIds.BitOf(frame.Clip.Id) }
-                : new UiSwitches { Hide = UiIds.BitOf(frame.Clip.Id) };
+                ? new UiSwitches { Invisible = frame.Clip.Target.Bit }
+                : new UiSwitches { Hide = frame.Clip.Target.Bit };
     }
 
     [TlClip("UI/Enable")]
     public struct EnableClip
     {
-        public byte Id;
+        public UiTargetRef Target;
     }
 
     public struct EnableTrack : ITlTrack<EnableClip>
     {
         [Feeds(typeof(While<UiSwitches>))]
         public static UiSwitches EnableTheTargetWhileOn(in TlFrame<EnableClip> frame)
-            => new UiSwitches { Enable = UiIds.BitOf(frame.Clip.Id) };
+            => new UiSwitches { Enable = frame.Clip.Target.Bit };
     }
 
     [TlClip("UI/Disable")]
     public struct DisableClip
     {
-        public byte Id;
+        public UiTargetRef Target;
     }
 
     public struct DisableTrack : ITlTrack<DisableClip>
     {
         [Feeds(typeof(While<UiSwitches>))]
         public static UiSwitches DisableTheTargetWhileOn(in TlFrame<DisableClip> frame)
-            => new UiSwitches { Disable = UiIds.BitOf(frame.Clip.Id) };
+            => new UiSwitches { Disable = frame.Clip.Target.Bit };
     }
 
     [TlClip("UI/Add Class")]
     public struct AddClassClip
     {
-        public byte Id;
-        public byte ClassSlot;
+        public UiTargetRef Target;
+        public UiClassRef Class;
     }
 
     public struct AddClassTrack : ITlTrack<AddClassClip>
@@ -69,8 +69,8 @@ namespace Tl.Ui
         [Feeds(typeof(While<UiSwitches>))]
         public static UiSwitches AddTheClassWhileOn(in TlFrame<AddClassClip> frame)
         {
-            var target = UiIds.BitOf(frame.Clip.Id);
-            switch (frame.Clip.ClassSlot)
+            var target = frame.Clip.Target.Bit;
+            switch (frame.Clip.Class.Slot)
             {
                 case 0: return new UiSwitches { Add0 = target };
                 case 1: return new UiSwitches { Add1 = target };
@@ -88,8 +88,8 @@ namespace Tl.Ui
     [TlClip("UI/Remove Class")]
     public struct RemoveClassClip
     {
-        public byte Id;
-        public byte ClassSlot;
+        public UiTargetRef Target;
+        public UiClassRef Class;
     }
 
     public struct RemoveClassTrack : ITlTrack<RemoveClassClip>
@@ -97,8 +97,8 @@ namespace Tl.Ui
         [Feeds(typeof(While<UiSwitches>))]
         public static UiSwitches RemoveTheClassWhileOn(in TlFrame<RemoveClassClip> frame)
         {
-            var target = UiIds.BitOf(frame.Clip.Id);
-            switch (frame.Clip.ClassSlot)
+            var target = frame.Clip.Target.Bit;
+            switch (frame.Clip.Class.Slot)
             {
                 case 0: return new UiSwitches { Remove0 = target };
                 case 1: return new UiSwitches { Remove1 = target };
@@ -116,8 +116,8 @@ namespace Tl.Ui
     [TlClip("UI/Attach")]
     public struct AttachClip
     {
-        public byte Id;
-        public byte TemplateSlot;
+        public UiTargetRef Target;
+        public UiTemplateRef Template;
     }
 
     public struct AttachTrack : ITlTrack<AttachClip>
@@ -125,8 +125,8 @@ namespace Tl.Ui
         [Feeds(typeof(While<UiSwitches>))]
         public static UiSwitches AttachTheTemplateWhileOn(in TlFrame<AttachClip> frame)
         {
-            var target = UiIds.BitOf(frame.Clip.Id);
-            switch (frame.Clip.TemplateSlot)
+            var target = frame.Clip.Target.Bit;
+            switch (frame.Clip.Template.Slot)
             {
                 case 0: return new UiSwitches { Attach0 = target };
                 case 1: return new UiSwitches { Attach1 = target };

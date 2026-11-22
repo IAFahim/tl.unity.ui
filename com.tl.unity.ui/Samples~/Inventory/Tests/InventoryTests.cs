@@ -49,7 +49,7 @@ namespace InventorySample.Tests
         [UnityTest]
         public IEnumerator RowsShowTheBufferClicksAndDragsReachTheBagAndNameplatesFollowTheirEntities()
         {
-            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Inventory.unity"));
+            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Inventory.unity") && System.IO.File.Exists(path));
             Assert.IsNotNull(scenePath, "Run Tl UI > Samples > Build Inventory first.");
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
 

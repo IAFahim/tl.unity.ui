@@ -1,4 +1,7 @@
 using System.IO;
+using Tl.Generated;
+using Tl.Ui;
+using Tl.Unity;
 using Tl.Unity.Editor;
 using Unity.Scenes;
 using Unity.Scenes.Editor;
@@ -117,10 +120,35 @@ namespace TlUi.Editor
             return panelSettings;
         }
 
+        public const string StarterTarget = "hello";
+        public const double StarterSeconds = 0.6;
+
+        static void AddStarterAnimate(TimelineAsset timeline, UiProperty property, float from, float to)
+        {
+            var track = timeline.CreateTrack<TlTrack>(null, "Animate");
+            track.Template = new Tl_Ui_AnimateClip_TlData();
+            var clip = track.CreateClip<TlClip>();
+            var data = (Tl_Ui_AnimateClip_TlData)((TlClip)clip.asset).Data;
+            data.Target = new UiTargetRef { Id = 0 };
+            data.Property = property;
+            data.From = from;
+            data.To = to;
+            data.Ease = new AnimationCurve(new Keyframe(0f, 0f, 0f, 2f), new Keyframe(1f, 1f, 0f, 0f));
+            data.Hold = true;
+            clip.start = 0.0;
+            clip.duration = StarterSeconds;
+            clip.displayName = TlUiTargets.ClipNameFor(data, StarterTarget);
+            EditorUtility.SetDirty(clip.asset);
+            EditorUtility.SetDirty(track);
+        }
+
         static TimelineAsset CreateTimeline(string wantedPath)
         {
             var timeline = TlTimelines.CreateAsset();
             AssetDatabase.CreateAsset(timeline, AssetDatabase.GenerateUniqueAssetPath(wantedPath));
+            AddStarterAnimate(timeline, UiProperty.Opacity, 0f, 1f);
+            AddStarterAnimate(timeline, UiProperty.MoveY, 60f, 0f);
+            EditorUtility.SetDirty(timeline);
             AssetDatabase.SaveAssets();
             return timeline;
         }
@@ -133,7 +161,7 @@ namespace TlUi.Editor
             var director = timelines.AddComponent<PlayableDirector>();
             director.playableAsset = timeline;
             director.playOnAwake = true;
-            timelines.AddComponent<TlUiTimelines>().TargetNames.Add("hello");
+            timelines.AddComponent<TlUiTimelines>().TargetNames.Add(StarterTarget);
             EditorSceneManager.SaveScene(timelinesScene, path);
             EditorSceneManager.CloseScene(timelinesScene, true);
             EditorSceneManager.SetActiveScene(screenScene);

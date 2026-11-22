@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using HudSample;
 using Tl.Generated;
+using Tl.Ui;
 using Tl.Unity;
 using Tl.Unity.Editor;
 using TlUi;
@@ -51,7 +52,7 @@ public static class HudBuilder
         clip.displayName = "Show";
         clip.start = 0.0;
         clip.duration = seconds;
-        ((Tl_Ui_ShowClip_TlData)((TlClip)clip.asset).Data).Id = shownId;
+        ((Tl_Ui_ShowClip_TlData)((TlClip)clip.asset).Data).Target = new UiTargetRef { Id = shownId };
         EditorUtility.SetDirty(clip.asset);
         EditorUtility.SetDirty(track);
         EditorUtility.SetDirty(timeline);
@@ -75,8 +76,8 @@ public static class HudBuilder
         clip.start = 0.0;
         clip.duration = 0.4;
         var data = (Tl_Ui_AddClassClip_TlData)((TlClip)clip.asset).Data;
-        data.Id = pulsingId;
-        data.ClassSlot = 0;
+        data.Target = new UiTargetRef { Id = pulsingId };
+        data.Class = new UiClassRef { Slot = 0 };
         timeline.CreateMarkerTrack();
         timeline.markerTrack.CreateMarker<TlTimelineSettings>(0.0).End = TlEnd.Loop;
         EditorUtility.SetDirty(clip.asset);
@@ -150,7 +151,7 @@ public static class HudBuilder
 
     static void AddToBuildList(string scenePath)
     {
-        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath).ToList();
+        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath && !(Path.GetFileName(scene.path) == Path.GetFileName(scenePath) && !File.Exists(scene.path))).ToList();
         scenes.Add(new EditorBuildSettingsScene(scenePath, true));
         EditorBuildSettings.scenes = scenes.ToArray();
     }

@@ -77,10 +77,13 @@ namespace TlUi.Editor
 
         public static void StopAll()
         {
+            var stoppedAny = s_Previewing.Count > 0;
             foreach (var panel in s_Previewing)
                 if (panel != null)
                     panel.StopPreview();
             s_Previewing.Clear();
+            if (stoppedAny && !EditorApplication.isPlaying)
+                EditorApplication.QueuePlayerLoopUpdate();
             foreach (var recording in s_Recordings.Values)
                 recording.ShownTick = -1;
         }
@@ -105,6 +108,7 @@ namespace TlUi.Editor
                 if (!s_Previewing.Contains(panel))
                     s_Previewing.Add(panel);
             }
+            EditorApplication.QueuePlayerLoopUpdate();
         }
 
         static Recording RecordingOf(PlayableDirector director, TlUiTimelines timelinesObject)

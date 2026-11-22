@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using Tl.Generated;
+using Tl.Ui;
 using Tl.Unity;
 using Tl.Unity.Editor;
 using TlUi;
@@ -131,22 +132,38 @@ namespace TlUiPackage.EditorTests
             var timeline = TlTimelines.CreateAsset();
             var hide = AddFromThePlusMenu(timeline, MenuTrack("UI/Hide")).CreateClip<TlClip>();
             var animate = AddFromThePlusMenu(timeline, MenuTrack("UI/Animate")).CreateClip<TlClip>();
+            var signal = AddFromThePlusMenu(timeline, MenuTrack("UI/Signal")).CreateClip<TlClip>();
             var action = new TlUiTargetAction();
 
             Assert.AreEqual(ActionValidity.Valid, action.Validate(new[] { hide }), "Tl UI Target is offered on a Hide clip");
-            Assert.AreEqual(ActionValidity.NotApplicable, action.Validate(new[] { animate }), "and not on an Animate clip, which drives a channel, not a target");
+            Assert.AreEqual(ActionValidity.Valid, action.Validate(new[] { animate }), "and on an Animate clip, which names its target too");
+            Assert.AreEqual(ActionValidity.NotApplicable, action.Validate(new[] { signal }), "but not on a Signal clip, which has no target");
             CollectionAssert.Contains(TlUiTargets.NamesToOffer(timelinesObject), "hello");
 
             Assert.IsTrue(TlUiTargets.Assign(new[] { hide }, timelinesObject, "title"));
             CollectionAssert.AreEqual(new[] { "hello", "title" }, timelinesObject.TargetNames, "a new name is added to the timelines object");
-            Assert.AreEqual(1, ((Tl_Ui_HideClip_TlData)((TlClip)hide.asset).Data).Id, "the clip stores the name's position");
+            Assert.AreEqual(1, ((Tl_Ui_HideClip_TlData)((TlClip)hide.asset).Data).Target.Id, "the clip stores the name's position");
             Assert.AreEqual("Hide title", hide.displayName, "the clip shows its target on the timeline");
             Assert.AreEqual("title", TlUiTargets.TargetNameOf(hide, timelinesObject));
 
             Assert.IsTrue(TlUiTargets.Assign(new[] { hide }, timelinesObject, "hello"));
-            Assert.AreEqual(0, ((Tl_Ui_HideClip_TlData)((TlClip)hide.asset).Data).Id, "an existing name keeps its position");
+            Assert.AreEqual(0, ((Tl_Ui_HideClip_TlData)((TlClip)hide.asset).Data).Target.Id, "an existing name keeps its position");
             Assert.AreEqual("Hide hello", hide.displayName);
             Assert.AreEqual(2, timelinesObject.TargetNames.Count);
+
+            var animateData = (Tl_Ui_AnimateClip_TlData)((TlClip)animate.asset).Data;
+            animateData.Property = UiProperty.MoveY;
+            Assert.IsTrue(TlUiTargets.Assign(new[] { animate }, timelinesObject, "title"));
+            Assert.AreEqual(1, animateData.Target.Id);
+            Assert.AreEqual("Move title Y", animate.displayName, "an Animate clip is named by what it moves and where");
+            var nameBefore = animate.displayName;
+            animateData.Property = UiProperty.Opacity;
+            TlUiTargets.RenameIfNamedByTlUi(animate, nameBefore, timelinesObject);
+            Assert.AreEqual("Fade title", animate.displayName, "changing the property renames a clip Tl UI named");
+            animate.displayName = "Title arrives";
+            animateData.Property = UiProperty.Scale;
+            TlUiTargets.RenameIfNamedByTlUi(animate, "Fade title", timelinesObject);
+            Assert.AreEqual("Title arrives", animate.displayName, "a name the designer typed stays");
             Object.DestroyImmediate(timeline);
         }
 
@@ -168,27 +185,26 @@ namespace TlUiPackage.EditorTests
                 panel.Panel = panelRenderer;
                 panel.Targets.Add(new UiTarget { Id = 0, Selector = "#title" });
                 panel.Commands.Add(new UiCommand { TargetId = 2, On = UiCommandEvent.Click });
-                panel.Channels.Add(new UiChannelBinding { Channel = 0, TargetId = 4 });
                 panel.Lists.Add(new UiListBinding { TargetId = 5 });
                 panel.Commands.Add(new UiCommand { TargetId = 6, On = UiCommandEvent.HotkeyOnly });
 
                 var timeline = TlTimelines.CreateAsset();
                 var numbered = AddFromThePlusMenu(timeline, MenuTrack("UI/Show")).CreateClip<TlClip>();
-                ((Tl_Ui_ShowClip_TlData)((TlClip)numbered.asset).Data).Id = 3;
+                ((Tl_Ui_ShowClip_TlData)((TlClip)numbered.asset).Data).Target = new UiTargetRef { Id = 3 };
                 var hideCoins = AddFromThePlusMenu(timeline, MenuTrack("UI/Hide")).CreateClip<TlClip>();
                 var hideLives = AddFromThePlusMenu(timeline, MenuTrack("UI/Hide")).CreateClip<TlClip>();
                 var timelinesObject = new GameObject("Screen Timelines").AddComponent<TlUiTimelines>();
                 timelinesObject.GetComponent<PlayableDirector>().playableAsset = timeline;
 
-                Assert.AreEqual(0b111111UL, TlUiTargets.IdsUsedByNumber(timelinesObject, new[] { hideCoins }), "Ids 0 to 5 are used: a Targets row, a TlTarget in the UXML, a Commands row, a numbered clip, a Channels row and a Lists row; a hotkey-only command targets nothing");
+                Assert.AreEqual(0b101111UL, TlUiTargets.IdsUsedByNumber(timelinesObject, new[] { hideCoins }), "Ids 0 to 3 and 5 are used: a Targets row, a TlTarget in the UXML, a Commands row, a numbered clip and a Lists row; a hotkey-only command targets nothing");
                 Assert.IsTrue(TlUiTargets.Assign(new[] { hideCoins }, timelinesObject, "coins"));
-                Assert.AreEqual(6, ((Tl_Ui_HideClip_TlData)((TlClip)hideCoins.asset).Data).Id, "the first new name takes the first Id nothing uses");
-                CollectionAssert.AreEqual(new[] { "", "", "", "", "", "", "coins" }, timelinesObject.TargetNames, "the positions in use stay empty, so no name drives them");
+                Assert.AreEqual(4, ((Tl_Ui_HideClip_TlData)((TlClip)hideCoins.asset).Data).Target.Id, "the first new name takes the first Id nothing uses");
+                CollectionAssert.AreEqual(new[] { "", "", "", "", "coins" }, timelinesObject.TargetNames, "the positions in use stay empty, so no name drives them");
                 Assert.IsTrue(TlUiTargets.Assign(new[] { hideLives }, timelinesObject, "lives"));
-                Assert.AreEqual(7, ((Tl_Ui_HideClip_TlData)((TlClip)hideLives.asset).Data).Id, "the next new name takes the next free Id");
+                Assert.AreEqual(6, ((Tl_Ui_HideClip_TlData)((TlClip)hideLives.asset).Data).Target.Id, "the next new name skips the Lists row at 5 and takes 6");
                 Assert.IsTrue(TlUiTargets.Assign(new[] { hideLives }, timelinesObject, "coins"));
-                Assert.AreEqual(6, ((Tl_Ui_HideClip_TlData)((TlClip)hideLives.asset).Data).Id, "an existing name keeps its Id");
-                Assert.AreEqual(3, ((Tl_Ui_ShowClip_TlData)((TlClip)numbered.asset).Data).Id, "naming other clips leaves a numbered clip alone");
+                Assert.AreEqual(4, ((Tl_Ui_HideClip_TlData)((TlClip)hideLives.asset).Data).Target.Id, "an existing name keeps its Id");
+                Assert.AreEqual(3, ((Tl_Ui_ShowClip_TlData)((TlClip)numbered.asset).Data).Target.Id, "naming other clips leaves a numbered clip alone");
                 Object.DestroyImmediate(timeline);
             }
             finally
@@ -234,6 +250,19 @@ namespace TlUiPackage.EditorTests
                 yield return null;
                 yield return null;
                 Assert.AreEqual(DisplayStyle.Flex, hello.resolvedStyle.display, "after the clip, Hello shows");
+
+                director.time = created.Timeline.duration;
+                director.Evaluate();
+                yield return null;
+                yield return null;
+                Assert.AreEqual(DisplayStyle.Flex, hello.resolvedStyle.display, "with the playhead exactly at the end, where the Hide clip ends too, Hello shows: the state after the last tick");
+
+                director.time = 0.3;
+                director.Evaluate();
+                yield return null;
+                yield return null;
+                Assert.That(hello.resolvedStyle.opacity, Is.InRange(0.05f, 0.95f), "the starter's Fade hello clip previews part way");
+                Assert.That(hello.resolvedStyle.translate.y, Is.InRange(1f, 59f), "and so does Move hello Y");
 
                 director.time = 1.0;
                 director.Evaluate();

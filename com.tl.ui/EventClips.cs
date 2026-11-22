@@ -30,7 +30,7 @@ namespace Tl.Ui
     [TlClip("UI/Focus")]
     public struct FocusClip
     {
-        public byte Id;
+        public UiTargetRef Target;
     }
 
     public struct FocusTrack : ITlTrack<FocusClip>
@@ -38,7 +38,7 @@ namespace Tl.Ui
         public static void OnClipStart(in TlFrame<FocusClip> frame, ref Events<UiFocus> focus)
         {
             if (frame.Direction > 0)
-                focus.Raise(new UiFocus { Id = frame.Clip.Id });
+                focus.Raise(new UiFocus { Id = frame.Clip.Target.Id });
         }
     }
 }

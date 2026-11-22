@@ -94,22 +94,42 @@ namespace Tl.Ui
             return touched;
         }
 
-        public static ushort TouchedChannels(in UiChannels before, in UiChannels after)
+        public static ulong TouchedTargetsOfChannels(in UiChannels before, in UiChannels after)
         {
-            var touched = before.Live ^ after.Live;
-            for (var channel = 0; channel < UiChannelValues.Count; channel++)
-                if ((after.Live & (1 << channel)) != 0 && before.Values.Get(channel) != after.Values.Get(channel))
-                    touched |= 1 << channel;
-            return (ushort)touched;
+            var touched = 0UL;
+            for (var slot = 0; slot < UiChannelValues.Count; slot++)
+            {
+                var wasLive = (before.Live & (1 << slot)) != 0;
+                var isLive = (after.Live & (1 << slot)) != 0;
+                if (!wasLive && !isLive)
+                    continue;
+                if (wasLive && isLive && before.Keys.Get(slot) == after.Keys.Get(slot) && before.Values.Get(slot) == after.Values.Get(slot))
+                    continue;
+                if (wasLive)
+                    touched |= UiIds.BitOf(UiChannelKey.TargetOf(before.Keys.Get(slot)));
+                if (isLive)
+                    touched |= UiIds.BitOf(UiChannelKey.TargetOf(after.Keys.Get(slot)));
+            }
+            return touched;
         }
 
         public static void MergeChannels(ref UiChannels total, in UiChannels next)
         {
-            for (var channel = 0; channel < UiChannelValues.Count; channel++)
-                if ((next.Live & (1 << channel)) != 0)
-                    total.Values.Set(channel, next.Values.Get(channel));
-            total.Live |= next.Live;
-            total.Held |= next.Held;
+            for (var slot = 0; slot < UiChannelValues.Count; slot++)
+            {
+                if ((next.Live & (1 << slot)) == 0)
+                    continue;
+                var key = next.Keys.Get(slot);
+                var into = UiChannelSlots.FindOrTakeFree(total.Live, total.Keys, key);
+                if (into < 0)
+                    continue;
+                var intoBit = (ushort)(1 << into);
+                total.Keys.Set(into, key);
+                total.Values.Set(into, next.Values.Get(slot));
+                total.Live |= intoBit;
+                if ((next.Held & (1 << slot)) != 0)
+                    total.Held |= intoBit;
+            }
         }
 
         public static int RevealedLength(int textLength, float reveal)

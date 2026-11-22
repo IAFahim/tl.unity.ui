@@ -81,7 +81,7 @@ namespace MenuSample.Tests
         [UnityTest]
         public IEnumerator ScreensSwapOnOneChannelSettingsWriteEcsCancelGoesBackAndTheHotkeyPauses()
         {
-            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Menu.unity"));
+            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Menu.unity") && System.IO.File.Exists(path));
             Assert.IsNotNull(scenePath, "Run Tl UI > Samples > Build Menu first.");
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
 

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using InventorySample;
 using Tl.Generated;
+using Tl.Ui;
 using Tl.Unity;
 using Tl.Unity.Editor;
 using TlUi;
@@ -82,7 +83,7 @@ public static class InventoryBuilder
         clip.displayName = "Title shows";
         clip.start = 0.0;
         clip.duration = 2.0;
-        ((Tl_Ui_ShowClip_TlData)((TlClip)clip.asset).Data).Id = 0;
+        ((Tl_Ui_ShowClip_TlData)((TlClip)clip.asset).Data).Target = new UiTargetRef { Id = 0 };
         EditorUtility.SetDirty(clip.asset);
         EditorUtility.SetDirty(track);
         EditorUtility.SetDirty(timeline);
@@ -184,7 +185,7 @@ public static class InventoryBuilder
 
     static void AddToBuildList(string scenePath)
     {
-        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath).ToList();
+        var scenes = EditorBuildSettings.scenes.Where(scene => scene.path != scenePath && !(Path.GetFileName(scene.path) == Path.GetFileName(scenePath) && !File.Exists(scene.path))).ToList();
         scenes.Add(new EditorBuildSettingsScene(scenePath, true));
         EditorBuildSettings.scenes = scenes.ToArray();
     }

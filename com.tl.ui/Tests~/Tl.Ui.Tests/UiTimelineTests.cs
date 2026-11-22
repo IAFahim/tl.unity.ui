@@ -28,8 +28,11 @@ public sealed class UiTimelineTests
         return curve;
     }
 
-    static readonly AnimateClip FadeInAndHold = new() { Channel = 0, Value = RampFromZeroToOne(), Hold = true };
-    static readonly AnimateClip HalfWhileOn = new() { Channel = 1, Value = TlCurve.Constant(0.5f), Hold = false };
+    static UiTargetRef Target(byte id) => new() { Id = id };
+
+    static readonly AnimateClip FadeInAndHold = new() { Target = Target(6), Property = UiProperty.Opacity, From = 0f, To = 1f, Ease = RampFromZeroToOne(), Hold = true };
+    static readonly AnimateClip SlideInWhileOn = new() { Target = Target(7), Property = UiProperty.MoveX, From = -300f, To = 0f, Ease = RampFromZeroToOne(), Hold = false };
+    static readonly TextClip CaptionWhileOn = new() { Target = Target(5), Text = new UiTextRef { Slot = 4 } };
 
     static byte[] BasicsLibrary()
     {
@@ -39,19 +42,19 @@ public sealed class UiTimelineTests
             Duration = TimelineTicks,
             Tracks =
             {
-                TrackOf(0, 60, new ShowClip { Id = 0 }),
-                TrackOf(40, 50, new HideClip { Id = 0 }),
-                TrackOf(30, 90, new HideClip { Id = 1, KeepSpace = true }),
-                TrackOf(10, 20, new AddClassClip { Id = 2, ClassSlot = 3 }),
-                TrackOf(15, 25, new RemoveClassClip { Id = 2, ClassSlot = 3 }),
-                TrackOf(20, 70, new DisableClip { Id = 4 }),
-                TrackOf(50, 60, new EnableClip { Id = 4 }),
-                TrackOf(70, 80, new AttachClip { Id = 5, TemplateSlot = 1 }),
+                TrackOf(0, 60, new ShowClip { Target = Target(0) }),
+                TrackOf(40, 50, new HideClip { Target = Target(0) }),
+                TrackOf(30, 90, new HideClip { Target = Target(1), KeepSpace = true }),
+                TrackOf(10, 20, new AddClassClip { Target = Target(2), Class = new UiClassRef { Slot = 3 } }),
+                TrackOf(15, 25, new RemoveClassClip { Target = Target(2), Class = new UiClassRef { Slot = 3 } }),
+                TrackOf(20, 70, new DisableClip { Target = Target(4) }),
+                TrackOf(50, 60, new EnableClip { Target = Target(4) }),
+                TrackOf(70, 80, new AttachClip { Target = Target(5), Template = new UiTemplateRef { Slot = 1 } }),
                 TrackOf(0, 60, FadeInAndHold),
-                TrackOf(20, 40, HalfWhileOn),
-                TrackOf(60, 90, new TextClip { Channel = 2, TextSlot = 4 }),
+                TrackOf(20, 40, SlideInWhileOn),
+                TrackOf(60, 90, CaptionWhileOn),
                 TrackOf(45, 46, new SignalClip { Code = 7 }),
-                TrackOf(50, 51, new FocusClip { Id = 3 }),
+                TrackOf(50, 51, new FocusClip { Target = Target(3) }),
             },
         };
         var manifest = LibraryBake.Manifest(new List<string> { basics.Name! }, [], TicksPerSecond);
@@ -160,27 +163,52 @@ public sealed class UiTimelineTests
         }
     }
 
+    static bool TryRead(in UiChannels channels, ushort key, out float value, out bool held)
+    {
+        var slot = UiChannelSlots.Find(channels.Live, channels.Keys, key);
+        value = slot >= 0 ? channels.Values.Get(slot) : 0f;
+        held = slot >= 0 && (channels.Held & (1 << slot)) != 0;
+        return slot >= 0;
+    }
+
     [Fact]
-    public void AnimateFollowsItsCurveAndHoldsWhileTextAndUnheldChannelsRestWhenTheirClipEnds()
+    public void AnimateMovesItsTargetsPropertyFromFromToToAndHoldsWhileTextAndUnheldPropertiesRestWhenTheirClipEnds()
     {
         var records = PlayBasics(TimelineTicks + 10, 0, out _);
-        var lastFadeValue = FadeInAndHold.Value.Evaluate(1f);
+        var fade = UiChannelKey.Of(FadeInAndHold.Target, UiProperty.Opacity);
+        var slide = UiChannelKey.Of(SlideInWhileOn.Target, UiProperty.MoveX);
+        var caption = UiChannelKey.OfText(CaptionWhileOn.Target);
         foreach (var record in records)
         {
             var tick = record.Tick;
             var channels = record.Channels;
             var playing = tick < TimelineTicks;
-            Assert.True((channels.Live & 1) != 0);
-            var expectedFade = tick < 59 ? FadeInAndHold.Value.Evaluate(tick / 60f) : lastFadeValue;
-            Assert.Equal(BitConverter.SingleToInt32Bits(expectedFade), BitConverter.SingleToInt32Bits(channels.Values.Get(0)));
-            Assert.Equal(playing && Within(tick, 20, 40), (channels.Live & 2) != 0);
-            if ((channels.Live & 2) != 0)
-                Assert.Equal(0.5f, channels.Values.Get(1));
-            Assert.Equal(playing && Within(tick, 60, 90), (channels.Live & 4) != 0);
-            if ((channels.Live & 4) != 0)
-                Assert.Equal(4f, channels.Values.Get(2));
-            Assert.Equal(1, channels.Held);
+            Assert.True(TryRead(channels, fade, out var opacity, out var fadeHeld));
+            Assert.True(fadeHeld);
+            var expectedOpacity = tick < 59 ? FadeInAndHold.Ease.Evaluate(tick / 60f) : FadeInAndHold.Ease.Evaluate(1f);
+            Assert.Equal(BitConverter.SingleToInt32Bits(expectedOpacity), BitConverter.SingleToInt32Bits(opacity));
+            Assert.Equal(playing && Within(tick, 20, 40), TryRead(channels, slide, out var moveX, out var slideHeld));
+            if (playing && Within(tick, 20, 40))
+            {
+                Assert.False(slideHeld);
+                Assert.Equal(-300f + 300f * SlideInWhileOn.Ease.Evaluate((tick - 20) / 20f), moveX, 3);
+            }
+            Assert.Equal(playing && Within(tick, 60, 90), TryRead(channels, caption, out var textSlot, out _));
+            if (playing && Within(tick, 60, 90))
+                Assert.Equal(4f, textSlot);
         }
+    }
+
+    [Fact]
+    public void ChannelKeysCarryTheTargetAndThePropertySoTwoClipsOnOneTargetDoNotCollide()
+    {
+        var opacity = UiChannelKey.Of(Target(9), UiProperty.Opacity);
+        var scale = UiChannelKey.Of(Target(9), UiProperty.Scale);
+        Assert.NotEqual(opacity, scale);
+        Assert.Equal(9, UiChannelKey.TargetOf(scale));
+        Assert.Equal((byte)UiProperty.Scale, UiChannelKey.PropertyOf(scale));
+        Assert.Equal(UiChannelKey.TextProperty, UiChannelKey.PropertyOf(UiChannelKey.OfText(Target(63))));
+        Assert.Equal(63, UiChannelKey.TargetOf(UiChannelKey.OfText(Target(63))));
     }
 
     [Fact]

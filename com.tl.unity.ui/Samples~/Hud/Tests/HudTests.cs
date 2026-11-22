@@ -40,7 +40,7 @@ namespace HudSample.Tests
         [UnityTest]
         public IEnumerator BindingsShowTheBurstWrittenSingletonAndButtonsReachGameSystemsAndTimelines()
         {
-            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Hud.unity"));
+            var scenePath = EditorBuildSettings.scenes.Select(scene => scene.path).FirstOrDefault(path => path.EndsWith("/Hud.unity") && System.IO.File.Exists(path));
             Assert.IsNotNull(scenePath, "Run Tl UI > Samples > Build Hud first.");
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
 
