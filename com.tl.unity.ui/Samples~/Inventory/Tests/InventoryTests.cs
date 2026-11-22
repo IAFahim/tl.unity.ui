@@ -80,6 +80,15 @@ namespace InventorySample.Tests
             Assert.AreEqual(potionsBefore - 1, SlotsOf(entityManager, bag)[0].Count, "a click on a bag row sends the use code with the row number");
             Assert.AreEqual((potionsBefore - 1).ToString(CultureInfo.InvariantCulture), rows[0].Q<Label>("itemCount").text, "the row shows the new count");
 
+            Assert.IsTrue(rows[0].focusable, "container rows are focusable, so keyboard and gamepad navigation reach them");
+            using (var submit = NavigationSubmitEvent.GetPooled())
+            {
+                submit.target = rows[0];
+                rows[0].SendEvent(submit);
+            }
+            yield return Frames(5);
+            Assert.AreEqual(potionsBefore - 2, SlotsOf(entityManager, bag)[0].Count, "Submit on a focused bag row uses the item, like a click");
+
             var beforeDrag = SlotsOf(entityManager, bag);
             var from = rows[0].worldBound.center;
             var onto = rows[2].worldBound.center;

@@ -37,6 +37,10 @@ namespace TlUi
             public readonly List<VisualElement> RowElements = new List<VisualElement>();
             public long ShownCountVersion = -1;
             public int ShownCount;
+            public EventCallback<NavigationSubmitEvent> OnSubmit;
+            public Action<IEnumerable<int>> OnSelect;
+            public Func<HandleDragAndDropArgs, DragVisualMode> OnDragUpdate;
+            public Func<HandleDragAndDropArgs, DragVisualMode> OnDrop;
         }
 
         sealed class ElementClasses : IUiClassList
@@ -351,6 +355,12 @@ namespace TlUi
                 SendToGame(_lists[list].Binding.ClickCode, row, -1);
         }
 
+        public void SendRowSubmit(int list, int row)
+        {
+            if (list >= 0 && list < _lists.Count && _lists[list].View == null)
+                SendRowClick(list, row);
+        }
+
         public void SendRowDrag(int list, int fromRow, int toRow)
         {
             if (list >= 0 && list < _lists.Count && _lists[list].Binding.DragCode >= 0)
@@ -439,8 +449,14 @@ namespace TlUi
             {
                 case UiCommandEvent.Click:
                     EventCallback<ClickEvent> onClick = _ => Run(command, command.GamePayload);
+                    EventCallback<NavigationSubmitEvent> onSubmit = _ => Run(command, command.GamePayload);
                     element.RegisterCallback(onClick);
-                    _unregisterCommands.Add(() => element.UnregisterCallback(onClick));
+                    element.RegisterCallback(onSubmit);
+                    _unregisterCommands.Add(() =>
+                    {
+                        element.UnregisterCallback(onClick);
+                        element.UnregisterCallback(onSubmit);
+                    });
                     break;
                 case UiCommandEvent.PointerEnter:
                     EventCallback<PointerEnterEvent> onEnter = _ => Run(command, command.GamePayload);
@@ -474,6 +490,9 @@ namespace TlUi
             var row = list.Binding.RowTemplate.Instantiate();
             WarnAboutTargetsInside(list.Binding.RowTemplate, row, "a row template");
             row.AddComponent(new TlRow { List = list.List, Index = -1 });
+            if (list.View != null)
+                return row;
+            row.focusable = true;
             if (list.Binding.DragCode >= 0)
                 row.AddComponent(new TlRowDrag());
             return row;
@@ -486,13 +505,68 @@ namespace TlUi
             row.dataSourcePath = list.Rows.PathToRow;
         }
 
+        void ChooseTheSelectedRow(ListState list)
+        {
+            var row = list.View.selectedIndex;
+            if (row >= 0)
+                SendToGame(list.Binding.ClickCode, row, -1);
+        }
+
+        DragVisualMode DropTheSelectedRow(ListState list, in HandleDragAndDropArgs drop)
+        {
+            var from = list.View.selectedIndex;
+            var to = drop.dropPosition == DragAndDropPosition.OverItem || drop.insertAtIndex <= from ? drop.insertAtIndex : drop.insertAtIndex - 1;
+            to = Mathf.Clamp(to, 0, Mathf.Max(0, list.Rows.Items.Count - 1));
+            if (from >= 0 && to != from)
+                SendToGame(list.Binding.DragCode, from, to);
+            return DragVisualMode.Move;
+        }
+
+        void HookUpTheListView(ListState list)
+        {
+            var view = list.View;
+            view.selectionType = SelectionType.Single;
+            if (list.Binding.ClickCode >= 0)
+            {
+                list.OnSubmit = _ => ChooseTheSelectedRow(list);
+                view.RegisterCallback(list.OnSubmit);
+            }
+            if (list.Binding.SelectCode >= 0)
+            {
+                list.OnSelect = _ => SendToGame(list.Binding.SelectCode, view.selectedIndex, -1);
+                view.selectedIndicesChanged += list.OnSelect;
+            }
+            if (list.Binding.DragCode >= 0)
+            {
+                view.reorderable = true;
+                list.OnDragUpdate = _ => DragVisualMode.Move;
+                list.OnDrop = drop => DropTheSelectedRow(list, drop);
+                view.dragAndDropUpdate += list.OnDragUpdate;
+                view.handleDrop += list.OnDrop;
+            }
+        }
+
+        static void UnhookTheListView(ListState list)
+        {
+            var view = list.View;
+            if (list.OnSubmit != null)
+                view.UnregisterCallback(list.OnSubmit);
+            if (list.OnSelect != null)
+                view.selectedIndicesChanged -= list.OnSelect;
+            if (list.OnDragUpdate != null)
+                view.dragAndDropUpdate -= list.OnDragUpdate;
+            if (list.OnDrop != null)
+                view.handleDrop -= list.OnDrop;
+            view.itemsSource = null;
+        }
+
         void ForgetLists()
         {
             foreach (var list in _lists)
             {
                 if (list.View != null)
                 {
-                    list.View.itemsSource = null;
+                    UnhookTheListView(list);
                     continue;
                 }
                 foreach (var row in list.RowElements)
@@ -521,6 +595,7 @@ namespace TlUi
                     list.View.bindItem = (row, rowIndex) => BindRow(list, row, rowIndex);
                     list.View.itemsSource = rows.Items;
                     list.ShownCountVersion = rows.CountVersion;
+                    HookUpTheListView(list);
                 }
                 _lists.Add(list);
             }

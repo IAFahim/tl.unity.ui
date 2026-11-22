@@ -71,10 +71,13 @@ namespace TlUi
         [Tooltip("The UXML made for each row. Its data source is the row, so bind the row's fields by name.")]
         public VisualTreeAsset RowTemplate;
 
-        [Tooltip("Send To Game code for a click on a row, with the row number as the payload. -1 sends nothing.")]
+        [Tooltip("Send To Game code when a row is chosen: clicked, or Submit (Enter, gamepad South) while it has focus or is selected in a ListView. The row number is the payload. -1 sends nothing.")]
         public int ClickCode = -1;
 
-        [Tooltip("Send To Game code for dragging one row onto another, with the dragged row as the payload and the row it was dropped on as the target. -1 turns dragging off.")]
+        [Tooltip("ListView only: Send To Game code when the selection moves (pointer or Up and Down navigation), with the selected row as the payload, -1 when nothing is selected. -1 sends nothing.")]
+        public int SelectCode = -1;
+
+        [Tooltip("Send To Game code for dragging a row onto another, with the dragged row as the payload and the row it lands on as the target. A ListView uses UI Toolkit's own drag and its insertion line; a container uses Tl UI's row drag. -1 turns dragging off.")]
         public int DragCode = -1;
     }
 

@@ -71,6 +71,22 @@ namespace TlUiPackage.Tests
             target.SendEvent(sent);
         }
 
+        static void Submit(VisualElement target)
+        {
+            using var submit = NavigationSubmitEvent.GetPooled();
+            submit.target = target;
+            target.SendEvent(submit);
+        }
+
+        static void SendPointer<TEvent>(VisualElement target, EventType mouseEvent, Vector2 panelPosition) where TEvent : PointerEventBase<TEvent>, new()
+        {
+            using var pointer = PointerEventBase<TEvent>.GetPooled(new Event { type = mouseEvent, mousePosition = panelPosition, button = 0 });
+            pointer.target = target;
+            target.SendEvent(pointer);
+        }
+
+        List<(int Code, int Payload, int Target)> InboxWithTargets() => _world.EntityManager.GetBuffer<UiCommandInbox>(_host).AsNativeArray().ToArray().Select(command => (command.Code, command.Payload, command.Target)).ToList();
+
         [TearDown]
         public void DestroyScreenAndWorld()
         {
@@ -164,10 +180,11 @@ namespace TlUiPackage.Tests
             volume.value = 42f;
             foreach (var button in buttons)
                 Send<ClickEvent>(button);
+            Submit(buttons[0]);
             yield return null;
             CollectionAssert.AreEqual(new[] { (10, 1), (11, 2), (12, 42) }, Inbox(), "pointer enter, pointer leave and value changed send their codes; value changed sends the new value");
             var ops = _world.EntityManager.GetBuffer<Tl.Unity.TimelineRequest>(_host).AsNativeArray().ToArray().Select(request => request.Op).ToArray();
-            CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop, RequestOp.Pause, RequestOp.Resume }, ops, "each button sends its verb for timeline slot 0");
+            CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop, RequestOp.Pause, RequestOp.Resume, RequestOp.Start }, ops, "each button sends its verb for timeline slot 0; Submit (keyboard or gamepad) on the Play button plays again");
         }
 
         [UnityTest]
@@ -183,6 +200,8 @@ namespace TlUiPackage.Tests
             var muteValue = TlSendValue.ScaledByOne();
             muteValue.Code = 22;
             mute.AddComponent(muteValue);
+            var card = new VisualElement { name = "card" };
+            card.AddComponent(new TlSend { Code = 24, Payload = 3 });
             var row = new VisualElement { name = "row" };
             row.AddComponent(new TlRow { List = 0, Index = 4 });
             var sell = new Button { text = "sell" };
@@ -201,6 +220,7 @@ namespace TlUiPackage.Tests
                 root.Add(send);
                 root.Add(volume);
                 root.Add(mute);
+                root.Add(card);
                 root.Add(row);
                 foreach (var button in verbButtons)
                     root.Add(button);
@@ -220,12 +240,16 @@ namespace TlUiPackage.Tests
             Send<ClickEvent>(sell);
             foreach (var button in verbButtons)
                 Send<ClickEvent>(button);
+            Assert.IsTrue(card.focusable, "TlSend makes a plain element focusable, so navigation can reach it");
+            Submit(card);
+            Submit(send);
+            Submit(verbButtons[0]);
             yield return null;
-            CollectionAssert.AreEqual(new[] { (20, 7), (21, 25), (22, 1), (23, 4) }, Inbox(), "Send sends code and payload; Send Value sends the scaled new value; Row As Payload sends the row index");
+            CollectionAssert.AreEqual(new[] { (20, 7), (21, 25), (22, 1), (23, 4), (24, 3), (20, 7) }, Inbox(), "Send sends code and payload; Send Value sends the scaled new value; Row As Payload sends the row index; Submit sends like a click");
             Assert.AreEqual(0, rowClicks, "a TlSend button inside a row stops the click, so the row does not also get it");
             Assert.AreEqual(0, bubbledClicks, "TlSend and TlPlay stop every click they handle at the button");
             var ops = _world.EntityManager.GetBuffer<Tl.Unity.TimelineRequest>(_host).AsNativeArray().ToArray().Select(request => request.Op).ToArray();
-            CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop, RequestOp.Pause, RequestOp.Resume, RequestOp.Stop, RequestOp.Start }, ops, "Play components send every verb; Restart is Stop then Start");
+            CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop, RequestOp.Pause, RequestOp.Resume, RequestOp.Stop, RequestOp.Start, RequestOp.Start }, ops, "Play components send every verb; Restart is Stop then Start; Submit on Play plays again");
         }
 
 #if UNITY_EDITOR
@@ -270,14 +294,59 @@ namespace TlUiPackage.Tests
         }
 #endif
 
+#if UNITY_EDITOR
+        [UnityTest]
+        public IEnumerator AListViewUsesUiToolkitsOwnSelectionSubmitAndDragAndSendsRowsToTheGame()
+        {
+            var rowTemplate = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.tl.unity.ui/Tests/Runtime/TestRow.uxml");
+            var rows = ScriptableObject.CreateInstance<TlUiAssetRows>();
+            for (var row = 0; row < 4; row++)
+                rows.Items.Add(ScriptableObject.CreateInstance<UiTestSettings>());
+            var view = new ListView { name = "list", fixedItemHeight = 40 };
+            view.style.width = 300;
+            view.style.height = 240;
+            yield return BuildScreen(panel =>
+            {
+                panel.Targets.Add(new UiTarget { Id = 0, Selector = "#list" });
+                panel.Lists.Add(new UiListBinding { TargetId = 0, Rows = rows, RowTemplate = rowTemplate, ClickCode = 30, SelectCode = 31, DragCode = 32 });
+            }, root => root.Add(view));
+            yield return null;
+            var rowElements = view.Query<TemplateContainer>().ToList().Where(row => row.HasComponent<TlRow>()).OrderBy(row => row.GetComponent<TlRow>().Index).ToList();
+            Assert.AreEqual(4, rowElements.Count, "the ListView binds a row per asset");
+            Assert.IsTrue(view.reorderable, "a Drag Code turns on UI Toolkit's own reordering drag");
+
+            Send<ClickEvent>(rowElements[1]);
+            view.SetSelection(2);
+            Submit(view);
+            view.SetSelection(0);
+            var from = rowElements[0].worldBound.center;
+            var onto = rowElements[2].worldBound.center;
+            SendPointer<PointerDownEvent>(rowElements[0], EventType.MouseDown, from);
+            SendPointer<PointerMoveEvent>(rowElements[0], EventType.MouseDrag, onto);
+            SendPointer<PointerUpEvent>(rowElements[0], EventType.MouseUp, onto);
+            yield return null;
+            var sent = InboxWithTargets();
+            Debug.Log("ListView inbox: " + string.Join(", ", sent));
+            CollectionAssert.AreEqual(new[] { (30, 1, -1), (31, 2, -1), (30, 2, -1), (31, 0, -1), (32, 0, 2) }, sent,
+                "a click chooses a row; a selection change sends the selected row; Submit chooses the selected row; UI Toolkit's drag of row 0 onto row 2 sends the drag code and leaves the rows as they were");
+            Assert.AreSame(rows.Items[0], rowElements[0].dataSource, "the ListView did not reorder the rows itself: the game decides");
+        }
+#endif
+
         [UnityTest]
         public IEnumerator AScriptableObjectDataSourceBindsThroughThePercentAndHiddenConverters()
         {
             var settings = ScriptableObject.CreateInstance<UiTestSettings>();
             var volumeText = new Label { name = "volumeText" };
             var mutedBanner = new Label("muted") { name = "mutedBanner" };
+            var volumeSlider = new Slider(0f, 1f) { name = "volumeSlider" };
+            var muteToggle = new Toggle { name = "muteToggle" };
             yield return BuildScreen(panel => panel.DataSource = settings, root =>
             {
+                volumeSlider.SetBinding("value", new DataBinding { dataSourcePath = new PropertyPath(nameof(UiTestSettings.Volume)), bindingMode = BindingMode.TwoWay });
+                muteToggle.SetBinding("value", new DataBinding { dataSourcePath = new PropertyPath(nameof(UiTestSettings.Muted)), bindingMode = BindingMode.TwoWay });
+                root.Add(volumeSlider);
+                root.Add(muteToggle);
                 TlUiConverters.Register();
                 var percentText = new DataBinding { dataSourcePath = new PropertyPath(nameof(UiTestSettings.Volume)), bindingMode = BindingMode.ToTarget };
                 Assert.IsTrue(ConverterGroups.TryGetConverterGroup(TlUiConverters.Percent, out var percent));
@@ -294,6 +363,15 @@ namespace TlUiPackage.Tests
             yield return null;
             Assert.AreEqual("45%", volumeText.text, "Volume 0.45 through tl-percent");
             Assert.AreEqual(DisplayStyle.None, mutedBanner.resolvedStyle.display, "Muted true through tl-hidden");
+            Assert.AreEqual(0.45f, volumeSlider.value, 0.0001f, "a TwoWay binding shows the asset's value");
+            volumeSlider.value = 0.8f;
+            muteToggle.value = false;
+            yield return null;
+            yield return null;
+            Assert.AreEqual(0.8f, settings.Volume, 0.0001f, "moving the slider writes the asset through UI Toolkit's TwoWay binding, with no Tl code");
+            Assert.IsFalse(settings.Muted, "the toggle writes the asset back too");
+            Assert.AreEqual("80%", volumeText.text, "and every other binding on that field follows");
+            Assert.AreEqual(DisplayStyle.Flex, mutedBanner.resolvedStyle.display);
             Object.Destroy(settings);
         }
     }

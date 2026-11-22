@@ -45,7 +45,7 @@ Rules when clips disagree: Hide beats Show, Disable beats Enable, Remove Class b
 
 ## Commands
 
-The **Commands** table turns a target's Click, Pointer Enter, Pointer Leave or Value Changed event, or an Input Action **Hotkey** (built, not yet covered by a test), into one action: play, stop, pause, resume or restart a timeline slot, **Send To Game** (a code and payload appended to the timeline object's `UiCommandInbox` buffer, read and cleared by your Burst systems), or a UnityEvent.
+Every click in Tl UI also answers **Submit** (Enter, or gamepad South while the element has focus), because UI Toolkit raises `ClickEvent` only for pointers; a Button turns Submit into `clicked`, never into `ClickEvent`. The **Commands** table turns a target's Click (pointer or Submit), Pointer Enter, Pointer Leave or Value Changed event, or an Input Action **Hotkey** (built, not yet covered by a test), into one action: play, stop, pause, resume or restart a timeline slot, **Send To Game** (a code and payload appended to the timeline object's `UiCommandInbox` buffer, read and cleared by your Burst systems), or a UnityEvent.
 
 ```csharp
 foreach (var inbox in SystemAPI.Query<DynamicBuffer<UiCommandInbox>>())
@@ -85,7 +85,7 @@ Unity 7 lets a struct ride on any element as a UI Toolkit component. Tl UI ships
 | `TlSendValue code scale` | a float, int or bool value change sends the code with the new value (floats times **Scale**, rounded) |
 | `TlPlay timeline verb` | a click plays, stops, pauses, resumes or restarts a timeline slot (UXML reserves `slot`, so the attribute is `timeline`) |
 
-From code it is the same struct: `button.AddComponent(new TlSend { Code = 1 })`. TlSend and TlPlay stop the click there, so a button inside a list row does not also click the row. List rows carry two code-only components the panel adds itself: `TlRow` (list and row index, row clicks) and `TlRowDrag` (drag onto another row).
+From code it is the same struct: `button.AddComponent(new TlSend { Code = 1 })`. TlSend and TlPlay make their element focusable, so keyboard and gamepad navigation reach it and Submit acts like a click. TlSend and TlPlay stop the click there, so a button inside a list row does not also click the row. List rows carry two code-only components the panel adds itself: `TlRow` (list and row index, row clicks) and `TlRowDrag` (drag onto another row).
 
 The handlers are static and registered once per type, the state is an unmanaged struct UI Toolkit keeps in native memory, and nothing is allocated per element or per click. UI Toolkit components are **experimental** in Unity 7000.0.0a16. They need no setting at runtime. **Project Settings > UI Toolkit > Enable UI Components** only adds the Components section to the UI Builder inspector, so a designer can add them there. The Targets and Commands tables work without components. Use the tables for anything that needs an asset or an event: Input Action hotkeys, UnityEvents.
 
@@ -120,7 +120,14 @@ A ScriptableObject works as the Data Source too, for settings and catalogs.
 
 ## Lists and entity views
 
-The **Lists** table shows rows in a target: a ListView (virtualized) or any container (rows pooled and hidden when unused). Rows come from a **Tl UI Asset Rows** asset (a list of ScriptableObjects, for shops and catalogs) or a **Tl UI Buffer Rows** component that copies an ECS buffer, and each row binds its UXML template with paths relative to the row (`Name`, `Count`). A row click sends **Click Code** with the row index; dragging a row onto another sends **Drag Code** with both indexes, and the rows get `tl-dragging` and `tl-drop-target` while it happens.
+The **Lists** table shows rows in a target: a ListView (virtualized) or any container (rows pooled and hidden when unused). Rows come from a **Tl UI Asset Rows** asset (a list of ScriptableObjects, for shops and catalogs) or a **Tl UI Buffer Rows** component that copies an ECS buffer, and each row binds its UXML template with paths relative to the row (`Name`, `Count`). A row is chosen by a click or by Submit, which sends **Click Code** with the row index. A ListView keeps all of UI Toolkit's own interaction:
+- Up and Down navigation moves the selection, and **Select Code** reports the selected row.
+- Submit chooses the selected row.
+- With a **Drag Code**, UI Toolkit's reordering drag (with its insertion line) sends the dragged row and the row it lands on. The ListView does not reorder the rows itself; your system does, and the rows follow.
+
+Container rows are focusable and get Tl UI's row drag, which adds `tl-dragging` and `tl-drop-target` while it runs. Style `:hover` and `:focus` in USS.
+
+Two-way controls need no Tl code: bind a slider or toggle with `binding-mode="TwoWay"` to a ScriptableObject data source, and moving it writes the asset.
 
 ```csharp
 public sealed class BagRows : TlUiBufferRows<InventorySlot>
@@ -155,6 +162,7 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
 - One timeline object (Tl UI Timelines) per World receives commands.
+- UI Toolkit shows tooltips and context menus only in Editor panels; runtime panels get neither.
 - Ids come from the panel's own UXML. A `TlTarget` inside a row, Attach or entity-view template does nothing and logs one warning; `TlSend` and `TlPlay` work anywhere under the panel.
 
 ## Samples

@@ -31,15 +31,23 @@ namespace TlUi
         [UxmlAttribute]
         public bool RowAsPayload;
 
-        [RegisterCallback(typeof(ClickEvent))]
-        static void SendTheCodeOnClick(ref TlSend self, VisualElement owner, ClickEvent click)
+        static void Send(in TlSend self, VisualElement owner, EventBase trigger)
         {
             var panel = TlUiPanel.Owning(owner);
             if (panel == null)
                 return;
             panel.SendToGame(self.Code, self.RowAsPayload ? TlRow.IndexAround(owner) : self.Payload, -1);
-            click.StopPropagation();
+            trigger.StopPropagation();
         }
+
+        [OnComponentAdded]
+        static void LetNavigationReachIt(ref TlSend self, VisualElement owner) => owner.focusable = true;
+
+        [RegisterCallback(typeof(ClickEvent))]
+        static void SendTheCodeOnClick(ref TlSend self, VisualElement owner, ClickEvent click) => Send(self, owner, click);
+
+        [RegisterCallback(typeof(NavigationSubmitEvent))]
+        static void SendTheCodeOnSubmit(ref TlSend self, VisualElement owner, NavigationSubmitEvent submit) => Send(self, owner, submit);
     }
 
     [VisualElementComponent]
@@ -80,15 +88,23 @@ namespace TlUi
         [UxmlAttribute]
         public UiTimelineVerb Verb;
 
-        [RegisterCallback(typeof(ClickEvent))]
-        static void RequestTheTimelineOnClick(ref TlPlay self, VisualElement owner, ClickEvent click)
+        static void Request(in TlPlay self, VisualElement owner, EventBase trigger)
         {
             var panel = TlUiPanel.Owning(owner);
             if (panel == null)
                 return;
             panel.RequestTimeline(self.Verb, self.Timeline);
-            click.StopPropagation();
+            trigger.StopPropagation();
         }
+
+        [OnComponentAdded]
+        static void LetNavigationReachIt(ref TlPlay self, VisualElement owner) => owner.focusable = true;
+
+        [RegisterCallback(typeof(ClickEvent))]
+        static void RequestTheTimelineOnClick(ref TlPlay self, VisualElement owner, ClickEvent click) => Request(self, owner, click);
+
+        [RegisterCallback(typeof(NavigationSubmitEvent))]
+        static void RequestTheTimelineOnSubmit(ref TlPlay self, VisualElement owner, NavigationSubmitEvent submit) => Request(self, owner, submit);
     }
 
     [VisualElementComponent(false)]
@@ -111,6 +127,14 @@ namespace TlUi
             var panel = TlUiPanel.Owning(owner);
             if (panel != null)
                 panel.SendRowClick(self.List, self.Index);
+        }
+
+        [RegisterCallback(typeof(NavigationSubmitEvent))]
+        static void SendTheRowSubmit(ref TlRow self, VisualElement owner, NavigationSubmitEvent submit)
+        {
+            var panel = TlUiPanel.Owning(owner);
+            if (panel != null)
+                panel.SendRowSubmit(self.List, self.Index);
         }
     }
 

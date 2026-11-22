@@ -11,4 +11,5 @@
 - `TlUiEntityViews<T>`: one view per entity with an unmanaged component, placed over the entity on screen; views are reused, not destroyed.
 - Converter `tl-fixed-text` for `FixedString32Bytes` and `FixedString64Bytes`.
 - UI Toolkit components (experimental in Unity 7000.0.0a16) you can author in UXML or UI Builder: `TlTarget`, `TlSend`, `TlSendValue` and `TlPlay`. List rows carry `TlRow` and `TlRowDrag`. Handlers are static, state is unmanaged, and nothing is allocated per element or per click.
+- Keyboard and gamepad: Submit acts like a click for TlSend, TlPlay, Commands, and container rows (which are focusable). A ListView keeps UI Toolkit's own selection (Select Code), Submit, and reordering drag, which sends the Drag Code instead of reordering.
 - Samples Basics, Hud and Inventory, each with a builder and a PlayMode test. Hud is authored entirely in UXML, with no Targets or Commands rows.

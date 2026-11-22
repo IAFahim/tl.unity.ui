@@ -63,6 +63,14 @@
     border-color: rgb(255, 196, 64);
 }
 
+:hover > .slot {
+    background-color: rgba(34, 40, 54, 0.95);
+}
+
+:focus > .slot {
+    border-color: rgb(120, 190, 255);
+}
+
 .slot-name {
     font-size: 16px;
     color: rgb(235, 238, 245);
