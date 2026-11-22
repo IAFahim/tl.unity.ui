@@ -20,10 +20,10 @@ Every screen is built from these. **UITK** means UI Toolkit already does it on U
 
 | Block | Does |
 |---|---|
-| Show, Hide, Enable, Disable | per Id while the clip is on; Hide beats Show, Disable beats Enable |
+| Show, Hide, Enable, Disable | the clip's Target (an element name) while the clip is on; Hide beats Show, Disable beats Enable |
 | Add Class, Remove Class | toggles a USS class, so any USS transition or `animation-name` animation plays from the timeline |
 | Attach | shows a UXML template inside the target |
-| Animate | a curve drives opacity, translate, scale, rotate, width, height, reveal or a value, frame-exact, with hold |
+| Animate | the Target's Property (opacity, move X or Y, scale, rotate, width, height, reveal or a value) from From to To along Ease, frame-exact, with hold |
 | Text | shows a text slot, with typewriter reveal |
 | Signal, Focus | one-shot at clip start |
 
@@ -31,6 +31,7 @@ Every screen is built from these. **UITK** means UI Toolkit already does it on U
 
 | Block | Does |
 |---|---|
+| Element name | pick it in the clip's Target dropdown; stored in Tl UI Timelines > Target Names and baked as fixed strings |
 | Targets table | Id to a selector: `#name`, `.class`, `Button`, combined |
 | `<tl:TlTarget id="3"/>` | the same, authored on the element in UXML or UI Builder |
 
@@ -53,6 +54,7 @@ Every screen is built from these. **UITK** means UI Toolkit already does it on U
 
 | Need | Use |
 |---|---|
+| Drag a row onto another list (hand to table, bag to equipment) | **Tl** the receiving list's Drop Code; a ghost follows the pointer (`tl-drag-ghost`, `tl-dragging`, `tl-drop-target`) |
 | Click or Submit sends a code to ECS | **Tl** `<tl:TlSend code="1"/>` or a Commands row |
 | A value change sends a code | **Tl** `<tl:TlSendValue code="4" scale="100"/>` |
 | Click plays a UI timeline | **Tl** `<tl:TlPlay timeline="1" verb="Restart"/>` |
