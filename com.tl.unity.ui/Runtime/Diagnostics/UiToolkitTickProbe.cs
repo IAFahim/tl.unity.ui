@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.LowLevel;
 
 namespace TlUi
 {
-    public static class UiToolkitTickProbe
+    [AutoStaticsCleanup]
+    public static partial class UiToolkitTickProbe
     {
         struct BeforeUiToolkitUpdate
         {
@@ -24,14 +26,6 @@ namespace TlUi
         public static long AllocatedBytes;
         public static int Ticks;
         public static long LargestTick;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ForgetThePreviousPlay()
-        {
-            s_Installed = false;
-            Measuring = false;
-            Reset();
-        }
 
         public static void Reset()
         {

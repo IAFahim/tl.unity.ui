@@ -6,6 +6,7 @@ using Tl.Ui;
 using Tl.Unity;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -17,7 +18,8 @@ namespace TlUi
     [DefaultExecutionOrder(TlUiOrder.Panel)]
     [AddComponentMenu("Tl UI/Tl UI Panel")]
     [HelpURL("https://github.com/IAFahim/tl.unity.ui/tree/main/com.tl.unity.ui")]
-    public sealed class TlUiPanel : MonoBehaviour
+    [AutoStaticsCleanup]
+    public sealed partial class TlUiPanel : MonoBehaviour
     {
         sealed class ListState
         {
@@ -87,7 +89,9 @@ namespace TlUi
         [Tooltip("The data source of the whole screen: a ScriptableObject, or a Tl UI Data component that shows an ECS singleton. Bind fields to it in UI Builder.")]
         public UnityEngine.Object DataSource;
 
-        static readonly List<TlUiPanel> s_Enabled = new List<TlUiPanel>(4);
+        static List<TlUiPanel> s_Enabled;
+
+        static List<TlUiPanel> PanelsEnabledNow => s_Enabled ??= new List<TlUiPanel>(4);
 
         readonly List<UiElementState> _elements = new List<UiElementState>();
         readonly Dictionary<VisualElement, UiElementState> _stateOf = new Dictionary<VisualElement, UiElementState>();
@@ -125,17 +129,14 @@ namespace TlUi
 
         public UiChannels ShownChannels => _shownChannels;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ForgetPanelsOfThePreviousPlay() => s_Enabled.Clear();
-
-        public static IReadOnlyList<TlUiPanel> EnabledPanels => s_Enabled;
+        public static IReadOnlyList<TlUiPanel> EnabledPanels => PanelsEnabledNow;
 
         public static string DumpEveryPanel()
         {
-            if (s_Enabled.Count == 0)
+            if (PanelsEnabledNow.Count == 0)
                 return "No Tl UI Panel is enabled. Enter Play mode in a scene with one.";
             var dump = new StringBuilder();
-            foreach (var panel in s_Enabled)
+            foreach (var panel in PanelsEnabledNow)
                 dump.Append("== ").Append(panel.name).Append(panel._resolvedRoot == null ? " (no UI loaded yet)" : "").Append('\n').Append(panel.Dump());
             return dump.ToString();
         }
@@ -143,7 +144,7 @@ namespace TlUi
         public static TlUiPanel Owning(VisualElement element)
         {
             for (var ancestor = element; ancestor != null; ancestor = ancestor.hierarchy.parent)
-                foreach (var panel in s_Enabled)
+                foreach (var panel in PanelsEnabledNow)
                     if (panel._resolvedRoot == ancestor)
                         return panel;
             return null;
@@ -186,7 +187,7 @@ namespace TlUi
             _channelsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiChannels>());
             _signalsQuery = entityManager.CreateEntityQuery(ComponentType.ReadWrite<TimelineEvent<UiSignal>>());
             _focusQuery = entityManager.CreateEntityQuery(ComponentType.ReadWrite<TimelineEvent<UiFocus>>());
-            _hostsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>(), ComponentType.ReadWrite<TimelineRequest>());
+            _hostsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>(), ComponentType.ReadWrite<UiCommandInbox>());
             _applyEverything = true;
         }
 
@@ -457,6 +458,11 @@ namespace TlUi
             if (slot < 0 || slot >= slots.Length)
             {
                 Debug.LogWarning("Tl UI Panel: timeline slot " + slot + " does not exist; the UI Sequence director has " + slots.Length + " (its Playable and Also Plays).", this);
+                return;
+            }
+            if (!entityManager.HasBuffer<TimelineRequest>(host))
+            {
+                Debug.LogWarning("Tl UI Panel: timeline slot " + slot + " cannot play because the Playable Director next to Tl UI Timelines has no timeline. Assign a Tl timeline as its Playable.", this);
                 return;
             }
             var timeline = slots[slot].Timeline;
@@ -950,8 +956,8 @@ namespace TlUi
             if (Panel == null)
                 Panel = GetComponent<PanelRenderer>();
             ListenToHotkeys();
-            if (!s_Enabled.Contains(this))
-                s_Enabled.Add(this);
+            if (!PanelsEnabledNow.Contains(this))
+                PanelsEnabledNow.Add(this);
             _onUiReloaded ??= OnUiReloaded;
             if (Panel != null)
                 Panel.RegisterUIReloadCallback(_onUiReloaded);
@@ -959,7 +965,7 @@ namespace TlUi
 
         void OnDisable()
         {
-            s_Enabled.Remove(this);
+            PanelsEnabledNow.Remove(this);
             StopListeningToHotkeys();
             if (Panel != null && _onUiReloaded != null)
                 Panel.UnregisterUIReloadCallback(_onUiReloaded);

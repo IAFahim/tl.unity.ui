@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-preview.2
+
+### Changed
+- Moved, with `com.tl.unity.ui`, to its own repository, IAFahim/tl.unity.ui. No code change.
+
 ## 0.1.0-preview.1
 
 ### Added

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-preview.2
+
+### Changed
+- Moved, with `com.tl.ui`, from the tl.unity branch `feat/uitk-blocks` to its own repository, IAFahim/tl.unity.ui. Install by Git URL from there.
+
+### Fixed
+- Send To Game, Tl Send, text and row codes reach the game when the Playable Director next to Tl UI Timelines has no timeline. Before, the panel found that object only through Tl's `TimelineRequest` buffer, which Tl adds only for a director with a timeline, so every code was dropped with a misleading warning. Playing a timeline slot there now logs that the director needs a timeline.
+- No Unity 7 statics warnings (UAL0010, UAL0013): Tl UI Panel, Tl Row Drag and UI Toolkit Tick Probe use `[AutoStaticsCleanup]` instead of hand-written `SubsystemRegistration` resets.
+
 ## 0.1.0-preview.1
 
 ### Added

@@ -253,6 +253,26 @@ namespace TlUiPackage.Tests
             CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop, RequestOp.Pause, RequestOp.Resume, RequestOp.Stop, RequestOp.Start, RequestOp.Start }, ops, "Play components send every verb; Restart is Stop then Start; Submit on Play plays again");
         }
 
+        [UnityTest]
+        public IEnumerator WithNoTimelineOnTheDirectorSendStillReachesTheGameAndPlayLogsWhy()
+        {
+            var heal = new Button { text = "heal" };
+            heal.AddComponent(new TlSend { Code = 1 });
+            var flash = new Button { text = "flash" };
+            flash.AddComponent(new TlPlay { Timeline = 0, Verb = UiTimelineVerb.Play });
+            yield return BuildScreen(panel => { }, root =>
+            {
+                root.Add(heal);
+                root.Add(flash);
+            });
+            _world.EntityManager.RemoveComponent<Tl.Unity.TimelineRequest>(_host);
+            Send<ClickEvent>(heal);
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("Playable Director next to Tl UI Timelines has no timeline"));
+            Send<ClickEvent>(flash);
+            yield return null;
+            CollectionAssert.AreEqual(new[] { (1, 0) }, Inbox(), "Tl UI Timelines with an empty Playable still gets the inbox, so Send reaches the game");
+        }
+
 #if UNITY_EDITOR
         [UnityTest]
         public IEnumerator EveryComponentAuthoredInUxmlAttachesWithItsAttributesAndActs()

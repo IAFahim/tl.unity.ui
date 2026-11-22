@@ -14,11 +14,11 @@ This package and `com.tl.ui` live in [IAFahim/tl.unity.ui](https://github.com/IA
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.1",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.1"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.2",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.2"
 ```
 
-A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 20 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
+A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 21 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
 
 ## Set up a screen
 
@@ -215,7 +215,7 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 
 | Check | Result |
 |---|---|
-| Editor PlayMode tests, `-batchmode -nographics` | 20 package tests and 4 sample tests pass |
+| Editor PlayMode tests, `-batchmode -nographics` | 21 package tests and 4 sample tests pass |
 | Engine-free rules | 13 .NET tests pass |
 | Linux player, CoreCLR | builds with 0 errors and 0 warnings; a smoke scene loads all four sample scenes headless and passes 27 checks |
 | Linux player, IL2CPP | builds (the only warnings are TextMeshPro's own IL2CPP notes) and passes the same 27 checks |

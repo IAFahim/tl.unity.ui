@@ -25,8 +25,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.1",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.1"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.2",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.2"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against. Unity resolves Entities, Input System and Timeline for you.
@@ -175,8 +175,8 @@ To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put 
 
 ## Status
 
-Preview, version `0.1.0-preview.1`. Checked on Unity 7000.0.0a16 on Linux:
-- Editor PlayMode tests: 20 package tests and 4 sample tests;
+Preview, version `0.1.0-preview.2`. Checked on Unity 7000.0.0a16 on Linux:
+- Editor PlayMode tests: 21 package tests, 4 sample tests, and the example above;
 - 13 .NET tests;
 - CoreCLR and IL2CPP players running all four samples headless.
 

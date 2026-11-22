@@ -1,3 +1,4 @@
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -163,15 +164,13 @@ namespace TlUi
 
     [VisualElementComponent(false)]
     [RequiresComponentOfType(typeof(TlRow))]
+    [AutoStaticsCleanup]
     public partial struct TlRowDrag
     {
         public const string DraggingClass = "tl-dragging";
         public const string DropTargetClass = "tl-drop-target";
 
         static VisualElement s_HoveredRow;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ForgetTheHoveredRowOfThePreviousPlay() => s_HoveredRow = null;
 
         static VisualElement RowUnder(VisualElement dragged, Vector2 panelPosition)
         {
