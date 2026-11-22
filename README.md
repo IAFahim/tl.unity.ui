@@ -41,7 +41,7 @@ You need all three lines because a Git package cannot pull in another Git packag
 You should see the following:
 - Health drains, and **Heal** heals through an ECS system.
 - **Flash** plays a timeline.
-- The ring and bar ease to the new value.
+- The bar eases to the new health, and the ring follows it.
 - Below 30% health, a banner pulses.
 
 The other samples work the same way:
@@ -55,10 +55,11 @@ The other samples work the same way:
 
 ## Make your own screen
 
-**1. The data.** Write an unmanaged struct and a one-line view.
+Five files and two GameObjects. This exact example is built and tested in a fresh project.
+
+**1. The data.** An unmanaged struct the screen shows, and the rules the game reads. `PlayerHud.cs`:
 
 ```csharp
-using TlUi;
 using Unity.Entities;
 using Unity.Properties;
 
@@ -69,24 +70,74 @@ public struct PlayerHud : IComponentData
     public int Coins;
 }
 
-public sealed class PlayerHudView : TlUiData<PlayerHud> { }
+public struct PlayerHudRules : IComponentData
+{
+    public int HealCode;
+    public float HealAmount;
+}
 ```
 
-**2. The game.** A Burst system writes the struct and reads the codes the UI sent.
+**2. The view.** One line connects the struct to UI Toolkit data binding. `PlayerHudView.cs`:
 
 ```csharp
+using TlUi;
+
+public sealed class PlayerHudView : TlUiData<PlayerHud>
+{
+}
+```
+
+**3. The authoring.** It bakes both structs, and a designer sets the numbers in the Inspector. `PlayerHudAuthoring.cs`:
+
+```csharp
+using Unity.Entities;
+using UnityEngine;
+
+public sealed class PlayerHudAuthoring : MonoBehaviour
+{
+    public float StartHealth = 100f;
+    public int HealCode = 1;
+    public float HealAmount = 30f;
+
+    sealed class Baker : Baker<PlayerHudAuthoring>
+    {
+        public override void Bake(PlayerHudAuthoring authoring)
+        {
+            var entity = GetEntity(TransformUsageFlags.None);
+            AddComponent(entity, new PlayerHud { Health = authoring.StartHealth });
+            AddComponent(entity, new PlayerHudRules { HealCode = authoring.HealCode, HealAmount = authoring.HealAmount });
+        }
+    }
+}
+```
+
+**4. The game.** A Burst system reads the codes the UI sent and writes the struct back. `PlayerHudSystem.cs`:
+
+```csharp
+using TlUi;
+using Unity.Burst;
+using Unity.Entities;
+
 [BurstCompile]
 public partial struct PlayerHudSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<PlayerHud>();
+        state.RequireForUpdate<PlayerHudRules>();
+    }
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var rules = SystemAPI.GetSingleton<PlayerHudRules>();
         var hud = SystemAPI.GetSingleton<PlayerHud>();
         foreach (var inbox in SystemAPI.Query<DynamicBuffer<UiCommandInbox>>())
         {
-            for (var i = 0; i < inbox.Length; i++)
-                if (inbox[i].Code == 1)
-                    hud.Health += 30f;
+            for (var command = 0; command < inbox.Length; command++)
+                if (inbox[command].Code == rules.HealCode)
+                    hud.Health += rules.HealAmount;
             inbox.Clear();
         }
         SystemAPI.SetSingleton(hud);
@@ -94,9 +145,7 @@ public partial struct PlayerHudSystem : ISystem
 }
 ```
 
-Bake the `PlayerHud` singleton from any authoring component, the way the Hud sample's `HudDemoAuthoring` does.
-
-**3. The screen.** Bind to the struct's fields and give the button a code.
+**5. The screen.** Bind the label to a field, and give the button the heal code. `PlayerHud.uxml`:
 
 ```xml
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:tl="TlUi">
@@ -105,21 +154,17 @@ Bake the `PlayerHud` singleton from any authoring component, the way the Hud sam
             <ui:DataBinding property="text" data-source-path="Health" binding-mode="ToTarget" source-to-ui-converters="tl-integer" />
         </Bindings>
     </ui:Label>
-    <ui:Button text="Heal">
+    <ui:Button name="heal" text="Heal">
         <tl:TlSend code="1" />
     </ui:Button>
 </ui:UXML>
 ```
 
-**4. The scene.**
-- **In a SubScene**, add a GameObject with these:
-  - a **Playable Director**, whose timeline can be empty for now;
-  - **Tl UI Timelines**, which gives the game the `UiCommandInbox`;
-  - your authoring component that bakes `PlayerHud`.
-- **In the main scene**, add a GameObject with a **Panel Renderer** (your Panel Settings and UXML), your `PlayerHudView`, and **Tl UI Panel**.
-- **Wire it up.** On Tl UI Panel, set **Panel** to the Panel Renderer and **Data Source** to the view.
+**6. The scene.**
+- **In a SubScene**, add a GameObject with **Tl UI Timelines** and **Player Hud Authoring**. Tl UI Timelines adds a Playable Director, and its Playable can stay empty until you have a timeline. This object gets the `UiCommandInbox`.
+- **In the main scene**, add a GameObject with a **Panel Renderer** (your Panel Settings, and `PlayerHud.uxml`), **Player Hud View** and **Tl UI Panel**. On Tl UI Panel, set **Panel** to the Panel Renderer and **Data Source** to the view.
 
-Press Play: the label shows `Health`, and the button heals.
+Press Play: the label shows 100, and each click on **Heal** adds 30.
 
 To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put UI clips with that Id on a Tl track in the Timeline window.
 

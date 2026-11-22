@@ -6,7 +6,7 @@ namespace TlUi
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PanelRenderer))]
     [AddComponentMenu("Tl UI/Tl UI Tooltips")]
-    [HelpURL("https://github.com/IAFahim/tl.unity/tree/main/com.tl.unity.ui")]
+    [HelpURL("https://github.com/IAFahim/tl.unity.ui/tree/main/com.tl.unity.ui")]
     public sealed class TlUiTooltips : MonoBehaviour
     {
         public const string TooltipClass = "tl-tooltip";
