@@ -162,7 +162,7 @@ A ScriptableObject works as the Data Source too, for settings and catalogs.
 
 ## Player input the game needs to know about
 
-- **UiInputState** on the timeline object says whether the pointer is over UI and whether the player is typing, so Burst gameplay can ignore clicks and keys the UI took. "Over UI" means over any pickable element, so give full-screen layout containers `picking-mode="Ignore"`, as the samples do; otherwise the whole screen counts as UI.
+- **UiInputState** on the timeline object says whether the pointer is over UI and whether the player is typing, so Burst gameplay can ignore clicks and keys the UI took. It reflects the layout UI Toolkit finished last frame, so it can be one frame behind; that way the panel never forces a layout pass mid-frame. "Over UI" means over any pickable element, so give full-screen layout containers `picking-mode="Ignore"`, as the samples do; otherwise the whole screen counts as UI.
 - **`<tl:TlSendText code="5"/>`** on a TextField sends its text to the `UiTextInbox` buffer (`FixedString128Bytes`, truncated) each time the field's value changes.
 - **TlSendValue** on a DropdownField sends the chosen index. A dropdown's `index` also binds TwoWay directly.
 
@@ -238,8 +238,8 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 | Static state | Unity 7 resets every static (`[AutoStaticsCleanup]` or `SubsystemRegistration`), so it is safe with domain reload off; 0 statics warnings |
 
 "Once warm" means after first-time costs, which UI Toolkit pays itself:
-- an element reaching a combination of USS classes it has never had costs UI Toolkit 88 B once on CoreCLR, in its style and layout pass;
-- Tl UI Panel reads the pointer before applying clips, so it never forces that pass early inside its own update.
+- In the Hud, UI Toolkit's update allocated 88 B once, shortly after the low-health pulse stopped, in a CoreCLR player only (0 B with IL2CPP). Likely its style and layout pass; the exact cause is not confirmed.
+- Tl UI Panel reads the pointer before applying clips, so it never forces UI Toolkit's style and layout pass early inside its own update. `Pick` starts with `ValidateLayout()`.
 
 The smoke scene and the player build script live in a separate test project. They are not shipped in the package.
 
