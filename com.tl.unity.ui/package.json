@@ -42,6 +42,11 @@
       "path": "Samples~/Inventory"
     },
     {
+      "displayName": "Cards",
+      "description": "A card table a designer can restyle and retime without code. The hand and the table are ECS buffers shown as card rows; drag a card onto the table to play it (energy and score), drag it back to take it back, drop it on another hand card to reorder, Draw and End Turn buttons. Cards lift on hover and a tilted ghost follows the pointer (USS). Not enough energy raises a signal whose timeline shakes the energy box; End Turn plays a banner timeline. The deck is a Card Set asset. Tl UI > Samples > Build Cards, then Play. Builder and a PlayMode test.",
+      "path": "Samples~/Cards"
+    },
+    {
       "displayName": "Menu",
       "description": "Screen flow and settings with no screen C#: two screens are Tl timelines on one channel (End Hold), so TlPlay buttons swap them; the settings slider, toggle and dropdown bind TwoWay to an ECS singleton through a Tl UI Data view; Cancel (Escape, gamepad East) goes back; a P / gamepad Start hotkey pauses through a Burst system; Tl UI Tooltips. Tl UI > Samples > Build Menu, then Play. Builder and a PlayMode test.",
       "path": "Samples~/Menu"

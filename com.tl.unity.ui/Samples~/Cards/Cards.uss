@@ -1,0 +1,167 @@
+.screen {
+    flex-grow: 1;
+    padding: 24px 32px;
+    background-color: rgb(22, 26, 36);
+}
+
+.top-bar {
+    flex-direction: row;
+    align-items: center;
+}
+
+.title {
+    flex-grow: 1;
+    font-size: 34px;
+    color: rgb(240, 242, 248);
+}
+
+.stat {
+    width: 140px;
+    margin-left: 12px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+.stat-caption {
+    font-size: 14px;
+    color: rgb(150, 160, 180);
+}
+
+.stat-value {
+    font-size: 30px;
+    color: rgb(240, 242, 248);
+    -unity-font-style: bold;
+}
+
+.energy .stat-value {
+    color: rgb(120, 210, 255);
+}
+
+.energy.warning {
+    background-color: rgba(230, 60, 60, 0.45);
+}
+
+.table {
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin: 24px 0;
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background-color: rgba(40, 110, 70, 0.35);
+    transition-property: border-color, background-color;
+    transition-duration: 0.15s;
+}
+
+.table.tl-drop-target {
+    border-color: rgb(255, 210, 90);
+    background-color: rgba(60, 150, 95, 0.5);
+}
+
+.table-hint {
+    position: absolute;
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.hand {
+    flex-direction: row;
+    justify-content: center;
+    min-height: 230px;
+    padding-top: 30px;
+    border-radius: 18px;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.hand.tl-drop-target {
+    background-color: rgba(255, 210, 90, 0.12);
+}
+
+.card {
+    width: 140px;
+    height: 196px;
+    margin: 0 6px;
+    padding: 10px;
+    justify-content: space-between;
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.85);
+    border-radius: 14px;
+    transition-property: translate, scale, rotate, opacity, border-color;
+    transition-duration: 0.12s;
+}
+
+.hand TemplateContainer:hover .card {
+    translate: 0 -26px;
+    scale: 1.06 1.06;
+}
+
+.tl-dragging .card {
+    opacity: 0.25;
+}
+
+.tl-drag-ghost .card {
+    rotate: 5deg;
+    scale: 1.1 1.1;
+    border-color: rgb(255, 210, 90);
+}
+
+.tl-drop-target .card {
+    border-color: rgb(255, 210, 90);
+}
+
+.card-cost {
+    width: 40px;
+    height: 40px;
+    -unity-text-align: middle-center;
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    background-color: rgb(40, 120, 230);
+    border-radius: 20px;
+}
+
+.card-name {
+    font-size: 20px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    color: rgb(20, 22, 30);
+}
+
+.card-power {
+    align-self: flex-end;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(20, 22, 30);
+}
+
+.buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.button {
+    font-size: 20px;
+    padding: 10px 20px;
+    margin-left: 12px;
+}
+
+.banner {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 40%;
+    font-size: 72px;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    color: rgb(255, 230, 130);
+}
+
+.start-hidden {
+    display: none;
+}

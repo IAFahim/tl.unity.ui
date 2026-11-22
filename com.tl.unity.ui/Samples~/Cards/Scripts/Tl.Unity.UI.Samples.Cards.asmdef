@@ -1,0 +1,14 @@
+{
+  "name": "Tl.Unity.UI.Samples.Cards",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.UI",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid"
+  ],
+  "autoReferenced": false
+}

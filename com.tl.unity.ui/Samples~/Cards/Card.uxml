@@ -1,0 +1,23 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Cards.uss" />
+    <ui:VisualElement name="card" class="card">
+        <Bindings>
+            <ui:DataBinding property="style.backgroundColor" data-source-path="Card.Tint" binding-mode="ToTarget" />
+        </Bindings>
+        <ui:Label name="cost" class="card-cost">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Card.Cost" binding-mode="ToTarget" source-to-ui-converters="tl-integer" />
+            </Bindings>
+        </ui:Label>
+        <ui:Label name="cardName" class="card-name">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Card.Name" binding-mode="ToTarget" source-to-ui-converters="tl-fixed-text" />
+            </Bindings>
+        </ui:Label>
+        <ui:Label name="power" class="card-power">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Card.Power" binding-mode="ToTarget" source-to-ui-converters="tl-integer" />
+            </Bindings>
+        </ui:Label>
+    </ui:VisualElement>
+</ui:UXML>

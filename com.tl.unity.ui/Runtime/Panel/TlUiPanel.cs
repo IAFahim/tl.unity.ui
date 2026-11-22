@@ -44,6 +44,7 @@ namespace TlUi
             public Action<IEnumerable<int>> OnSelect;
             public Func<HandleDragAndDropArgs, DragVisualMode> OnDragUpdate;
             public Func<HandleDragAndDropArgs, DragVisualMode> OnDrop;
+            public TemplateContainer DragGhost;
         }
 
         sealed class ElementClasses : IUiClassList
@@ -123,6 +124,7 @@ namespace TlUi
         int _resolvedVersion = -1;
         bool _resolveRequested;
         bool _applyEverything = true;
+        bool _someListTakesDrops;
         UiInputState _shownInput;
         bool _inputReported;
 
@@ -491,11 +493,13 @@ namespace TlUi
             state.ShownChannels = look;
         }
 
-        public void SendToGame(int code, int payload, int target)
+        public void SendToGame(int code, int payload, int target) => SendToGame(code, payload, target, -1);
+
+        public void SendToGame(int code, int payload, int target, int fromList)
         {
             if (!TryFindHost(out var host))
                 return;
-            _boundWorld.EntityManager.GetBuffer<UiCommandInbox>(host).Add(new UiCommandInbox { Code = code, Payload = payload, Target = target });
+            _boundWorld.EntityManager.GetBuffer<UiCommandInbox>(host).Add(new UiCommandInbox { Code = code, Payload = payload, Target = target, FromList = fromList });
         }
 
         public bool SomeoneIsTyping()
@@ -550,8 +554,50 @@ namespace TlUi
 
         public void SendRowDrag(int list, int fromRow, int toRow)
         {
-            if (list >= 0 && list < _lists.Count && _lists[list].Binding.DragCode >= 0)
-                SendToGame(_lists[list].Binding.DragCode, fromRow, toRow);
+            if (ReordersRows(list))
+                SendToGame(_lists[list].Binding.DragCode, fromRow, toRow, list);
+        }
+
+        public void SendRowDrop(int fromList, int fromRow, int toList, int toRow)
+        {
+            if (TakesDrops(toList))
+                SendToGame(_lists[toList].Binding.DropCode, fromRow, toRow, fromList);
+        }
+
+        public bool ReordersRows(int list) => list >= 0 && list < _lists.Count && _lists[list].Binding.DragCode >= 0;
+
+        public bool TakesDrops(int list) => list >= 0 && list < _lists.Count && _lists[list].Binding.DropCode >= 0 && _lists[list].Target != null && _lists[list].View == null;
+
+        public VisualElement DragGhostOf(VisualElement row)
+        {
+            var list = row.HasComponent<TlRow>() ? row.GetComponent<TlRow>().List : -1;
+            if (list < 0 || list >= _lists.Count || _lists[list].Binding.RowTemplate == null || _resolvedRoot == null)
+                return null;
+            var state = _lists[list];
+            if (state.DragGhost == null)
+            {
+                state.DragGhost = state.Binding.RowTemplate.Instantiate();
+                state.DragGhost.name = "tl-drag-ghost";
+                state.DragGhost.AddToClassList(TlRowDrag.GhostClass);
+                state.DragGhost.pickingMode = PickingMode.Ignore;
+                state.DragGhost.style.position = Position.Absolute;
+                state.DragGhost.style.display = DisplayStyle.None;
+            }
+            if (state.DragGhost.hierarchy.parent != _resolvedRoot)
+                _resolvedRoot.Add(state.DragGhost);
+            else
+                state.DragGhost.BringToFront();
+            state.DragGhost.dataSource = row.dataSource;
+            state.DragGhost.dataSourcePath = row.dataSourcePath;
+            return state.DragGhost;
+        }
+
+        public int ListHolding(VisualElement element)
+        {
+            for (var list = 0; list < _lists.Count; list++)
+                if (_lists[list].Target != null && (_lists[list].Target == element || _lists[list].Target.contentContainer == element))
+                    return list;
+            return -1;
         }
 
         bool TryFindHostQuietly(out Entity host)
@@ -720,7 +766,7 @@ namespace TlUi
             if (list.View != null)
                 return row;
             row.focusable = true;
-            if (list.Binding.DragCode >= 0)
+            if (list.Binding.DragCode >= 0 || _someListTakesDrops)
                 row.AddComponent(new TlRowDrag());
             return row;
         }
@@ -745,7 +791,7 @@ namespace TlUi
             var to = drop.dropPosition == DragAndDropPosition.OverItem || drop.insertAtIndex <= from ? drop.insertAtIndex : drop.insertAtIndex - 1;
             to = Mathf.Clamp(to, 0, Mathf.Max(0, list.Rows.Items.Count - 1));
             if (from >= 0 && to != from)
-                SendToGame(list.Binding.DragCode, from, to);
+                SendToGame(list.Binding.DragCode, from, to, list.List);
             return DragVisualMode.Move;
         }
 
@@ -798,6 +844,7 @@ namespace TlUi
                 }
                 foreach (var row in list.RowElements)
                     row.RemoveFromHierarchy();
+                list.DragGhost?.RemoveFromHierarchy();
             }
             _lists.Clear();
         }
@@ -805,6 +852,9 @@ namespace TlUi
         void ResolveLists()
         {
             ForgetLists();
+            _someListTakesDrops = false;
+            foreach (var binding in Lists)
+                _someListTakesDrops |= binding.DropCode >= 0;
             for (var index = 0; index < Lists.Count; index++)
             {
                 var binding = Lists[index];

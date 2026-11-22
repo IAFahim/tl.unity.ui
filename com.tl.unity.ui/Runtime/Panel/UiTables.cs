@@ -58,8 +58,11 @@ namespace TlUi
         [Tooltip("ListView only: Send To Game code when the selection moves (pointer or Up and Down navigation), with the selected row as the payload, -1 when nothing is selected. -1 sends nothing.")]
         public int SelectCode = -1;
 
-        [Tooltip("Send To Game code for dragging a row onto another, with the dragged row as the payload and the row it lands on as the target. A ListView uses UI Toolkit's own drag and its insertion line; a container uses Tl UI's row drag. -1 turns dragging off.")]
+        [Tooltip("Send To Game code for dropping a row on another row of this list (swap, reorder): the dragged row is the payload, the row it lands on the target. A ListView uses UI Toolkit's own drag and its insertion line; in a container the row lifts and follows the pointer. -1: rows stay put inside this list.")]
         public int DragCode = -1;
+
+        [Tooltip("Send To Game code for a row from another list dropped on this one (hand to table, bag to equipment): the dragged row is the payload, the row it lands on the target (-1 for empty space), and From List the list it came from. Containers only. -1: this list takes no drops. While any list takes drops, container rows can be lifted.")]
+        public int DropCode = -1;
     }
 
     public enum UiCommandEvent

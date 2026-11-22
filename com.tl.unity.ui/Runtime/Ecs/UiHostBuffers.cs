@@ -16,6 +16,7 @@ namespace TlUi
         public int Code;
         public int Payload;
         public int Target;
+        public int FromList;
     }
 
     [InternalBufferCapacity(0)]

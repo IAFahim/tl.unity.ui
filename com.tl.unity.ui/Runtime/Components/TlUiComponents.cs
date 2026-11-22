@@ -1,4 +1,4 @@
-using Unity.Scripting.LifecycleManagement;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -164,72 +164,148 @@ namespace TlUi
 
     [VisualElementComponent(false)]
     [RequiresComponentOfType(typeof(TlRow))]
-    [AutoStaticsCleanup]
     public partial struct TlRowDrag
     {
         public const string DraggingClass = "tl-dragging";
         public const string DropTargetClass = "tl-drop-target";
+        public const string GhostClass = "tl-drag-ghost";
+        public const float PixelsBeforeTheRowLifts = 6f;
 
-        static VisualElement s_HoveredRow;
+        Vector2 _pointerAtPress;
+        Vector2 _ghostAtPressInTheDragLayer;
+        bool _lifted;
+        VisualElement _ghost;
+        VisualElement _hovered;
+        List<VisualElement> _underThePointer;
 
-        static VisualElement RowUnder(VisualElement dragged, Vector2 panelPosition)
+        static void Lift(ref TlRowDrag self, VisualElement row)
         {
-            var list = dragged.GetComponent<TlRow>().List;
-            for (var element = dragged.panel?.Pick(panelPosition); element != null; element = element.hierarchy.parent)
-                if (element.HasComponent<TlRow>() && element.GetComponent<TlRow>().List == list)
-                    return element;
+            var panel = TlUiPanel.Owning(row);
+            self._ghost = panel != null ? panel.DragGhostOf(row) : null;
+            row.AddToClassList(DraggingClass);
+            self._lifted = true;
+            if (self._ghost == null)
+                return;
+            var layer = self._ghost.hierarchy.parent;
+            self._ghostAtPressInTheDragLayer = layer.WorldToLocal(row.worldBound.position);
+            self._ghost.style.width = row.layout.width;
+            self._ghost.style.height = row.layout.height;
+            self._ghost.style.display = DisplayStyle.Flex;
+        }
+
+        static void PutBack(ref TlRowDrag self, VisualElement row)
+        {
+            Hover(ref self, null);
+            row.RemoveFromClassList(DraggingClass);
+            if (self._ghost != null)
+                self._ghost.style.display = DisplayStyle.None;
+            self._ghost = null;
+            self._lifted = false;
+        }
+
+        static void Hover(ref TlRowDrag self, VisualElement dropTarget)
+        {
+            if (dropTarget == self._hovered)
+                return;
+            self._hovered?.RemoveFromClassList(DropTargetClass);
+            self._hovered = dropTarget;
+            self._hovered?.AddToClassList(DropTargetClass);
+        }
+
+        static VisualElement DropTargetUnder(ref TlRowDrag self, VisualElement row, Vector2 panelPosition)
+        {
+            var panel = TlUiPanel.Owning(row);
+            if (panel == null)
+                return null;
+            var draggedList = row.GetComponent<TlRow>().List;
+            self._underThePointer ??= new List<VisualElement>(16);
+            self._underThePointer.Clear();
+            row.panel.PickAll(panelPosition, self._underThePointer);
+            foreach (var picked in self._underThePointer)
+            {
+                if (picked == row || row.Contains(picked) || (self._ghost != null && (picked == self._ghost || self._ghost.Contains(picked))))
+                    continue;
+                for (var element = picked; element != null; element = element.hierarchy.parent)
+                {
+                    if (element.HasComponent<TlRow>())
+                    {
+                        var landedOn = element.GetComponent<TlRow>().List;
+                        if (landedOn == draggedList ? panel.ReordersRows(landedOn) : panel.TakesDrops(landedOn))
+                            return element;
+                        break;
+                    }
+                    var list = panel.ListHolding(element);
+                    if (list >= 0 && list != draggedList && panel.TakesDrops(list))
+                        return element;
+                }
+            }
             return null;
         }
 
-        static void Hover(VisualElement row)
-        {
-            if (row == s_HoveredRow)
-                return;
-            s_HoveredRow?.RemoveFromClassList(DropTargetClass);
-            s_HoveredRow = row;
-            s_HoveredRow?.AddToClassList(DropTargetClass);
-        }
-
         [RegisterCallback(typeof(PointerDownEvent))]
-        static void StartDragging(ref TlRowDrag self, VisualElement owner, PointerDownEvent down)
+        static void PressTheRow(ref TlRowDrag self, VisualElement owner, PointerDownEvent down)
         {
             if (down.button != 0)
                 return;
+            self._pointerAtPress = down.position;
+            self._lifted = false;
             owner.CapturePointer(down.pointerId);
-            owner.AddToClassList(DraggingClass);
         }
 
         [RegisterCallback(typeof(PointerMoveEvent))]
-        static void MarkTheRowUnderThePointer(ref TlRowDrag self, VisualElement owner, PointerMoveEvent move)
+        static void MoveTheRowWithThePointer(ref TlRowDrag self, VisualElement owner, PointerMoveEvent move)
         {
             if (!owner.HasPointerCapture(move.pointerId))
                 return;
-            var row = RowUnder(owner, move.position);
-            Hover(row == owner ? null : row);
+            var moved = (Vector2)move.position - self._pointerAtPress;
+            if (!self._lifted)
+            {
+                if (moved.sqrMagnitude < PixelsBeforeTheRowLifts * PixelsBeforeTheRowLifts)
+                    return;
+                Lift(ref self, owner);
+            }
+            if (self._ghost != null)
+            {
+                self._ghost.style.left = self._ghostAtPressInTheDragLayer.x + moved.x;
+                self._ghost.style.top = self._ghostAtPressInTheDragLayer.y + moved.y;
+            }
+            Hover(ref self, DropTargetUnder(ref self, owner, move.position));
         }
 
         [RegisterCallback(typeof(PointerCaptureOutEvent))]
-        static void StopDraggingWhenCaptureIsLost(ref TlRowDrag self, VisualElement owner, PointerCaptureOutEvent lost)
+        static void PutTheRowBackWhenCaptureIsLost(ref TlRowDrag self, VisualElement owner, PointerCaptureOutEvent lost)
         {
-            owner.RemoveFromClassList(DraggingClass);
-            Hover(null);
+            if (self._lifted)
+                PutBack(ref self, owner);
         }
 
         [RegisterCallback(typeof(PointerUpEvent))]
-        static void DropOnTheRowUnderThePointer(ref TlRowDrag self, VisualElement owner, PointerUpEvent up)
+        static void DropTheRow(ref TlRowDrag self, VisualElement owner, PointerUpEvent up)
         {
             if (!owner.HasPointerCapture(up.pointerId))
                 return;
-            owner.ReleasePointer(up.pointerId);
-            owner.RemoveFromClassList(DraggingClass);
-            Hover(null);
-            var dropped = RowUnder(owner, up.position);
-            if (dropped == null || dropped == owner)
+            if (!self._lifted)
+            {
+                owner.ReleasePointer(up.pointerId);
                 return;
-            var from = owner.GetComponent<TlRow>();
+            }
+            var dropTarget = DropTargetUnder(ref self, owner, up.position);
+            PutBack(ref self, owner);
             var panel = TlUiPanel.Owning(owner);
-            if (panel != null)
-                panel.SendRowDrag(from.List, from.Index, dropped.GetComponent<TlRow>().Index);
+            var dragged = owner.GetComponent<TlRow>();
+            owner.ReleasePointer(up.pointerId);
+            if (panel == null || dropTarget == null)
+                return;
+            if (dropTarget.HasComponent<TlRow>())
+            {
+                var landedOn = dropTarget.GetComponent<TlRow>();
+                if (landedOn.List == dragged.List)
+                    panel.SendRowDrag(dragged.List, dragged.Index, landedOn.Index);
+                else
+                    panel.SendRowDrop(dragged.List, dragged.Index, landedOn.List, landedOn.Index);
+                return;
+            }
+            panel.SendRowDrop(dragged.List, dragged.Index, panel.ListHolding(dropTarget), -1);
         }
     }
 }
