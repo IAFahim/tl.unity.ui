@@ -140,6 +140,54 @@ namespace TlUiPackage.EditorTests
             Object.DestroyImmediate(timeline);
         }
 
+        [Test]
+        public void ANewNameSkipsEveryIdTheWorldAlreadyUsesByNumber()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            if (!AssetDatabase.IsValidFolder(FlowFolder))
+                AssetDatabase.CreateFolder("Assets", "Tl UI Designer Flow Test");
+            var screenPath = FlowFolder + "/Numbered.uxml";
+            System.IO.File.WriteAllText(screenPath, "<ui:UXML xmlns:ui=\"UnityEngine.UIElements\" xmlns:tl=\"TlUi\"><ui:Label name=\"title\"><tl:TlTarget id=\"1\" /></ui:Label><ui:Label name=\"coins\" /><ui:Label name=\"lives\" /></ui:UXML>");
+            AssetDatabase.ImportAsset(screenPath, ImportAssetOptions.ForceSynchronousImport);
+            try
+            {
+                var screen = new GameObject("Screen");
+                var panelRenderer = screen.AddComponent<PanelRenderer>();
+                panelRenderer.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(screenPath);
+                var panel = screen.AddComponent<TlUiPanel>();
+                panel.Panel = panelRenderer;
+                panel.Targets.Add(new UiTarget { Id = 0, Selector = "#title" });
+                panel.Commands.Add(new UiCommand { TargetId = 2, On = UiCommandEvent.Click });
+                panel.Channels.Add(new UiChannelBinding { Channel = 0, TargetId = 4 });
+                panel.Lists.Add(new UiListBinding { TargetId = 5 });
+                panel.Commands.Add(new UiCommand { TargetId = 6, On = UiCommandEvent.HotkeyOnly });
+
+                var timeline = TlTimelines.CreateAsset();
+                var numbered = AddFromThePlusMenu(timeline, typeof(ShowUiMenuTrack)).CreateClip<TlClip>();
+                ((Tl_Ui_ShowClip_TlData)((TlClip)numbered.asset).Data).Id = 3;
+                var hideCoins = AddFromThePlusMenu(timeline, typeof(HideUiMenuTrack)).CreateClip<TlClip>();
+                var hideLives = AddFromThePlusMenu(timeline, typeof(HideUiMenuTrack)).CreateClip<TlClip>();
+                var timelinesObject = new GameObject("Screen Timelines").AddComponent<TlUiTimelines>();
+                timelinesObject.GetComponent<PlayableDirector>().playableAsset = timeline;
+
+                Assert.AreEqual(0b111111UL, TlUiTargets.IdsUsedByNumber(timelinesObject, new[] { hideCoins }), "Ids 0 to 5 are used: a Targets row, a TlTarget in the UXML, a Commands row, a numbered clip, a Channels row and a Lists row; a hotkey-only command targets nothing");
+                Assert.IsTrue(TlUiTargets.Assign(new[] { hideCoins }, timelinesObject, "coins"));
+                Assert.AreEqual(6, ((Tl_Ui_HideClip_TlData)((TlClip)hideCoins.asset).Data).Id, "the first new name takes the first Id nothing uses");
+                CollectionAssert.AreEqual(new[] { "", "", "", "", "", "", "coins" }, timelinesObject.TargetNames, "the positions in use stay empty, so no name drives them");
+                Assert.IsTrue(TlUiTargets.Assign(new[] { hideLives }, timelinesObject, "lives"));
+                Assert.AreEqual(7, ((Tl_Ui_HideClip_TlData)((TlClip)hideLives.asset).Data).Id, "the next new name takes the next free Id");
+                Assert.IsTrue(TlUiTargets.Assign(new[] { hideLives }, timelinesObject, "coins"));
+                Assert.AreEqual(6, ((Tl_Ui_HideClip_TlData)((TlClip)hideLives.asset).Data).Id, "an existing name keeps its Id");
+                Assert.AreEqual(3, ((Tl_Ui_ShowClip_TlData)((TlClip)numbered.asset).Data).Id, "naming other clips leaves a numbered clip alone");
+                Object.DestroyImmediate(timeline);
+            }
+            finally
+            {
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                AssetDatabase.DeleteAsset(FlowFolder);
+            }
+        }
+
         [UnityTest]
         public IEnumerator ScrubbingTheTimelineHidesTheLabelWhileThePlayheadIsOnTheClipAndRestoresItAfter()
         {

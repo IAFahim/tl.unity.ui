@@ -14,8 +14,8 @@ This package and `com.tl.ui` live in [IAFahim/tl.unity.ui](https://github.com/IA
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.4",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.4"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.5",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.5"
 ```
 
 A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 21 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
@@ -34,7 +34,7 @@ To build it by hand:
 3. **Targets.** Clips target elements by **name**. Right-click a UI clip in the Timeline window and pick **Tl UI Target…** to choose an element name from your screens' UXML. The name is added to **Tl UI Timelines > Target Names**, and the clip stores its position there.
    - Names are baked into ECS as `FixedString64Bytes` (`UiTargetName` on the timeline object), so every Tl UI Panel in the world finds the same elements.
    - To target by type or class instead, or from code, give an element an Id (0 to 63) another way: a **Target** component in UXML or UI Builder (see below), or a row in Tl UI Panel's **Targets** table with a selector. `#name` is one element, `.class` every element with that class, `Button` every button, and words combine (`.shop-card Button`).
-   - Names take Ids from 0 up, so don't mix them with hand-picked Ids in one world.
+   - A new name takes the first Id that nothing in the open scenes uses by number: no Targets, Channels, Lists or Commands row, no UXML `TlTarget`, and no clip without a name. The positions it skips stay empty. Picking an existing name whose Id is also used by number logs a warning.
 4. **Clips.** In the Timeline window, click **+**, pick a block under **UI** (Show, Hide, and so on), right-click the new track, and pick **Add Tl Clip**.
 
 **Preview while scrubbing.** With the director bound in the Timeline window, dragging the playhead previews every Tl UI Panel in the open scenes in Edit mode. Tl bakes the director and runs its real systems once per edit, recording the UI state for every tick, so scrubbing is a lookup and matches Play mode. Signals, focus and commands do not fire in preview. When preview ends, every element is back to what the UXML says.

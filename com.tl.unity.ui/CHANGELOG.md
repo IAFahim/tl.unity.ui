@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0-preview.5
+
+### Fixed
+- **Root cause of the Basics sample's flaky 192 B.**
+  - Tl UI Panel worked out "pointer over UI" with `panel.Pick` after applying the frame's clips, and `Pick` begins with `ValidateLayout()`.
+  - So when a clip changed the layout (an element shown at tick 0), the panel forced a full UI Toolkit layout pass inside its own update. That pass sometimes allocated, and it doubled layout work on frames that changed.
+  - The panel now reads the pointer state first, from the layout UI Toolkit finished last frame, then applies clips.
+  - A preallocated per-step recording across whole test runs shows those picks no longer allocate. The 0.1.0-preview.4 change, remembering the timeline object, made the failure rarer but was not the cause.
+- **Tl UI Target** no longer gives a new name an Id that the world already uses by number. In a screen that also uses numbers, such as the samples, a new name used to take Id 0 and drive that element too. A new name now takes the first Id that the open scenes don't use: no Targets, Channels, Lists or Commands row, no UXML `TlTarget`, and no clip without a name. The skipped positions stay empty, and a warning names an existing clash.
+
 ## 0.1.0-preview.4
 
 ### Added

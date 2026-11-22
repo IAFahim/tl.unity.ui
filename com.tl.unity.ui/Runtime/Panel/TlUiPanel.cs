@@ -527,7 +527,7 @@ namespace TlUi
             return picked != null && picked != _resolvedRoot && _resolvedRoot.Contains(picked);
         }
 
-        void ReportInputState()
+        void ReportInputStateFromLastLayout()
         {
             var latest = new UiInputState { PointerOverUi = PointerIsOverUi(), Typing = SomeoneIsTyping() };
             if (latest.PointerOverUi == _shownInput.PointerOverUi && latest.Typing == _shownInput.Typing && _inputReported)
@@ -1106,6 +1106,7 @@ namespace TlUi
         {
             if (_resolvedRoot == null || !BoundWorldIsUsable())
                 return;
+            ReportInputStateFromLastLayout();
             if (!_targetNamesRead && !_targetNamesQuery.IsEmptyIgnoreFilter)
                 ReadTargetNames();
             if (_resolveRequested)
@@ -1115,7 +1116,6 @@ namespace TlUi
             UpdateLists();
             DrainSignals();
             DrainFocus();
-            ReportInputState();
             _applyEverything = false;
         }
     }

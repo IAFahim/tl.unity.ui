@@ -25,7 +25,7 @@ To hide something else:
 
 You never type a number. Every block is under **+ > UI**: Show, Hide, Enable, Disable, Add Class, Remove Class, Attach, Animate, Text, Signal and Focus.
 
-Names live on the **Screen Timelines** object, in **Tl UI Timelines > Target Names**, and are baked into ECS as fixed strings. A clip stores its name's position in that list, a byte, so Play mode still allocates nothing.
+Names live on the **Screen Timelines** object, in **Tl UI Timelines > Target Names**, and are baked into ECS as fixed strings. A clip stores its name's position in that list, a byte, so Play mode still allocates nothing. A new name never takes a number that an older screen already uses by hand.
 
 ## What is in this repo
 
@@ -42,8 +42,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.4",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.4"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.5",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.5"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against. Unity resolves Entities, Input System and Timeline for you.
@@ -192,7 +192,7 @@ To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put 
 
 ## Status
 
-Preview, version `0.1.0-preview.4`. Checked on Unity 7000.0.0a16 on Linux.
+Preview, version `0.1.0-preview.5`. Checked on Unity 7000.0.0a16 on Linux.
 
 On `0.1.0-preview.4`:
 - 21 package PlayMode tests, plus the Basics, Hud, Inventory and Menu sample tests (three full runs, 26/26 each);
