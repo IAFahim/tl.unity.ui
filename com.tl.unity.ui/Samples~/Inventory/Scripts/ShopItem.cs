@@ -14,5 +14,9 @@ namespace InventorySample
         [CreateProperty]
         [Min(0)]
         public int Price = 10;
+
+        [Tooltip("What the shop row's tooltip says.")]
+        [CreateProperty]
+        public string Description = "";
     }
 }

@@ -40,6 +40,11 @@
       "displayName": "Inventory",
       "description": "Lists, drag and nameplates. Bag slots come from an ECS buffer (Bag Rows, a Tl UI Buffer Rows) into a container: click uses an item, dragging a slot onto another swaps them, both through the game's UI Command Inbox. The shop is a ListView of ShopItem assets (Tl UI Asset Rows): click buys. Three wandering enemies get nameplates (Nameplate Views, a Tl UI Entity Views) that follow them on screen. Tl UI > Samples > Build Inventory, then Play. Builder and a PlayMode test.",
       "path": "Samples~/Inventory"
+    },
+    {
+      "displayName": "Menu",
+      "description": "Screen flow and settings with no screen C#: two screens are Tl timelines on one channel (End Hold), so TlPlay buttons swap them; the settings slider, toggle and dropdown bind TwoWay to an ECS singleton through a Tl UI Data view; Cancel (Escape, gamepad East) goes back; a P / gamepad Start hotkey pauses through a Burst system; Tl UI Tooltips. Tl UI > Samples > Build Menu, then Play. Builder and a PlayMode test.",
+      "path": "Samples~/Menu"
     }
   ]
 }

@@ -1,0 +1,63 @@
+:root {
+    --menu-accent: rgb(120, 190, 255);
+    --menu-panel: rgba(18, 22, 30, 0.92);
+    --menu-text: rgb(235, 238, 245);
+}
+
+.menu-root {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen {
+    min-width: 420px;
+    padding: 28px;
+    background-color: var(--menu-panel);
+    border-radius: 12px;
+}
+
+.start-hidden {
+    display: none;
+}
+
+.title {
+    margin-bottom: 18px;
+    font-size: 34px;
+    color: var(--menu-text);
+}
+
+.menu-button {
+    height: 48px;
+    margin-bottom: 10px;
+    font-size: 22px;
+    transition-property: scale;
+    transition-duration: 0.12s;
+}
+
+.menu-button:hover,
+.menu-button:focus {
+    scale: 1.04 1.04;
+    border-color: var(--menu-accent);
+}
+
+.setting {
+    margin-bottom: 12px;
+}
+
+.banner {
+    margin-top: 12px;
+    padding: 8px 14px;
+    background-color: var(--menu-accent);
+    border-radius: 6px;
+    color: rgb(10, 20, 30);
+    font-size: 20px;
+}
+
+.tl-tooltip {
+    padding: 6px 10px;
+    background-color: rgba(10, 12, 18, 0.95);
+    border-radius: 6px;
+    color: var(--menu-text);
+    font-size: 16px;
+}

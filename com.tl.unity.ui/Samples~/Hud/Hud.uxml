@@ -4,9 +4,11 @@
         <ui:Label name="title" text="Tl UI HUD" class="title start-hidden">
             <tl:TlTarget id="0" />
         </ui:Label>
-        <ui:Label name="lowHealth" text="Low health" class="banner">
+        <ui:Label name="lowHealth" text="Low health" class="banner pulsing">
+            <tl:TlTarget id="2" />
             <Bindings>
                 <ui:DataBinding property="style.display" data-source-path="LowHealth" binding-mode="ToTarget" source-to-ui-converters="tl-visible" />
+                <tl:TlTriggerBinding property="low-health-pulse" data-source-path="LowHealth" timeline="2" when-on="Play" when-off="Stop" />
             </Bindings>
         </ui:Label>
         <ui:Label name="flashBanner" text="Flash timeline" class="banner flash start-hidden">
@@ -20,16 +22,23 @@
                 </Bindings>
             </ui:Label>
         </ui:VisualElement>
-        <ui:ProgressBar name="healthBar" low-value="0" high-value="1" class="health-bar">
-            <Bindings>
-                <ui:DataBinding property="value" data-source-path="HealthFraction" binding-mode="ToTarget" />
-            </Bindings>
-        </ui:ProgressBar>
+        <ui:VisualElement class="row">
+            <ui:ProgressBar name="healthBar" low-value="0" high-value="1" class="health-bar">
+                <Bindings>
+                    <tl:TlSmoothBinding property="value" data-source-path="HealthFraction" seconds="0.3" />
+                </Bindings>
+            </ui:ProgressBar>
+            <tl:TlRadialFill name="healthRing" class="ring">
+                <Bindings>
+                    <ui:DataBinding property="value" data-source-path="HealthFraction" binding-mode="ToTarget" />
+                </Bindings>
+            </tl:TlRadialFill>
+        </ui:VisualElement>
         <ui:VisualElement class="row">
             <ui:Label text="Coins" class="caption" />
             <ui:Label name="coins" class="value">
                 <Bindings>
-                    <ui:DataBinding property="text" data-source-path="Coins" binding-mode="ToTarget" source-to-ui-converters="tl-integer" />
+                    <tl:TlSmoothBinding property="text" data-source-path="Coins" seconds="0.5" />
                 </Bindings>
             </ui:Label>
         </ui:VisualElement>

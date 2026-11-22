@@ -38,7 +38,7 @@ public static class InventoryBuilder
         throw new InvalidOperationException("InventoryBuilder.cs was not found under Assets.");
     }
 
-    static ShopItem LoadOrCreateShopItem(string folder, string displayName, int price)
+    static ShopItem LoadOrCreateShopItem(string folder, string displayName, int price, string description)
     {
         var path = folder + "/Shop " + displayName + ".asset";
         var existing = AssetDatabase.LoadAssetAtPath<ShopItem>(path);
@@ -47,6 +47,7 @@ public static class InventoryBuilder
         var item = ScriptableObject.CreateInstance<ShopItem>();
         item.DisplayName = displayName;
         item.Price = price;
+        item.Description = description;
         AssetDatabase.CreateAsset(item, path);
         return item;
     }
@@ -58,9 +59,9 @@ public static class InventoryBuilder
         if (existing != null)
             return existing;
         var rows = ScriptableObject.CreateInstance<TlUiAssetRows>();
-        rows.Items.Add(LoadOrCreateShopItem(folder, "Potion", 15));
-        rows.Items.Add(LoadOrCreateShopItem(folder, "Shield", 60));
-        rows.Items.Add(LoadOrCreateShopItem(folder, "Arrow", 2));
+        rows.Items.Add(LoadOrCreateShopItem(folder, "Potion", 15, "Restores 25 health"));
+        rows.Items.Add(LoadOrCreateShopItem(folder, "Shield", 60, "Blocks the next hit"));
+        rows.Items.Add(LoadOrCreateShopItem(folder, "Arrow", 2, "One arrow for the bow"));
         AssetDatabase.CreateAsset(rows, path);
         AssetDatabase.SaveAssets();
         return rows;
@@ -168,6 +169,7 @@ public static class InventoryBuilder
         var uiPanel = ui.AddComponent<TlUiPanel>();
         uiPanel.Panel = panelRenderer;
         ConfigurePanel(uiPanel, bagRows, AssetDatabase.LoadAssetAtPath<TlUiAssetRows>(folder + "/" + ShopRowsFile), folder);
+        ui.AddComponent<TlUiTooltips>();
         var nameplates = ui.AddComponent<NameplateViews>();
         nameplates.Panel = uiPanel;
         nameplates.ContainerId = 3;

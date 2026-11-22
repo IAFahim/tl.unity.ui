@@ -1,0 +1,21 @@
+{
+  "name": "Tl.Unity.UI.Samples.Menu.Editor",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.Tracks",
+    "Tl.Unity.Tracks.Editor",
+    "Tl.Unity.UI",
+    "Tl.Unity.UI.Samples.Menu",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.InputSystem",
+    "Unity.Scenes",
+    "Unity.Timeline"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

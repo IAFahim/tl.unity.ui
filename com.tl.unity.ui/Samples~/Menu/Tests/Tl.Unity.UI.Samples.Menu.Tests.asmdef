@@ -1,0 +1,23 @@
+{
+  "name": "Tl.Unity.UI.Samples.Menu.Tests",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.UI",
+    "Tl.Unity.UI.Samples.Menu",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.InputSystem",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "autoReferenced": false
+}

@@ -111,6 +111,19 @@ namespace InventorySample.Tests
             Assert.GreaterOrEqual(shopRows.Count, 3, "the shop ListView binds a row per shop item");
             Assert.AreEqual("Shield", shopRows[1].Q<Label>("shopName").text, "shop rows bind the ShopItem asset's DisplayName");
             Assert.AreEqual("60", shopRows[1].Q<Label>("shopPrice").text);
+            var tooltips = UnityEngine.Object.FindAnyObjectByType<TlUiTooltips>();
+            using (var over = PointerEventBase<PointerOverEvent>.GetPooled(new Event { type = EventType.MouseMove, mousePosition = shopRows[1].worldBound.center }))
+            {
+                var shieldName = shopRows[1].Q<Label>("shopName");
+                over.target = shieldName;
+                shieldName.SendEvent(over);
+            }
+            var tooltipDeadline = Time.realtimeSinceStartup + 3f;
+            while (tooltips.ShownFor == null && Time.realtimeSinceStartup < tooltipDeadline)
+                yield return null;
+            Assert.IsNotNull(tooltips.ShownFor, "hovering a shop row shows its tooltip after the delay");
+            Assert.AreEqual("Blocks the next hit", tooltips.Label.text, "the row's tooltip is bound to the ShopItem's Description");
+
             Send<ClickEvent>(shopRows[1]);
             yield return Frames(5);
             Assert.IsTrue(SlotsOf(entityManager, bag).Any(slot => TextOf(slot.Name) == "Shield" && slot.Count == 1), "clicking the Shield row buys a Shield into the bag");

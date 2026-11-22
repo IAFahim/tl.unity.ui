@@ -18,6 +18,7 @@ public static class HudBuilder
 {
     const string IntroTimelineFile = "Hud Intro.playable";
     const string FlashTimelineFile = "Hud Flash.playable";
+    const string PulseTimelineFile = "Hud Low Health Pulse.playable";
     const string ThemeFile = "Hud Theme.tss";
     const string PanelSettingsFile = "Hud Panel Settings.asset";
     const string ScreenFile = "Hud.uxml";
@@ -58,6 +59,33 @@ public static class HudBuilder
         return timeline;
     }
 
+    static TimelineAsset LoadOrCreatePulseTimeline(string path, byte pulsingId)
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<TimelineAsset>(path);
+        if (existing != null)
+            return existing;
+        var timeline = TlTimelines.CreateAsset();
+        AssetDatabase.CreateAsset(timeline, path);
+        timeline.durationMode = TimelineAsset.DurationMode.FixedLength;
+        timeline.fixedDuration = 0.8;
+        var track = timeline.CreateTrack<TlTrack>(null, "Pulse");
+        track.Template = new Tl_Ui_AddClassClip_TlData();
+        var clip = track.CreateClip<TlClip>();
+        clip.displayName = "Pulse";
+        clip.start = 0.0;
+        clip.duration = 0.4;
+        var data = (Tl_Ui_AddClassClip_TlData)((TlClip)clip.asset).Data;
+        data.Id = pulsingId;
+        data.ClassSlot = 0;
+        timeline.CreateMarkerTrack();
+        timeline.markerTrack.CreateMarker<TlTimelineSettings>(0.0).End = TlEnd.Loop;
+        EditorUtility.SetDirty(clip.asset);
+        EditorUtility.SetDirty(track);
+        EditorUtility.SetDirty(timeline);
+        AssetDatabase.SaveAssets();
+        return timeline;
+    }
+
     static PanelSettings LoadOrCreatePanelSettings(string folder)
     {
         var path = folder + "/" + PanelSettingsFile;
@@ -86,7 +114,9 @@ public static class HudBuilder
         var director = sequence.AddComponent<PlayableDirector>();
         director.playableAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(folder + "/" + IntroTimelineFile);
         director.playOnAwake = true;
-        sequence.AddComponent<TlAlsoPlays>().Timelines.Add(AssetDatabase.LoadAssetAtPath<TimelineAsset>(folder + "/" + FlashTimelineFile));
+        var alsoPlays = sequence.AddComponent<TlAlsoPlays>();
+        alsoPlays.Timelines.Add(AssetDatabase.LoadAssetAtPath<TimelineAsset>(folder + "/" + FlashTimelineFile));
+        alsoPlays.Timelines.Add(AssetDatabase.LoadAssetAtPath<TimelineAsset>(folder + "/" + PulseTimelineFile));
         sequence.AddComponent<TlUiTimelines>();
         sequence.AddComponent<HudDemoAuthoring>();
         EditorSceneManager.SaveScene(objects, folder + "/" + ObjectsSceneFile);
@@ -96,6 +126,8 @@ public static class HudBuilder
     {
         uiPanel.Targets.Clear();
         uiPanel.Commands.Clear();
+        uiPanel.ClassSlots.Clear();
+        uiPanel.ClassSlots.Add("pulse");
         uiPanel.DataSource = hudView;
     }
 
@@ -151,6 +183,7 @@ public static class HudBuilder
         var folder = SampleFolder();
         LoadOrCreateShowTimeline(folder + "/" + IntroTimelineFile, 1.5, 0);
         LoadOrCreateShowTimeline(folder + "/" + FlashTimelineFile, 0.5, 1);
+        LoadOrCreatePulseTimeline(folder + "/" + PulseTimelineFile, 2);
         LoadOrCreatePanelSettings(folder);
         CreateObjectsScene(folder);
         CreateScene(folder);

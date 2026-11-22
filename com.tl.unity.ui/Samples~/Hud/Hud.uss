@@ -55,3 +55,21 @@
     margin-right: 10px;
     font-size: 20px;
 }
+
+.pulsing {
+    transition-property: scale;
+    transition-duration: 0.2s;
+}
+
+.pulse {
+    scale: 1.08 1.08;
+}
+
+.ring {
+    width: 44px;
+    height: 44px;
+    margin-left: 14px;
+    --tl-fill-color: rgb(96, 220, 120);
+    --tl-track-color: rgba(255, 255, 255, 0.15);
+    --tl-thickness: 6;
+}

@@ -1,0 +1,47 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:tl="TlUi">
+    <ui:Style src="Menu.uss" />
+    <ui:VisualElement name="menuRoot" class="menu-root">
+        <ui:VisualElement name="mainScreen" class="screen start-hidden">
+            <tl:TlTarget id="0" />
+            <ui:Label text="Tl UI Menu" class="title" />
+            <ui:Button name="play" text="Play" class="menu-button" tooltip="Start the game">
+                <tl:TlSend code="1" />
+            </ui:Button>
+            <ui:Button name="settings" text="Settings" class="menu-button" tooltip="Sound and picture">
+                <tl:TlPlay timeline="1" />
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement name="settingsScreen" class="screen start-hidden">
+            <tl:TlTarget id="1" />
+            <ui:Label text="Settings" class="title" />
+            <ui:Slider name="volume" label="Volume" low-value="0" high-value="1" class="setting">
+                <Bindings>
+                    <ui:DataBinding property="value" data-source-path="Volume" binding-mode="TwoWay" />
+                </Bindings>
+            </ui:Slider>
+            <ui:Toggle name="mute" label="Mute" class="setting">
+                <Bindings>
+                    <ui:DataBinding property="value" data-source-path="Muted" binding-mode="TwoWay" />
+                </Bindings>
+            </ui:Toggle>
+            <ui:DropdownField name="quality" label="Quality" choices="Low,Medium,High" class="setting">
+                <Bindings>
+                    <ui:DataBinding property="index" data-source-path="Quality" binding-mode="TwoWay" />
+                </Bindings>
+            </ui:DropdownField>
+            <ui:Button name="back" text="Back" class="menu-button" tooltip="Back to the main menu (Cancel works too)">
+                <tl:TlPlay timeline="0" />
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:Label name="paused" text="Paused" class="banner">
+            <Bindings>
+                <ui:DataBinding property="style.display" data-source-path="Paused" binding-mode="ToTarget" source-to-ui-converters="tl-visible" />
+            </Bindings>
+        </ui:Label>
+        <ui:Label name="started" text="Game started" class="banner">
+            <Bindings>
+                <ui:DataBinding property="style.display" data-source-path="Started" binding-mode="ToTarget" source-to-ui-converters="tl-visible" />
+            </Bindings>
+        </ui:Label>
+    </ui:VisualElement>
+</ui:UXML>

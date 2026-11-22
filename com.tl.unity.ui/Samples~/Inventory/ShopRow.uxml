@@ -1,6 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Style src="Inventory.uss" />
     <ui:VisualElement name="shopRow" class="shop-row">
+        <Bindings>
+            <ui:DataBinding property="tooltip" data-source-path="Description" binding-mode="ToTarget" />
+        </Bindings>
         <ui:Label name="shopName" class="shop-name">
             <Bindings>
                 <ui:DataBinding property="text" data-source-path="DisplayName" binding-mode="ToTarget" />

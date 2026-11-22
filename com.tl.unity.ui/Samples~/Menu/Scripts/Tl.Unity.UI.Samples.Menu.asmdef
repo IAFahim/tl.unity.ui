@@ -1,0 +1,15 @@
+{
+  "name": "Tl.Unity.UI.Samples.Menu",
+  "references": [
+    "Tl.Core",
+    "Tl.Ui",
+    "Tl.Unity",
+    "Tl.Unity.UI",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.Mathematics"
+  ],
+  "autoReferenced": false
+}
