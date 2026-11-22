@@ -18,7 +18,15 @@ The packages live on the tl.unity branch `feat/uitk-blocks` and are tested as lo
 "com.tl.unity.ui": "file:/path/to/tl.unity/com.tl.unity.ui"
 ```
 
-Once the branch is merged, each also installs by Git URL (`https://github.com/IAFahim/tl.unity.git?path=/com.tl.ui#main` and so on); list all three, because a Git package cannot pull another Git package. The Git install is not tested yet.
+Or install by Git URL. List all three, because a Git package cannot pull another Git package:
+
+```json
+"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#feat/uitk-blocks",
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.ui#feat/uitk-blocks",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity.ui#feat/uitk-blocks"
+```
+
+A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 20 package tests. Change `#feat/uitk-blocks` to `#main` once the branch is merged.
 
 ## Set up a screen
 
@@ -210,6 +218,27 @@ Unity 7000.0.0a16, `-batchmode -nographics`, PlayMode tests in a fresh project w
 - Every UI Toolkit call the panel makes (style display, set enabled, label text, progress value, focus, attach, detach) allocates 0 B once warm.
 
 The first play of a timeline pays one-time costs: UI Toolkit focus and blur paths, Attach creating its template, Tl filling its per-stage event cache. Rendering was not part of these runs.
+
+## Production checks
+
+| Check | Result |
+|---|---|
+| Editor PlayMode tests, `-batchmode -nographics` | 20 package tests and 4 sample tests pass |
+| Engine-free rules | 13 .NET tests pass |
+| Linux player, CoreCLR | builds with 0 errors and 0 warnings; a smoke scene loads all four sample scenes headless and passes 27 checks |
+| Linux player, IL2CPP | builds (the only warnings are TextMeshPro's own IL2CPP notes) and passes the same 27 checks |
+| UXML in a player | TlTarget, TlSend, TlPlay, the three Tl bindings and Tl Radial Fill all load from UXML and work under both backends |
+| Allocation in a player | UI Toolkit's panel update allocates 0 B over 240 ticks while the Hud data changes every frame |
+| Git URL install | a fresh project compiles and passes the package tests |
+| Static state | every static resets on `SubsystemRegistration`, so it is safe with domain reload off |
+
+The smoke scene and the build script live in the tl-ui project (`Assets/PlayerSmoke`, `Assets/Editor/TlUiPlayerBuild.cs`). They are not shipped in the package.
+
+Not checked yet:
+- other platforms (Windows, macOS, mobile, consoles, WebGL);
+- what anything looks like (all runs are headless);
+- authoring in UI Builder's own panels;
+- Unity 7000.0.0a20.
 
 ## Limits
 
