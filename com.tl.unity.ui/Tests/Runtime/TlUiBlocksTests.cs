@@ -152,6 +152,35 @@ namespace TlUiPackage.Tests
             CollectionAssert.AreEqual(new[] { RequestOp.Start, RequestOp.Stop }, Requests(), "other fields changing do not re-fire the trigger");
         }
 
+#if UNITY_EDITOR
+        [UnityTest]
+        public IEnumerator BindingsAuthoredInUxmlKeepEveryAttribute()
+        {
+            var screen = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.tl.unity.ui/Tests/Runtime/AuthoredBindings.uxml");
+            Assert.IsNotNull(screen);
+            yield return BuildScreen(panel => panel.Panel.visualTreeAsset = screen, root => { });
+            var flagged = _panel.Root.Q("flagged");
+            Assert.IsTrue(flagged.TryGetBinding("flag", out var flagBinding), "the class binding loads from UXML");
+            var classBinding = (TlClassBinding)flagBinding;
+            Assert.AreEqual("quiet", classBinding.ClassName, "uss-class parses");
+            Assert.IsTrue(classBinding.Invert, "invert parses");
+            Assert.IsTrue(flagged.TryGetBinding("trigger", out var triggerBinding));
+            var trigger = (TlTriggerBinding)triggerBinding;
+            Assert.AreEqual(UiTimelineVerb.Restart, trigger.WhenOn, "when-on parses");
+            Assert.AreEqual(UiTimelineVerb.Pause, trigger.WhenOff, "when-off parses");
+            Assert.IsTrue(_panel.Root.Q("eased").TryGetBinding("value", out var smoothBinding));
+            Assert.AreEqual(0.2f, ((TlSmoothBinding)smoothBinding).Seconds, 0.0001f, "seconds parses");
+
+            yield return Frames(3);
+            Assert.IsFalse(flagged.ClassListContains("quiet"), "invert: Muted true turns the class off");
+            CollectionAssert.AreEqual(new[] { RequestOp.Stop, RequestOp.Start }, Requests(), "Muted starts true, so the trigger restarts slot 0");
+            SetSettings(new TestSettingsData { Volume = 0.45f, Muted = false, Coins = 100 });
+            yield return Frames(3);
+            Assert.IsTrue(flagged.ClassListContains("quiet"));
+            CollectionAssert.AreEqual(new[] { RequestOp.Stop, RequestOp.Start, RequestOp.Pause }, Requests(), "the falling edge pauses it");
+        }
+#endif
+
         [UnityTest]
         public IEnumerator TwoWayKeepsAGameWriteMadeInTheSameFrame()
         {

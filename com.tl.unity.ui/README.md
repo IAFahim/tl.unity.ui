@@ -45,6 +45,8 @@ Rules when clips disagree: Hide beats Show, Disable beats Enable, Remove Class b
 
 ## Commands
 
+Commands also have **Cancel** (Escape, gamepad East, sent to the focused element and bubbling up), for Back on a screen. Hotkeys are ignored while a TextField has focus.
+
 Every click in Tl UI also answers **Submit** (Enter, or gamepad South while the element has focus), because UI Toolkit raises `ClickEvent` only for pointers; a Button turns Submit into `clicked`, never into `ClickEvent`. The **Commands** table turns a target's Click (pointer or Submit), Pointer Enter, Pointer Leave or Value Changed event, or an Input Action **Hotkey** (heard through the action's `performed` event, not polled), into one action: play, stop, pause, resume or restart a timeline slot, **Send To Game** (a code and payload appended to the timeline object's `UiCommandInbox` buffer, read and cleared by your Burst systems), or a UnityEvent.
 
 ```csharp
@@ -115,8 +117,42 @@ Bind in UI Builder or UXML with paths relative to the struct (`Health`, `Coins`)
 | `tl-percent` | float 0 to 1 | `"45%"`, cached |
 | `tl-clock` | seconds | `"m:ss"`, cached to 99:59 |
 | `tl-visible` / `tl-hidden` | bool | `display` |
+| `tl-invisible` | bool | `visibility` (keeps the space) |
+| `tl-not` | bool | bool, for `enabledSelf` and the like |
+
+Three binding types go in an element's Bindings next to ordinary bindings, and UI Builder lists them too. Each reads a bool, int or float without boxing:
+
+```xml
+<ui:Label name="lowHealth" text="Low health">
+    <Bindings>
+        <tl:TlClassBinding property="danger-class" data-source-path="LowHealth" uss-class="danger" />
+        <tl:TlTriggerBinding property="pulse" data-source-path="LowHealth" timeline="2" when-on="Play" when-off="Stop" />
+    </Bindings>
+</ui:Label>
+<ui:ProgressBar name="healthBar">
+    <Bindings>
+        <tl:TlSmoothBinding property="value" data-source-path="HealthFraction" seconds="0.3" />
+    </Bindings>
+</ui:ProgressBar>
+```
+
+| Binding | Does |
+|---|---|
+| `TlClassBinding uss-class invert` | a USS class is on while the value is true or non-zero |
+| `TlTriggerBinding timeline when-on when-off` | plays, stops or restarts a UI timeline on each edge of the value (a looping pulse while health is low) |
+| `TlSmoothBinding seconds` | eases a value control (ProgressBar, Slider, Tl Radial Fill) or a Label's number to the new value over the given time, on one reused scheduled item |
+
+For enabled and disabled, bind `enabledSelf` directly, with `tl-not` to invert it.
+
+**Tl Radial Fill** (`<tl:TlRadialFill>`) is a ring drawn with Painter2D. Its `value` (0 to 1) is bindable, smoothable, and driven by the Animate Value channel. Style it with `--tl-fill-color`, `--tl-track-color` and `--tl-thickness`.
 
 A ScriptableObject works as the Data Source too, for settings and catalogs.
+
+## Player input the game needs to know about
+
+- **UiInputState** on the timeline object says whether the pointer is over UI and whether the player is typing, so Burst gameplay can ignore clicks and keys the UI took.
+- **`<tl:TlSendText code="5"/>`** on a TextField sends its text to the `UiTextInbox` buffer (`FixedString128Bytes`, truncated) when it changes; set `is-delayed` on the field to send only on Enter or blur.
+- **TlSendValue** on a DropdownField sends the chosen index. A dropdown's `index` also binds TwoWay directly.
 
 ## Game moments
 
@@ -170,6 +206,7 @@ Unity 7000.0.0a16, `-batchmode -nographics`, PlayMode tests in a fresh project w
 - Inventory: rows show the ECS buffer through `tl-fixed-text` and `tl-integer`; a row click uses an item, a synthesized drag swaps two slots, a shop row click buys. Nameplates follow their entities within 3 px, and a destroyed entity's view is hidden for reuse. Bag Rows, Nameplate Views and the panel allocate 0 B over 240 frames while two nameplates move and change every frame.
 - Package tests: selectors for one element, a class and a type; Hide with Keep Space, Enable on an authored-disabled button, Remove Class; translate, scale, rotate and width channels; Pointer Enter, Pointer Leave and Value Changed commands into the inbox; Play, Stop, Pause and Resume clicks into the request buffer; a ScriptableObject data source through `tl-percent` and `tl-hidden`; every component added from code and authored in UXML, with every attribute set to a non-default value.
 - UI Toolkit components: 1,000 rounds of `GetComponent`, `HasComponent`, a click through a static handler and `MarkComponentDirty` allocate 0 B once warm.
+- UI Toolkit's own panel update (`UIElementsUpdatePanels`, measured by `UiToolkitTickProbe`): 0 B over 239 ticks while the Hud data changes every frame, with its smooth, trigger and radial bindings, and 0 B over 120 frames of the Menu.
 - Every UI Toolkit call the panel makes (style display, set enabled, label text, progress value, focus, attach, detach) allocates 0 B once warm.
 
 The first play of a timeline pays one-time costs: UI Toolkit focus and blur paths, Attach creating its template, Tl filling its per-stage event cache. Rendering was not part of these runs.
@@ -180,6 +217,9 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
 - One timeline object (Tl UI Timelines) per World receives commands.
+- Ids are shared by the whole World, so a timeline cannot play per list row or per entity. Per-entity motion belongs in ECS data shown by Tl UI Entity Views.
+- Tl timelines run in `FixedStepSimulationSystemGroup`, so `Time.timeScale = 0` freezes UI timelines too. Pause the game with an ECS flag instead (see the Menu sample).
+- An element can hold one component of each type, so one TlTarget and one TlSend per element.
 - UI Toolkit shows tooltips and context menus only in Editor panels. Tl UI Tooltips covers tooltips at runtime; context menus are not covered.
 - Ids come from the panel's own UXML. A `TlTarget` inside a row, Attach or entity-view template does nothing and logs one warning; `TlSend` and `TlPlay` work anywhere under the panel.
 
@@ -187,6 +227,7 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 
 - **Basics**: every time block on one screen, with a test that checks each against its clip.
 - **Hud**: ECS data binding, converters, the command inbox and a button that plays a timeline, all authored in UXML with Target, Send and Play components.
-- **Inventory**: a bag from an ECS buffer (click to use, drag to swap), a shop ListView from ScriptableObjects (click to buy), and nameplates that follow three moving enemies.
+- **Inventory**: a bag from an ECS buffer (click to use, drag to swap), a shop ListView from ScriptableObjects (click to buy) with tooltips bound per row, and nameplates that follow three moving enemies.
+- **Menu**: screen flow with no screen C#. Two screens are Tl timelines on one channel (End Hold), so buttons swap them. Settings bind TwoWay to an ECS singleton; Cancel goes back; a hotkey pauses.
 
-Import a sample, run **Tl UI > Samples > Build Basics** (or **Build Hud**, **Build Inventory**), open the built scene and press Play.
+Import a sample, run **Tl UI > Samples > Build Basics** (or **Build Hud**, **Build Inventory**, **Build Menu**), open the built scene and press Play.

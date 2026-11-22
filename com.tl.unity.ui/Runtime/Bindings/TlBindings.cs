@@ -43,7 +43,7 @@ namespace TlUi
     [UxmlObject]
     public partial class TlClassBinding : DataBinding
     {
-        [UxmlAttribute("class")]
+        [UxmlAttribute("uss-class")]
         public string ClassName;
 
         [UxmlAttribute]

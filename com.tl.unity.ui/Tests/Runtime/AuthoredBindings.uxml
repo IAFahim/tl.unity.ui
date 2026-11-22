@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:tl="TlUi">
+    <ui:Label name="flagged" text="flagged">
+        <Bindings>
+            <tl:TlClassBinding property="flag" data-source-path="Muted" uss-class="quiet" invert="true" />
+            <tl:TlTriggerBinding property="trigger" data-source-path="Muted" timeline="0" when-on="Restart" when-off="Pause" />
+        </Bindings>
+    </ui:Label>
+    <ui:ProgressBar name="eased" low-value="0" high-value="1">
+        <Bindings>
+            <tl:TlSmoothBinding property="value" data-source-path="Volume" seconds="0.2" />
+        </Bindings>
+    </ui:ProgressBar>
+</ui:UXML>
