@@ -7,6 +7,7 @@
     "Tl.Unity.UI",
     "Unity.Collections",
     "Unity.Entities",
+    "Unity.InputSystem",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],
