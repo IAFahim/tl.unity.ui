@@ -41,6 +41,6 @@ dotnet test tl.unity.ui/com.tl.ui/Tests~/Tl.Ui.Tests
 Then, in a fresh 7000.0.0a16 project:
 1. Add the packages with `file:` paths and `"testables": ["com.tl.unity.ui"]`. Unity hides warnings for Git-URL packages, so only a `file:` install shows them.
 2. Compile, and check `error CS` and own warnings are 0.
-3. Run EditMode tests (2: the Timeline menu and the designer flow), then PlayMode tests (21 package tests). Run PlayMode twice with the samples imported; the allocation checks must read 0 B both times.
+3. Run EditMode tests (4: the Timeline menu, the target action, scrub preview, and the designer flow in Play mode), then PlayMode tests (21 package tests). Run PlayMode twice with the samples imported; the allocation checks must read 0 B both times.
 4. Import a sample, run its **Tl UI > Samples > Build** item, and run its test.
 5. Before a tag, install the exact commit by Git URL and run the PlayMode tests again.

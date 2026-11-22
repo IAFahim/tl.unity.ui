@@ -12,19 +12,20 @@ Game code never calls the UI and never holds a reference to it. Game code writes
 
 ## Designers: start here (no code)
 
-Make something hide, in four clicks:
+Make something hide, and see it while you scrub:
 
-1. Save your scene. In the **Hierarchy**, right-click and pick **Tl UI > Screen**. A screen with a big **Hello** label appears, and the Timeline window opens.
+1. Save your scene. In the **Hierarchy**, right-click and pick **Tl UI > Screen**. A big **Hello** label appears, and the Timeline window opens on it, ready to scrub.
 2. In the Timeline window, click **+** and pick **UI > Hide**.
 3. Right-click the new **Hide** track and pick **Add Tl Clip**. Drag the clip to where the hide should start, and drag its end to how long it lasts.
-4. Press **Play**. Hello disappears while the clip plays and comes back after it.
-
-The **UI** menu in the Timeline **+** button holds every block: Show, Hide, Enable, Disable, Add Class, Remove Class, Attach, Animate, Text, Signal and Focus. Each clip has an **Id** in the Inspector. The starter Hello label is Id 0, the default.
+4. Drag the playhead across the clip. Hello disappears in the Game view while the playhead is on the clip, with no Play needed. Press **Play** to see it run for real.
 
 To hide something else:
 1. Double-click `Screen.uxml` to open it in UI Builder, add an element, and give it a **Name**.
-2. Select the **Screen** GameObject. Under **Tl UI Panel > Targets**, click **+**, set **Id** to 1 and **Selector** to `#` plus the name.
-3. Set the clip's **Id** to 1.
+2. Right-click the clip and pick **Tl UI Target…**, then pick that name. The clip renames itself, for example **Hide title**.
+
+You never type a number. Every block is under **+ > UI**: Show, Hide, Enable, Disable, Add Class, Remove Class, Attach, Animate, Text, Signal and Focus.
+
+Names live on the **Screen Timelines** object, in **Tl UI Timelines > Target Names**, and are baked into ECS as fixed strings. A clip stores its name's position in that list, a byte, so Play mode still allocates nothing.
 
 ## What is in this repo
 
@@ -41,8 +42,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.3",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.3"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.4",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.4"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against. Unity resolves Entities, Input System and Timeline for you.
@@ -191,11 +192,11 @@ To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put 
 
 ## Status
 
-Preview, version `0.1.0-preview.3`. Checked on Unity 7000.0.0a16 on Linux.
+Preview, version `0.1.0-preview.4`. Checked on Unity 7000.0.0a16 on Linux.
 
-On `0.1.0-preview.3`:
-- 21 package PlayMode tests, plus the Basics, Hud, Inventory and Menu sample tests (two full runs, 26/26 each);
-- 2 EditMode tests: every block is in the Timeline **+** menu, and the designer flow above hides the label;
+On `0.1.0-preview.4`:
+- 21 package PlayMode tests, plus the Basics, Hud, Inventory and Menu sample tests (three full runs, 26/26 each);
+- 4 EditMode tests: every block in the **+** menu, **Tl UI Target** naming a clip, scrubbing hiding and restoring Hello, and the element named hello hiding in Play mode;
 - 13 .NET tests from a fresh clone.
 
 On `0.1.0-preview.2`: "Make your own screen" above, built as the steps say.

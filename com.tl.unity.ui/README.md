@@ -14,20 +14,30 @@ This package and `com.tl.ui` live in [IAFahim/tl.unity.ui](https://github.com/IA
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.3",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.3"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.4",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.4"
 ```
 
 A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 21 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
 
 ## Set up a screen
 
-**GameObject > Tl UI > Screen** (or right-click in the Hierarchy) does all four steps below. You get a starter screen whose Hello label is Id 0, and its empty timeline opens in the Timeline window. Save the scene first. To build it by hand:
+**GameObject > Tl UI > Screen** (or right-click in the Hierarchy) does all four steps below. Save the scene first. You get:
+- a starter screen with a Hello label;
+- `hello` as the first target name;
+- the timelines SubScene opened for editing, with its director bound in the Timeline window so scrubbing previews right away.
+
+To build it by hand:
 
 1. **The timeline object.** In a SubScene, make a GameObject with a **Playable Director** and add **Tl UI Timelines**. Its Playable is timeline slot 0; its **Also Plays** list holds slots 1 and up, which buttons can play.
 2. **The screen.** In the main scene, make a GameObject with a **Panel Renderer** (Unity 7's UI Toolkit component; UI Document is Legacy) holding your Panel Settings and UXML, and add **Tl UI Panel**.
-3. **Targets.** Give each thing a timeline will touch an Id (0 to 63): put a **Target** component on the element in UXML or UI Builder (see below), or add a row to Tl UI Panel's **Targets** table with a selector: `#name` is one element, `.class` every element with that class, `Button` every button, and words combine (`.shop-card Button`). An element can get Ids from both.
-4. **Clips.** In the Timeline window, click **+**, pick a block under **UI** (Show, Hide, and so on), right-click the new track, pick **Add Tl Clip**, and set the clip's **Id** in the Inspector.
+3. **Targets.** Clips target elements by **name**. Right-click a UI clip in the Timeline window and pick **Tl UI Target…** to choose an element name from your screens' UXML. The name is added to **Tl UI Timelines > Target Names**, and the clip stores its position there.
+   - Names are baked into ECS as `FixedString64Bytes` (`UiTargetName` on the timeline object), so every Tl UI Panel in the world finds the same elements.
+   - To target by type or class instead, or from code, give an element an Id (0 to 63) another way: a **Target** component in UXML or UI Builder (see below), or a row in Tl UI Panel's **Targets** table with a selector. `#name` is one element, `.class` every element with that class, `Button` every button, and words combine (`.shop-card Button`).
+   - Names take Ids from 0 up, so don't mix them with hand-picked Ids in one world.
+4. **Clips.** In the Timeline window, click **+**, pick a block under **UI** (Show, Hide, and so on), right-click the new track, and pick **Add Tl Clip**.
+
+**Preview while scrubbing.** With the director bound in the Timeline window, dragging the playhead previews every Tl UI Panel in the open scenes in Edit mode. Tl bakes the director and runs its real systems once per edit, recording the UI state for every tick, so scrubbing is a lookup and matches Play mode. Signals, focus and commands do not fire in preview. When preview ends, every element is back to what the UXML says.
 
 ## Blocks
 
@@ -236,7 +246,7 @@ Not checked yet:
 
 ## Limits
 
-- 64 Ids, 16 channels and 8 slots of each kind per screen.
+- 64 Ids (or names), 16 channels and 8 slots of each kind per screen.
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
 - One timeline object (Tl UI Timelines) per World receives commands.

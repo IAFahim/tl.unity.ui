@@ -8,9 +8,11 @@
     "Tl.Unity.Tracks",
     "Tl.Unity.Tracks.Editor",
     "Tl.Unity.UI",
+    "Unity.Collections",
     "Unity.Entities",
     "Unity.Entities.Hybrid",
     "Unity.Scenes",
+    "Unity.Scenes.Editor",
     "Unity.Timeline",
     "Unity.Timeline.Editor"
   ],

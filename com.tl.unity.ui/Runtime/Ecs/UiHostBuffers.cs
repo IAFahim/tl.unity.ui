@@ -25,6 +25,12 @@ namespace TlUi
         public FixedString128Bytes Text;
     }
 
+    [InternalBufferCapacity(0)]
+    public struct UiTargetName : IBufferElementData
+    {
+        public FixedString64Bytes Name;
+    }
+
     public struct UiInputState : IComponentData
     {
         public bool PointerOverUi;

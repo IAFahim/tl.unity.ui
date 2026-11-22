@@ -13,7 +13,9 @@ using Unity.Entities;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
+using UnityEditor.Timeline.Actions;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.TestTools;
 using UnityEngine.Timeline;
 using UnityEngine.UIElements;
@@ -49,14 +51,40 @@ namespace TlUiPackage.EditorTests
             return allTracks.Where(track => !(bool)isHidden.Invoke(null, new object[] { track })).ToList();
         }
 
-        static TrackAsset AddFromThePlusMenu(TimelineAsset timeline, System.Type menuTrack)
+        static TlTrack AddFromThePlusMenu(TimelineAsset timeline, System.Type menuTrack)
         {
             var createTrack = TimelineEditorInternal("TimelineHelpers").GetMethod("CreateTrack", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(TimelineAsset), typeof(System.Type), typeof(TrackAsset), typeof(string) }, null);
             createTrack.Invoke(null, new object[] { timeline, menuTrack, null, null });
-            return timeline.GetRootTracks().Last();
+            return timeline.GetRootTracks().Last() as TlTrack;
         }
 
         static string MenuPathOf(System.Type track) => track.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName;
+
+        static TlUiScreenMenu.Created ScreenWithAHideClip(double start, double duration)
+        {
+            var flowScene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+            if (!AssetDatabase.IsValidFolder(FlowFolder))
+                AssetDatabase.CreateFolder("Assets", "Tl UI Designer Flow Test");
+            EditorSceneManager.SaveScene(flowScene, FlowFolder + "/Flow.unity");
+            var created = TlUiScreenMenu.Create(FlowFolder);
+            Assert.IsNotNull(created.Screen, "GameObject > Tl UI > Screen makes the screen");
+            var hideTrack = AddFromThePlusMenu(created.Timeline, typeof(HideUiMenuTrack));
+            var hideClip = hideTrack.CreateClip<TlClip>();
+            hideClip.start = start;
+            hideClip.duration = duration;
+            EditorUtility.SetDirty(hideClip.asset);
+            EditorUtility.SetDirty(hideTrack);
+            EditorUtility.SetDirty(created.Timeline);
+            AssetDatabase.SaveAssets();
+            EditorSceneManager.SaveScene(flowScene);
+            return created;
+        }
+
+        static void ForgetTheFlow()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            AssetDatabase.DeleteAsset(FlowFolder);
+        }
 
         [Test]
         public void EveryUiBlockIsInTheTimelinePlusMenuAndAddsATlTrackOfThatBlock()
@@ -71,7 +99,7 @@ namespace TlUiPackage.EditorTests
                 Object.DestroyImmediate(menuTrackInstance);
 
                 var timeline = TlTimelines.CreateAsset();
-                var track = AddFromThePlusMenu(timeline, menuTrack) as TlTrack;
+                var track = AddFromThePlusMenu(timeline, menuTrack);
                 var shortName = block.Menu.Substring("UI/".Length);
                 Assert.IsNotNull(track, block.Menu + " turns into a Tl track when picked");
                 Assert.AreEqual(1, timeline.GetRootTracks().Count(), "the menu entry itself is not left in the timeline");
@@ -84,24 +112,99 @@ namespace TlUiPackage.EditorTests
             }
         }
 
-        [UnityTest]
-        public IEnumerator ADesignerAddsAScreenAndAHideClipAndTheLabelHidesWhileTheClipIsOn()
+        [Test]
+        public void TheTargetActionNamesAClipsTargetAndAddsNewNamesToTheTimelinesObject()
         {
-            var flowScene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-            if (!AssetDatabase.IsValidFolder(FlowFolder))
-                AssetDatabase.CreateFolder("Assets", "Tl UI Designer Flow Test");
-            EditorSceneManager.SaveScene(flowScene, FlowFolder + "/Flow.unity");
-            var screen = TlUiScreenMenu.Create(FlowFolder, out var timeline);
-            Assert.IsNotNull(screen, "GameObject > Tl UI > Screen makes the screen");
-            var hideTrack = (TlTrack)AddFromThePlusMenu(timeline, typeof(HideUiMenuTrack));
-            var hideClip = hideTrack.CreateClip<TlClip>();
-            hideClip.start = 0.5;
-            hideClip.duration = 1.0;
-            EditorUtility.SetDirty(hideClip.asset);
-            EditorUtility.SetDirty(hideTrack);
-            EditorUtility.SetDirty(timeline);
-            AssetDatabase.SaveAssets();
-            EditorSceneManager.SaveScene(flowScene);
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var timelinesObject = new GameObject("Screen Timelines").AddComponent<TlUiTimelines>();
+            timelinesObject.TargetNames.Add("hello");
+            var timeline = TlTimelines.CreateAsset();
+            var hide = AddFromThePlusMenu(timeline, typeof(HideUiMenuTrack)).CreateClip<TlClip>();
+            var animate = AddFromThePlusMenu(timeline, typeof(AnimateUiMenuTrack)).CreateClip<TlClip>();
+            var action = new TlUiTargetAction();
+
+            Assert.AreEqual(ActionValidity.Valid, action.Validate(new[] { hide }), "Tl UI Target is offered on a Hide clip");
+            Assert.AreEqual(ActionValidity.NotApplicable, action.Validate(new[] { animate }), "and not on an Animate clip, which drives a channel, not a target");
+            CollectionAssert.Contains(TlUiTargets.NamesToOffer(timelinesObject), "hello");
+
+            Assert.IsTrue(TlUiTargets.Assign(new[] { hide }, timelinesObject, "title"));
+            CollectionAssert.AreEqual(new[] { "hello", "title" }, timelinesObject.TargetNames, "a new name is added to the timelines object");
+            Assert.AreEqual(1, ((Tl_Ui_HideClip_TlData)((TlClip)hide.asset).Data).Id, "the clip stores the name's position");
+            Assert.AreEqual("Hide title", hide.displayName, "the clip shows its target on the timeline");
+            Assert.AreEqual("title", TlUiTargets.TargetNameOf(hide, timelinesObject));
+
+            Assert.IsTrue(TlUiTargets.Assign(new[] { hide }, timelinesObject, "hello"));
+            Assert.AreEqual(0, ((Tl_Ui_HideClip_TlData)((TlClip)hide.asset).Data).Id, "an existing name keeps its position");
+            Assert.AreEqual("Hide hello", hide.displayName);
+            Assert.AreEqual(2, timelinesObject.TargetNames.Count);
+            Object.DestroyImmediate(timeline);
+        }
+
+        [UnityTest]
+        public IEnumerator ScrubbingTheTimelineHidesTheLabelWhileThePlayheadIsOnTheClipAndRestoresItAfter()
+        {
+            var created = ScreenWithAHideClip(0.5, 1.0);
+            var director = TlUiScreenMenu.OpenTimelinesObject(created.Timelines);
+            Assert.IsNotNull(director, "the Screen Timelines SubScene opens for editing and holds the director");
+            var panel = created.Screen.GetComponent<TlUiPanel>();
+            AnimationMode.StartAnimationMode();
+            try
+            {
+                director.time = 1.0;
+                director.Evaluate();
+                var previewDeadline = Time.realtimeSinceStartup + 20f;
+                while ((panel.Root == null || panel.Root.Q<Label>("hello") == null || panel.Root.Q<Label>("hello").resolvedStyle.display != DisplayStyle.None) && Time.realtimeSinceStartup < previewDeadline)
+                    yield return null;
+                Assert.IsTrue(panel.IsPreviewing, "scrubbing a Tl UI timeline previews every Tl UI Panel in the open scenes");
+                var hello = panel.Root.Q<Label>("hello");
+                Assert.AreEqual(DisplayStyle.None, hello.resolvedStyle.display, "at 1.0 s the playhead is on the Hide clip, so Hello is hidden in Edit mode");
+
+                director.time = 0.2;
+                director.Evaluate();
+                yield return null;
+                yield return null;
+                Assert.AreEqual(DisplayStyle.Flex, hello.resolvedStyle.display, "at 0.2 s, before the clip, Hello shows");
+
+                director.time = 1.4;
+                director.Evaluate();
+                yield return null;
+                yield return null;
+                Assert.AreEqual(DisplayStyle.None, hello.resolvedStyle.display, "scrubbing back onto the clip hides it again");
+
+                director.time = 1.8;
+                director.Evaluate();
+                yield return null;
+                yield return null;
+                Assert.AreEqual(DisplayStyle.Flex, hello.resolvedStyle.display, "after the clip, Hello shows");
+
+                director.time = 1.0;
+                director.Evaluate();
+                yield return null;
+                yield return null;
+                AnimationMode.StopAnimationMode();
+                var stopDeadline = Time.realtimeSinceStartup + 5f;
+                while (panel.IsPreviewing && Time.realtimeSinceStartup < stopDeadline)
+                    yield return null;
+                yield return null;
+                Assert.IsFalse(panel.IsPreviewing, "leaving Timeline preview stops the UI preview");
+                Assert.AreEqual(0, TlUiScrubPreview.PreviewingPanels);
+                Assert.AreEqual(DisplayStyle.Flex, hello.resolvedStyle.display, "and Hello is back to what the UXML says");
+            }
+            finally
+            {
+                if (AnimationMode.InAnimationMode())
+                    AnimationMode.StopAnimationMode();
+                TlUiScrubPreview.StopAll();
+            }
+            ForgetTheFlow();
+        }
+
+        [UnityTest]
+        public IEnumerator ADesignerAddsAScreenAndAHideClipAndTheLabelNamedHelloHidesWhilePlaying()
+        {
+            var created = ScreenWithAHideClip(0.5, 1.0);
+            StringAssert.DoesNotContain("TlTarget", System.IO.File.ReadAllText(FlowFolder + "/Screen.uxml"), "the starter screen marks nothing with an Id");
+            Assert.IsNotNull(created.Timelines, "the Screen Timelines SubScene exists");
 
             yield return new EnterPlayMode();
 
@@ -109,16 +212,16 @@ namespace TlUiPackage.EditorTests
             var entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             var timelinesQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>());
             var loadDeadline = Time.realtimeSinceStartup + 60f;
-            while ((panel.Root == null || panel.Root.Q<Label>("hello") == null || timelinesQuery.IsEmpty) && Time.realtimeSinceStartup < loadDeadline)
+            while ((panel.Root == null || panel.Root.Q<Label>("hello") == null || timelinesQuery.IsEmpty || panel.TargetNames.Count == 0) && Time.realtimeSinceStartup < loadDeadline)
                 yield return null;
             var hello = panel.Root.Q<Label>("hello");
             Assert.IsNotNull(hello, "the starter screen has the Hello label");
-            Assert.IsFalse(timelinesQuery.IsEmpty, "the Screen Timelines SubScene bakes Tl UI Timelines");
+            CollectionAssert.AreEqual(new[] { "hello" }, panel.TargetNames, "the panel reads the target names Tl UI Timelines baked into ECS");
 
             var hiddenDeadline = Time.realtimeSinceStartup + 10f;
             while (hello.resolvedStyle.display != DisplayStyle.None && Time.realtimeSinceStartup < hiddenDeadline)
                 yield return null;
-            Assert.AreEqual(DisplayStyle.None, hello.resolvedStyle.display, "the Hide clip hides the label, which the starter screen marks as Id 0, the clip's default Id");
+            Assert.AreEqual(DisplayStyle.None, hello.resolvedStyle.display, "the Hide clip hides the element named hello, the name at Id 0, the clip's default");
             var shownDeadline = Time.realtimeSinceStartup + 5f;
             while (hello.resolvedStyle.display == DisplayStyle.None && Time.realtimeSinceStartup < shownDeadline)
                 yield return null;
@@ -126,8 +229,7 @@ namespace TlUiPackage.EditorTests
             timelinesQuery.Dispose();
 
             yield return new ExitPlayMode();
-            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            AssetDatabase.DeleteAsset(FlowFolder);
+            ForgetTheFlow();
         }
     }
 }

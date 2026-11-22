@@ -1,6 +1,7 @@
 using System.IO;
 using Tl.Unity.Editor;
 using Unity.Scenes;
+using Unity.Scenes.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
@@ -16,39 +17,59 @@ namespace TlUi.Editor
         public const string DefaultFolder = "Assets/Tl UI";
 
         const string StarterScreen =
-@"<ui:UXML xmlns:ui=""UnityEngine.UIElements"" xmlns:tl=""TlUi"">
+@"<ui:UXML xmlns:ui=""UnityEngine.UIElements"">
     <ui:VisualElement name=""screen"" picking-mode=""Ignore"" style=""flex-grow: 1; align-items: center; justify-content: center;"">
-        <ui:Label name=""hello"" text=""Hello"" style=""font-size: 96px; color: rgb(255, 255, 255); background-color: rgb(40, 90, 200); padding: 24px 48px; border-radius: 16px;"">
-            <tl:TlTarget id=""0"" />
-        </ui:Label>
+        <ui:Label name=""hello"" text=""Hello"" style=""font-size: 96px; color: rgb(255, 255, 255); background-color: rgb(40, 90, 200); padding: 24px 48px; border-radius: 16px;"" />
     </ui:VisualElement>
 </ui:UXML>
 ";
 
+        public struct Created
+        {
+            public GameObject Screen;
+            public SubScene Timelines;
+            public TimelineAsset Timeline;
+        }
+
         [MenuItem("GameObject/Tl UI/Screen", false, 10)]
         static void CreateFromMenu()
         {
-            var screen = Create(DefaultFolder, out var timeline);
-            if (screen == null)
+            var created = Create(DefaultFolder);
+            if (created.Screen == null)
                 return;
-            Selection.activeGameObject = screen;
-            if (!Application.isBatchMode)
-                TimelineEditor.GetOrCreateWindow().SetTimeline(timeline);
+            var director = OpenTimelinesObject(created.Timelines);
+            Selection.activeGameObject = director != null ? director.gameObject : created.Screen;
+            if (director != null && !Application.isBatchMode)
+                TimelineEditor.GetOrCreateWindow().SetTimeline(director);
         }
 
-        public static GameObject Create(string folder, out TimelineAsset timeline)
+        public static PlayableDirector OpenTimelinesObject(SubScene timelines)
         {
-            timeline = null;
+            if (timelines == null)
+                return null;
+            if (!timelines.EditingScene.isLoaded)
+                SubSceneUtility.EditScene(timelines);
+            var scene = timelines.EditingScene;
+            if (!scene.isLoaded)
+                return null;
+            foreach (var root in scene.GetRootGameObjects())
+                if (root.TryGetComponent<TlUiTimelines>(out _))
+                    return root.GetComponent<PlayableDirector>();
+            return null;
+        }
+
+        public static Created Create(string folder)
+        {
             var screenScene = EditorSceneManager.GetActiveScene();
             if (string.IsNullOrEmpty(screenScene.path))
             {
                 EditorUtility.DisplayDialog("Tl UI Screen", "Save this scene first, then add the screen again.", "OK");
-                return null;
+                return default;
             }
             CreateFolder(folder);
             var panelSettings = CreatePanelSettings(folder);
             var screenFile = CreateText(folder + "/Screen.uxml", StarterScreen);
-            timeline = CreateTimeline(folder + "/Screen Timeline.playable");
+            var timeline = CreateTimeline(folder + "/Screen Timeline.playable");
             var timelinesScenePath = CreateTimelinesScene(folder + "/Screen Timelines.unity", timeline, screenScene);
 
             var subSceneObject = new GameObject("Screen Timelines");
@@ -65,7 +86,7 @@ namespace TlUi.Editor
             panel.Panel = panelRenderer;
             Undo.RegisterCreatedObjectUndo(screen, "Create Tl UI Screen");
             EditorSceneManager.MarkSceneDirty(screenScene);
-            return screen;
+            return new Created { Screen = screen, Timelines = subScene, Timeline = timeline };
         }
 
         static void CreateFolder(string folder)
@@ -112,7 +133,7 @@ namespace TlUi.Editor
             var director = timelines.AddComponent<PlayableDirector>();
             director.playableAsset = timeline;
             director.playOnAwake = true;
-            timelines.AddComponent<TlUiTimelines>();
+            timelines.AddComponent<TlUiTimelines>().TargetNames.Add("hello");
             EditorSceneManager.SaveScene(timelinesScene, path);
             EditorSceneManager.CloseScene(timelinesScene, true);
             EditorSceneManager.SetActiveScene(screenScene);

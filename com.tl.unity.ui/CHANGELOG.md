@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0-preview.4
+
+### Added
+- **Named targets.** Right-click a UI clip and pick **Tl UI Target…** to choose an element name from your UXML; the clip renames itself (**Hide title**).
+  - Names live on Tl UI Timelines (**Target Names**) and are baked into ECS as `FixedString64Bytes` (`UiTargetName`).
+  - Every Tl UI Panel finds elements by those names, so a new screen needs no Targets table and no `TlTarget`.
+  - Clips still store a byte, so Play mode still allocates nothing.
+- **Preview while scrubbing.** Dragging the Timeline playhead shows Show, Hide, Enable, Disable, classes, attach, animate and text on every Tl UI Panel in Edit mode.
+  - Tl bakes the director and runs its real systems once per edit, recording every tick, so scrubbing is a lookup and matches Play mode.
+  - Signals, focus and commands do not fire in preview, and leaving preview restores the UXML.
+- **GameObject > Tl UI > Screen** starts with `hello` as a target name, opens the timelines SubScene, and binds its director in the Timeline window.
+
+### Fixed
+- Tl UI Panel remembers the Tl UI Timelines object instead of running an entity query each time the pointer-over-UI or typing state changes. That query sometimes allocated 192 B, which made the Basics sample's allocation check flaky.
+
 ## 0.1.0-preview.3
 
 ### Added

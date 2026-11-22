@@ -13,7 +13,8 @@
     "Unity.Timeline",
     "Unity.Timeline.Editor",
     "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner"
+    "UnityEditor.TestRunner",
+    "Unity.Scenes.Editor"
   ],
   "includePlatforms": [
     "Editor"

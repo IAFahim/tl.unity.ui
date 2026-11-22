@@ -110,6 +110,15 @@ namespace TlUi
         EntityQuery _focusQuery;
         EntityQuery _hostsQuery;
         EntityQuery _hostsWithoutTimelineQuery;
+        EntityQuery _targetNamesQuery;
+        Entity _host;
+        readonly List<string> _targetNames = new List<string>();
+        bool _targetNamesRead;
+        readonly List<string> _previewNames = new List<string>();
+        UiSwitches _previewSwitches;
+        UiChannels _previewChannels;
+        bool _previewing;
+        PanelRenderer.VersionedUIReloadCallback _onPreviewReloaded;
         UiSwitches _shownSwitches;
         UiChannels _shownChannels;
         PanelRenderer.VersionedUIReloadCallback _onUiReloaded;
@@ -125,6 +134,10 @@ namespace TlUi
         public IReadOnlyList<UiElementState> Elements => _elements;
 
         public VisualElement Root => _resolvedRoot;
+
+        public IReadOnlyList<string> TargetNames => _targetNames;
+
+        public bool IsPreviewing => _previewing;
 
         public UiSwitches ShownSwitches => _shownSwitches;
 
@@ -190,6 +203,9 @@ namespace TlUi
             _focusQuery = entityManager.CreateEntityQuery(ComponentType.ReadWrite<TimelineEvent<UiFocus>>());
             _hostsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>(), ComponentType.ReadWrite<TimelineRequest>());
             _hostsWithoutTimelineQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTimelineSlot>(), ComponentType.ReadWrite<UiCommandInbox>());
+            _targetNamesQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<UiTargetName>());
+            _targetNamesRead = false;
+            _host = Entity.Null;
             _applyEverything = true;
         }
 
@@ -250,6 +266,121 @@ namespace TlUi
                     Debug.LogWarning("Tl UI Panel: " + element.GetType().Name + " #" + element.name + " has an Id and a data binding on style.display or enabledSelf. Show, Hide, Enable and Disable clips write the same property, so whichever writes last wins.", this);
             }
             state.Ids |= UiIds.BitOf((byte)id);
+        }
+
+        void CollectNamedUnder(VisualElement parent, string name, int id)
+        {
+            for (var child = 0; child < parent.hierarchy.childCount; child++)
+            {
+                var element = parent.hierarchy[child];
+                if (element.name == name)
+                    AddToId(element, id);
+                CollectNamedUnder(element, name, id);
+            }
+        }
+
+        void ResolveTargets(VisualElement root, IReadOnlyList<string> targetNames)
+        {
+            foreach (var state in _elements)
+                RestoreAuthoredState(state);
+            _elements.Clear();
+            _stateOf.Clear();
+            foreach (var target in Targets)
+            {
+                var steps = UiSelector.Parse(target.Selector);
+                if (steps.Length == 0 || target.Id < 0 || target.Id > UiIds.HighestId)
+                    continue;
+                _matches.Clear();
+                CollectMatchesUnder(root, root, steps);
+                foreach (var element in _matches)
+                    AddToId(element, target.Id);
+            }
+            for (var id = 0; id < targetNames.Count && id <= UiIds.HighestId; id++)
+                if (!string.IsNullOrEmpty(targetNames[id]))
+                    CollectNamedUnder(root, targetNames[id], id);
+            CollectAuthoredTargetsUnder(root);
+        }
+
+        void ReadTargetNames()
+        {
+            _targetNamesQuery.CompleteDependency();
+            using var hosts = _targetNamesQuery.ToEntityArray(Allocator.Temp);
+            var names = _boundWorld.EntityManager.GetBuffer<UiTargetName>(hosts[0], true);
+            _targetNames.Clear();
+            for (var id = 0; id < names.Length; id++)
+                _targetNames.Add(names[id].Name.ToString());
+            _targetNamesRead = true;
+            if (_targetNames.Count > 0)
+                _resolveRequested = true;
+        }
+
+        public void ShowPreview(IReadOnlyList<string> targetNames, in UiSwitches switches, in UiChannels channels)
+        {
+            if (Application.isPlaying)
+                return;
+            if (Panel == null)
+                Panel = GetComponent<PanelRenderer>();
+            if (Panel == null)
+                return;
+            var namesChanged = targetNames.Count != _previewNames.Count;
+            for (var id = 0; !namesChanged && id < targetNames.Count; id++)
+                namesChanged = targetNames[id] != _previewNames[id];
+            if (namesChanged)
+            {
+                _previewNames.Clear();
+                _previewNames.AddRange(targetNames);
+            }
+            _previewSwitches = switches;
+            _previewChannels = channels;
+            if (!_previewing)
+            {
+                _previewing = true;
+                _onPreviewReloaded ??= OnPreviewReloaded;
+                Panel.RegisterUIReloadCallback(_onPreviewReloaded);
+                return;
+            }
+            if (_resolvedRoot == null)
+                return;
+            if (namesChanged)
+            {
+                ResolveTargets(_resolvedRoot, _previewNames);
+                _applyEverything = true;
+            }
+            ApplyPreview();
+        }
+
+        public void StopPreview()
+        {
+            if (!_previewing)
+                return;
+            _previewing = false;
+            if (Panel != null && _onPreviewReloaded != null)
+                Panel.UnregisterUIReloadCallback(_onPreviewReloaded);
+            foreach (var state in _elements)
+                RestoreAuthoredState(state);
+            _elements.Clear();
+            _stateOf.Clear();
+            _resolvedRoot = null;
+            _shownSwitches = default;
+            _shownChannels = default;
+            _applyEverything = true;
+        }
+
+        void OnPreviewReloaded(PanelRenderer panel, VisualElement root, int version)
+        {
+            if (!_previewing || Application.isPlaying)
+                return;
+            ResolveTargets(root, _previewNames);
+            _resolvedRoot = root;
+            _applyEverything = true;
+            ApplyPreview();
+        }
+
+        void ApplyPreview()
+        {
+            ApplySwitches(_previewSwitches);
+            ApplyChannels(_previewChannels);
+            _applyEverything = false;
         }
 
         void CollectAuthoredTargetsUnder(VisualElement parent)
@@ -428,13 +559,19 @@ namespace TlUi
 
         bool TryFindHostQuietly(out Entity host)
         {
+            var entities = _boundWorld.EntityManager;
+            if (_host != Entity.Null && entities.Exists(_host) && entities.HasBuffer<UiTimelineSlot>(_host))
+            {
+                host = _host;
+                return true;
+            }
             host = Entity.Null;
             var hostsQuery = _hostsQuery.IsEmptyIgnoreFilter ? _hostsWithoutTimelineQuery : _hostsQuery;
             if (hostsQuery.IsEmptyIgnoreFilter)
                 return false;
             hostsQuery.CompleteDependency();
             using var hosts = hostsQuery.ToEntityArray(Allocator.Temp);
-            host = hosts[0];
+            host = _host = hosts[0];
             return true;
         }
 
@@ -737,21 +874,7 @@ namespace TlUi
             foreach (var unregister in _unregisterCommands)
                 unregister();
             _unregisterCommands.Clear();
-            foreach (var state in _elements)
-                RestoreAuthoredState(state);
-            _elements.Clear();
-            _stateOf.Clear();
-            foreach (var target in Targets)
-            {
-                var steps = UiSelector.Parse(target.Selector);
-                if (steps.Length == 0 || target.Id < 0 || target.Id > UiIds.HighestId)
-                    continue;
-                _matches.Clear();
-                CollectMatchesUnder(root, root, steps);
-                foreach (var element in _matches)
-                    AddToId(element, target.Id);
-            }
-            CollectAuthoredTargetsUnder(root);
+            ResolveTargets(root, _targetNames);
             foreach (var command in Commands)
                 foreach (var state in _elements)
                     if (command.On != UiCommandEvent.HotkeyOnly && (state.Ids & UiIds.BitOf((byte)command.TargetId)) != 0)
@@ -983,6 +1106,8 @@ namespace TlUi
         {
             if (_resolvedRoot == null || !BoundWorldIsUsable())
                 return;
+            if (!_targetNamesRead && !_targetNamesQuery.IsEmptyIgnoreFilter)
+                ReadTargetNames();
             if (_resolveRequested)
                 Resolve(_resolvedRoot);
             ApplySwitches(ReadSwitchesOfEveryHost());
