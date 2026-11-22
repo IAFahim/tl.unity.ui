@@ -22,7 +22,12 @@ That's the whole loop. The rest of this section shows where that motion lives an
 
 ### 2. Find the motion: the Timeline window
 
-When you made the screen, the **Timeline** window opened at the bottom. If you closed it, open **Window > Sequencing > Timeline**, then click the **Screen Timelines** object in the Hierarchy.
+When you made the screen, the **Timeline** window opened at the bottom. If you closed it, or come back later:
+1. Open **Window > Sequencing > Timeline**.
+2. In the Hierarchy, tick the box next to **Screen Timelines**. That opens it for editing.
+3. Expand it with the small arrow, and click the **Screen Timelines** object inside.
+
+Always open the timeline this way, from its object, not by double-clicking the `.playable` file. Only then can the Inspector offer element names and the Game view preview while you scrub.
 
 Each row in the Timeline is a **track**, and each block on a track is a **clip**. A clip changes something on the screen from where it starts until where it ends. The starter has two clips:
 - **Fade hello**
@@ -115,6 +120,7 @@ How dragging works:
 ### 7. Nothing moves? Check these
 
 - **The clip's Target says "(no name: pick one)".** Pick a name.
+- **The Inspector shows "Target Id" and a blue note instead of names.** The timeline was opened without its object. Do step 2 again: tick the box next to Screen Timelines, expand it, and click the object inside.
 - **From and To are equal.** The Inspector says so under Property.
 - **The clip is outside the timeline's play range,** or the track is muted (the speaker icon on the track).
 - **Add Class: the class has no style in your USS.** The class is added, but nothing changes how it looks.
@@ -135,8 +141,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.1",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.1"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.2",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.2"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. Unity resolves Entities, Input System and Timeline for you.

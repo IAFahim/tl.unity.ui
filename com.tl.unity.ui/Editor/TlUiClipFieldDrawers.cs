@@ -75,28 +75,54 @@ namespace TlUi.Editor
             return free;
         }
 
-        public static void WriteSlot(SerializedProperty slot, int value)
+        public static Action<int> SlotWriterFor(SerializedProperty slot)
         {
-            slot.serializedObject.Update();
-            slot.intValue = value;
-            slot.serializedObject.ApplyModifiedProperties();
+            var clipAsset = slot.serializedObject.targetObject;
+            var path = slot.propertyPath;
+            return value =>
+            {
+                if (clipAsset == null)
+                    return;
+                var fresh = new SerializedObject(clipAsset);
+                var property = fresh.FindProperty(path);
+                if (property == null)
+                    return;
+                property.intValue = value;
+                fresh.ApplyModifiedProperties();
+            };
         }
     }
 
     [CustomPropertyDrawer(typeof(UiTargetRef))]
     public sealed class UiTargetRefDrawer : PropertyDrawer
     {
+        const string HowToGetNames = "To pick the target by name, open the timeline from its object: in the Hierarchy, tick the box next to Screen Timelines (the SubScene), expand it, and click the Screen Timelines object inside. The Timeline window then shows names here.";
+
+        static bool NamesCanBeOffered(SerializedProperty property) =>
+            TlUiTargets.TimelinesObjectOf(TimelineEditor.inspectedDirector) != null
+            && TlUiTargets.TimelineClipOf(property.serializedObject.targetObject as TlClip) != null
+            && !property.serializedObject.isEditingMultipleObjects;
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            if (NamesCanBeOffered(property))
+                return EditorGUIUtility.singleLineHeight;
+            return EditorGUIUtility.singleLineHeight + 4f + EditorStyles.helpBox.CalcHeight(new GUIContent(HowToGetNames), EditorGUIUtility.currentViewWidth - 40f);
+        }
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var id = property.FindPropertyRelative(nameof(UiTargetRef.Id));
-            var timelinesObject = TlUiTargets.TimelinesObjectOf(TimelineEditor.inspectedDirector);
-            var clip = TlUiTargets.TimelineClipOf(property.serializedObject.targetObject as TlClip);
             var pickByName = new GUIContent(label.text, "The element this clip changes: an element's Name in UI Builder.");
-            if (timelinesObject == null || clip == null || property.serializedObject.isEditingMultipleObjects)
+            if (!NamesCanBeOffered(property))
             {
-                EditorGUI.PropertyField(position, id, new GUIContent(label.text + " Id", "Open the timeline from the object with Tl UI Timelines to pick the target by name."));
+                var line = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+                EditorGUI.PropertyField(line, id, new GUIContent(label.text + " Id", HowToGetNames));
+                EditorGUI.HelpBox(new Rect(position.x, line.yMax + 2f, position.width, position.height - EditorGUIUtility.singleLineHeight - 4f), HowToGetNames, MessageType.Info);
                 return;
             }
+            var timelinesObject = TlUiTargets.TimelinesObjectOf(TimelineEditor.inspectedDirector);
+            var clip = TlUiTargets.TimelineClipOf(property.serializedObject.targetObject as TlClip);
             var names = timelinesObject.TargetNames;
             var current = id.intValue < names.Count ? names[id.intValue] : null;
             var shown = string.IsNullOrEmpty(current) ? "Id " + id.intValue + " (no name: pick one)" : current;
@@ -122,6 +148,7 @@ namespace TlUi.Editor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var slot = property.FindPropertyRelative(nameof(UiClassRef.Slot));
+            var writeSlot = TlUiPanelLists.SlotWriterFor(slot);
             var panels = TlUiPanelLists.PanelsInOpenScenes();
             var current = TlUiPanelLists.NameAtSlot(panels.Select(panel => (IList<string>)panel.ClassSlots), slot.intValue);
             var button = EditorGUI.PrefixLabel(position, new GUIContent(label.text, "The USS class this clip adds or removes. Its style lives in your USS file."));
@@ -134,7 +161,7 @@ namespace TlUi.Editor
                 if (name == null)
                     continue;
                 var chosen = index;
-                menu.AddItem(new GUIContent(name), chosen == slot.intValue, () => TlUiPanelLists.WriteSlot(slot, chosen));
+                menu.AddItem(new GUIContent(name), chosen == slot.intValue, () => writeSlot(chosen));
             }
             if (panels.Count == 0)
                 menu.AddDisabledItem(new GUIContent("Open the scene with the Tl UI Panel to name classes"));
@@ -143,7 +170,7 @@ namespace TlUi.Editor
                 {
                     var added = TlUiPanelLists.AddToEveryPanel(panels, panel => panel.ClassSlots, typed, UiIds.SlotCount);
                     if (added >= 0)
-                        TlUiPanelLists.WriteSlot(slot, added);
+                        writeSlot(added);
                     else
                         Debug.LogWarning("Tl UI: all " + UiIds.SlotCount + " class slots are used. Free one in the Tl UI Panel's Class Slots.");
                 })));
@@ -161,6 +188,7 @@ namespace TlUi.Editor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var slot = property.FindPropertyRelative(nameof(UiTextRef.Slot));
+            var writeSlot = TlUiPanelLists.SlotWriterFor(slot);
             var panels = TlUiPanelLists.PanelsInOpenScenes();
             var current = TlUiPanelLists.NameAtSlot(panels.Select(panel => (IList<string>)panel.TextSlots), slot.intValue);
             var button = EditorGUI.PrefixLabel(position, new GUIContent(label.text, "The text the target shows while this clip is on."));
@@ -174,7 +202,7 @@ namespace TlUi.Editor
                 if (text == null)
                     continue;
                 var chosen = index;
-                menu.AddItem(new GUIContent(Shortened(text).Replace('/', '∕')), chosen == slot.intValue, () => TlUiPanelLists.WriteSlot(slot, chosen));
+                menu.AddItem(new GUIContent(Shortened(text).Replace('/', '∕')), chosen == slot.intValue, () => writeSlot(chosen));
             }
             if (panels.Count == 0)
                 menu.AddDisabledItem(new GUIContent("Open the scene with the Tl UI Panel to add texts"));
@@ -183,7 +211,7 @@ namespace TlUi.Editor
                 {
                     var added = TlUiPanelLists.AddToEveryPanel(panels, panel => panel.TextSlots, typed, MostTexts);
                     if (added >= 0)
-                        TlUiPanelLists.WriteSlot(slot, added);
+                        writeSlot(added);
                 })));
             menu.DropDown(button);
         }
@@ -195,6 +223,7 @@ namespace TlUi.Editor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var slot = property.FindPropertyRelative(nameof(UiTemplateRef.Slot));
+            var writeSlot = TlUiPanelLists.SlotWriterFor(slot);
             var panels = TlUiPanelLists.PanelsInOpenScenes();
             string NameOfTemplateAt(int index) => TlUiPanelLists.NameAtSlot(panels.Select(panel => (IList<string>)panel.TemplateSlots.Select(template => template != null ? template.name : null).ToList()), index);
             var current = NameOfTemplateAt(slot.intValue);
@@ -208,7 +237,7 @@ namespace TlUi.Editor
                 if (name == null)
                     continue;
                 var chosen = index;
-                menu.AddItem(new GUIContent(name), chosen == slot.intValue, () => TlUiPanelLists.WriteSlot(slot, chosen));
+                menu.AddItem(new GUIContent(name), chosen == slot.intValue, () => writeSlot(chosen));
             }
             if (panels.Count > 0)
                 menu.AddItem(new GUIContent("Add templates on the Tl UI Panel…"), false, () => Selection.activeObject = panels[0]);

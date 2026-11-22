@@ -168,6 +168,20 @@ namespace TlUiPackage.EditorTests
         }
 
         [Test]
+        public void APickedSlotIsWrittenThroughAFreshSerializedObjectSoAMenuCallbackSticks()
+        {
+            var timeline = TlTimelines.CreateAsset();
+            var clip = AddFromThePlusMenu(timeline, MenuTrack("UI/Add Class")).CreateClip<TlClip>();
+            var clipAsset = (TlClip)clip.asset;
+            var slotSeenByTheInspector = new SerializedObject(clipAsset).FindProperty("Data.Class.Slot");
+            Assert.IsNotNull(slotSeenByTheInspector, "Tl's clip Inspector reaches the Class field's slot under Data");
+            var writeSlot = TlUiPanelLists.SlotWriterFor(slotSeenByTheInspector);
+            writeSlot(3);
+            Assert.AreEqual(3, ((Tl_Ui_AddClassClip_TlData)clipAsset.Data).Class.Slot, "the picked class slot reaches the clip even though the menu answers after the Inspector drew");
+            Object.DestroyImmediate(timeline);
+        }
+
+        [Test]
         public void ANewNameSkipsEveryIdTheWorldAlreadyUsesByNumber()
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);

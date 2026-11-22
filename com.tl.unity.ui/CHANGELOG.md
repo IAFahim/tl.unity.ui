@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-preview.2
+
+### Fixed
+- **No more silent numbers.** When a clip's Target can't offer names, the Inspector says why in a blue note under it: the timeline was opened without its Screen Timelines object. Before, only a tooltip explained the "Target Id" number field.
+- Picking a class, text or template slot from its dropdown writes through a fresh `SerializedObject`. A menu answers after the Inspector has drawn, so the old property could be stale.
+
+### Not yet verified on screen
+- The scrub preview asks Unity for a player-loop update after it changes the screen and after it stops (0.3.0-preview.1), so the Game view redraws in Edit mode. The tests check the UI state, not what a windowed Game view draws.
+
 ## 0.3.0-preview.1
 
 Made for designers who never read code. Breaking: timelines made with 0.2 lose their UI clip values (the fields changed) and the panel's Channels table is gone; rebuild the samples.
@@ -16,7 +25,6 @@ Made for designers who never read code. Breaking: timelines made with 0.2 lose t
 
 ### Fixed
 - **A Hide clip that ends where the timeline ends no longer leaves its target hidden while you scrub or play the Timeline window to the end.** 0.2's preview records the state after the last tick, and a test now scrubs to exactly that end. 0.1.0-preview.5 showed the last tick there, which matches the "hello stays hidden until it loops" report.
-- The scrub preview asks Unity for a player-loop update after it changes the screen and after it stops, so the Game view redraws in Edit mode.
 - A disabled Tl UI Panel stops its preview.
 - A list targeted by a name no longer warns before the names arrive from ECS; it resolves once they do.
 - Sample builders drop older-version sample scenes that no longer exist from the build list, and sample tests open the scene that exists.
