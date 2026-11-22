@@ -125,6 +125,7 @@ namespace TlUi
         bool _resolveRequested;
         bool _applyEverything = true;
         bool _someListTakesDrops;
+        bool _listsWaitForTargetNames;
         UiInputState _shownInput;
         bool _inputReported;
 
@@ -309,8 +310,9 @@ namespace TlUi
             for (var id = 0; id < names.Length; id++)
                 _targetNames.Add(names[id].Name.ToString());
             _targetNamesRead = true;
-            if (_targetNames.Count > 0)
+            if (_targetNames.Count > 0 || _listsWaitForTargetNames)
                 _resolveRequested = true;
+            _listsWaitForTargetNames = false;
         }
 
         public void ShowPreview(IReadOnlyList<string> targetNames, in UiSwitches switches, in UiChannels channels)
@@ -861,6 +863,12 @@ namespace TlUi
                 var target = FirstElementOf(binding.TargetId);
                 if (!(binding.Rows is ITlUiRows rows) || binding.RowTemplate == null || target == null)
                 {
+                    if (binding.Rows is ITlUiRows && binding.RowTemplate != null && !_targetNamesRead)
+                    {
+                        _listsWaitForTargetNames = true;
+                        _lists.Add(new ListState(index, binding, null, null));
+                        continue;
+                    }
                     Debug.LogWarning("Tl UI Panel: list " + index + " needs Rows (Tl UI Asset Rows or a Tl UI Buffer Rows component), a Row Template and a Target Id that matches an element.", this);
                     _lists.Add(new ListState(index, binding, null, null));
                     continue;

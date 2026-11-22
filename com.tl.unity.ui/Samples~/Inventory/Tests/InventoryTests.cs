@@ -128,6 +128,33 @@ namespace InventorySample.Tests
             yield return Frames(5);
             Assert.IsTrue(SlotsOf(entityManager, bag).Any(slot => TextOf(slot.Name) == "Shield" && slot.Count == 1), "clicking the Shield row buys a Shield into the bag");
 
+            var equipmentRows = uiPanel.RowElementsOf(2);
+            var swordSlot = Array.FindIndex(SlotsOf(entityManager, bag), slot => TextOf(slot.Name) == "Sword");
+            Assert.GreaterOrEqual(swordSlot, 0, "the bag starts with a Sword");
+            var swordFrom = rows[swordSlot].worldBound.center;
+            var weaponAt = equipmentRows[0].worldBound.center;
+            SendPointer<PointerDownEvent>(rows[swordSlot], EventType.MouseDown, swordFrom);
+            SendPointer<PointerMoveEvent>(rows[swordSlot], EventType.MouseDrag, Vector2.Lerp(swordFrom, weaponAt, 0.5f));
+            SendPointer<PointerMoveEvent>(rows[swordSlot], EventType.MouseDrag, weaponAt);
+            var weaponLit = equipmentRows[0].ClassListContains(TlRowDrag.DropTargetClass);
+            SendPointer<PointerUpEvent>(rows[swordSlot], EventType.MouseUp, weaponAt);
+            yield return Frames(5);
+            var equipped = entityManager.GetBuffer<EquippedItem>(bag, true).AsNativeArray().ToArray();
+            Assert.IsTrue(weaponLit, "the Weapon slot of the other list lights up under the dragged Sword");
+            Assert.AreEqual("Sword", TextOf(equipped[0].Name), "dropping the Sword on the Weapon slot sends the equipment list's Drop Code, and the bag system equips it");
+            Assert.AreEqual(0, SlotsOf(entityManager, bag)[swordSlot].Count, "the bag slot it came from is empty");
+            Assert.AreEqual("Sword", equipmentRows[0].Q<Label>("equippedName").text, "the Weapon row shows it");
+
+            var backTo = rows[swordSlot].worldBound.center;
+            var weaponFrom = equipmentRows[0].worldBound.center;
+            SendPointer<PointerDownEvent>(equipmentRows[0], EventType.MouseDown, weaponFrom);
+            SendPointer<PointerMoveEvent>(equipmentRows[0], EventType.MouseDrag, Vector2.Lerp(weaponFrom, backTo, 0.5f));
+            SendPointer<PointerMoveEvent>(equipmentRows[0], EventType.MouseDrag, backTo);
+            SendPointer<PointerUpEvent>(equipmentRows[0], EventType.MouseUp, backTo);
+            yield return Frames(5);
+            Assert.AreEqual("Sword", TextOf(SlotsOf(entityManager, bag)[swordSlot].Name), "dragging it back onto the bag slot unequips it there (the bag's Drop Code)");
+            Assert.AreEqual(0, entityManager.GetBuffer<EquippedItem>(bag, true)[0].Count);
+
             var enemies = enemyQuery.ToEntityArray(Allocator.Temp).ToArray();
             {
                 Assert.AreEqual(3, enemies.Length);

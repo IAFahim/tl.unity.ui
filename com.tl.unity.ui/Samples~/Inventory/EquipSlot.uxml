@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Inventory.uss" />
+    <ui:VisualElement name="equipSlot" class="slot equip-slot">
+        <ui:Label name="equipSlotName" class="equip-slot-name">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Slot" binding-mode="ToTarget" source-to-ui-converters="tl-fixed-text" />
+            </Bindings>
+        </ui:Label>
+        <ui:Label name="equippedName" class="slot-name">
+            <Bindings>
+                <ui:DataBinding property="text" data-source-path="Name" binding-mode="ToTarget" source-to-ui-converters="tl-fixed-text" />
+            </Bindings>
+        </ui:Label>
+    </ui:VisualElement>
+</ui:UXML>

@@ -12,6 +12,14 @@ namespace InventorySample
         public int Count;
     }
 
+    [GeneratePropertyBag]
+    public struct EquippedItem : IBufferElementData
+    {
+        public FixedString32Bytes Slot;
+        public FixedString32Bytes Name;
+        public int Count;
+    }
+
     public struct ShopEntry : IBufferElementData
     {
         public FixedString32Bytes Name;
@@ -22,6 +30,8 @@ namespace InventorySample
         public int UseCode;
         public int MoveCode;
         public int BuyCode;
+        public int EquipCode;
+        public int UnequipCode;
     }
 
     [GeneratePropertyBag]

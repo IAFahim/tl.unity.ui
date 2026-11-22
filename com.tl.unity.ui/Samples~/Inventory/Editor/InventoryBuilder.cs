@@ -24,6 +24,7 @@ public static class InventoryBuilder
     const string ScreenFile = "Inventory.uxml";
     const string BagSlotFile = "BagSlot.uxml";
     const string ShopRowFile = "ShopRow.uxml";
+    const string EquipSlotFile = "EquipSlot.uxml";
     const string NameplateFile = "Nameplate.uxml";
     const string ObjectsSceneFile = "Inventory Objects.unity";
     const string SceneFile = "Inventory.unity";
@@ -142,15 +143,17 @@ public static class InventoryBuilder
         EditorSceneManager.SaveScene(objects, folder + "/" + ObjectsSceneFile);
     }
 
-    static void ConfigurePanel(TlUiPanel uiPanel, BagRows bagRows, TlUiAssetRows shopRows, string folder)
+    static void ConfigurePanel(TlUiPanel uiPanel, BagRows bagRows, EquipmentRows equipmentRows, TlUiAssetRows shopRows, string folder)
     {
         uiPanel.Targets.Clear();
         uiPanel.Targets.Add(new UiTarget { Id = 0, Selector = "#title" });
         uiPanel.Targets.Add(new UiTarget { Id = 1, Selector = "#bag" });
         uiPanel.Targets.Add(new UiTarget { Id = 2, Selector = "#shop" });
+        uiPanel.Targets.Add(new UiTarget { Id = 4, Selector = "#equipment" });
         uiPanel.Lists.Clear();
-        uiPanel.Lists.Add(new UiListBinding { TargetId = 1, Rows = bagRows, RowTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(folder + "/" + BagSlotFile), ClickCode = 1, DragCode = 2 });
+        uiPanel.Lists.Add(new UiListBinding { TargetId = 1, Rows = bagRows, RowTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(folder + "/" + BagSlotFile), ClickCode = 1, DragCode = 2, DropCode = 5 });
         uiPanel.Lists.Add(new UiListBinding { TargetId = 2, Rows = shopRows, RowTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(folder + "/" + ShopRowFile), ClickCode = 3 });
+        uiPanel.Lists.Add(new UiListBinding { TargetId = 4, Rows = equipmentRows, RowTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(folder + "/" + EquipSlotFile), DropCode = 4 });
     }
 
     static void CreateScene(string folder)
@@ -167,9 +170,10 @@ public static class InventoryBuilder
         panelRenderer.panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>(folder + "/" + PanelSettingsFile);
         panelRenderer.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(folder + "/" + ScreenFile);
         var bagRows = ui.AddComponent<BagRows>();
+        var equipmentRows = ui.AddComponent<EquipmentRows>();
         var uiPanel = ui.AddComponent<TlUiPanel>();
         uiPanel.Panel = panelRenderer;
-        ConfigurePanel(uiPanel, bagRows, AssetDatabase.LoadAssetAtPath<TlUiAssetRows>(folder + "/" + ShopRowsFile), folder);
+        ConfigurePanel(uiPanel, bagRows, equipmentRows, AssetDatabase.LoadAssetAtPath<TlUiAssetRows>(folder + "/" + ShopRowsFile), folder);
         ui.AddComponent<TlUiTooltips>();
         var nameplates = ui.AddComponent<NameplateViews>();
         nameplates.Panel = uiPanel;
@@ -197,7 +201,7 @@ public static class InventoryBuilder
         var nameplates = UnityEngine.Object.FindAnyObjectByType<NameplateViews>();
         var subScene = UnityEngine.Object.FindAnyObjectByType<SubScene>();
         var problem = uiPanel == null || uiPanel.Panel == null || uiPanel.Panel.visualTreeAsset == null ? "the Tl UI Panel is not wired"
-            : uiPanel.Lists.Count != 2 || uiPanel.Lists.Any(list => list.Rows == null || list.RowTemplate == null) ? "a list has no rows or no row template"
+            : uiPanel.Lists.Count != 3 || uiPanel.Lists.Any(list => list.Rows == null || list.RowTemplate == null) ? "a list has no rows or no row template"
             : nameplates == null || nameplates.Panel == null || nameplates.ViewTemplate == null || nameplates.Camera == null ? "the Nameplate Views are not wired"
             : subScene == null || subScene.SceneAsset == null ? "the SubScene has no scene"
             : null;

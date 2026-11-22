@@ -10,6 +10,10 @@
                 <ui:Label text="Bag: click to use, drag onto another slot to swap" class="heading" />
                 <ui:VisualElement name="bag" class="bag" />
             </ui:VisualElement>
+            <ui:VisualElement class="column narrow" picking-mode="Ignore">
+                <ui:Label text="Equipment: drag bag items here" class="heading" />
+                <ui:VisualElement name="equipment" class="equipment" />
+            </ui:VisualElement>
             <ui:VisualElement class="column" picking-mode="Ignore">
                 <ui:Label text="Shop: click to buy" class="heading" />
                 <ui:ListView name="shop" fixed-item-height="40" class="shop" />

@@ -46,13 +46,59 @@ namespace InventorySample
                 }
         }
 
+        static void Equip(DynamicBuffer<InventorySlot> slots, DynamicBuffer<EquippedItem> equipment, int bagSlot, int droppedOnEquipmentRow)
+        {
+            var item = slots[bagSlot];
+            if (item.Count == 0 || equipment.Length == 0)
+                return;
+            var into = droppedOnEquipmentRow >= 0 && droppedOnEquipmentRow < equipment.Length ? droppedOnEquipmentRow : FirstEmptyEquipment(equipment);
+            var worn = equipment[into];
+            slots[bagSlot] = worn.Count > 0 ? new InventorySlot { Name = worn.Name, Count = worn.Count } : default;
+            worn.Name = item.Name;
+            worn.Count = item.Count;
+            equipment[into] = worn;
+        }
+
+        static int FirstEmptyEquipment(DynamicBuffer<EquippedItem> equipment)
+        {
+            for (var row = 0; row < equipment.Length; row++)
+                if (equipment[row].Count == 0)
+                    return row;
+            return 0;
+        }
+
+        static void Unequip(DynamicBuffer<InventorySlot> slots, DynamicBuffer<EquippedItem> equipment, int equipmentRow, int droppedOnBagSlot)
+        {
+            var worn = equipment[equipmentRow];
+            if (worn.Count == 0)
+                return;
+            if (IsSlot(slots, droppedOnBagSlot))
+            {
+                var there = slots[droppedOnBagSlot];
+                slots[droppedOnBagSlot] = new InventorySlot { Name = worn.Name, Count = worn.Count };
+                worn.Name = there.Name;
+                worn.Count = there.Count;
+                equipment[equipmentRow] = worn;
+                return;
+            }
+            for (var slot = 0; slot < slots.Length; slot++)
+                if (slots[slot].Count == 0)
+                {
+                    slots[slot] = new InventorySlot { Name = worn.Name, Count = worn.Count };
+                    worn.Name = default;
+                    worn.Count = 0;
+                    equipment[equipmentRow] = worn;
+                    return;
+                }
+        }
+
         [BurstCompile]
         public void OnCreate(ref SystemState state) => state.RequireForUpdate<BagRules>();
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            foreach (var (rules, slots, shop, inbox) in SystemAPI.Query<RefRO<BagRules>, DynamicBuffer<InventorySlot>, DynamicBuffer<ShopEntry>, DynamicBuffer<UiCommandInbox>>())
+            foreach (var (rules, slots, equipment, shop, inbox) in SystemAPI.Query<RefRO<BagRules>, DynamicBuffer<InventorySlot>, DynamicBuffer<EquippedItem>, DynamicBuffer<ShopEntry>, DynamicBuffer<UiCommandInbox>>())
             {
                 for (var index = 0; index < inbox.Length; index++)
                 {
@@ -63,6 +109,10 @@ namespace InventorySample
                         Swap(slots, command.Payload, command.Target);
                     else if (command.Code == rules.ValueRO.BuyCode && command.Payload >= 0 && command.Payload < shop.Length)
                         PutIn(slots, shop[command.Payload].Name);
+                    else if (command.Code == rules.ValueRO.EquipCode && IsSlot(slots, command.Payload))
+                        Equip(slots, equipment, command.Payload, command.Target);
+                    else if (command.Code == rules.ValueRO.UnequipCode && command.Payload >= 0 && command.Payload < equipment.Length)
+                        Unequip(slots, equipment, command.Payload, command.Target);
                 }
                 inbox.Clear();
             }

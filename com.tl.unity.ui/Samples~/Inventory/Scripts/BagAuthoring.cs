@@ -28,6 +28,9 @@ namespace InventorySample
         [Tooltip("What the bag holds when the game starts, from the first slot on.")]
         public List<StartingItem> StartingItems = new List<StartingItem>();
 
+        [Tooltip("The equipment slots, as their rows show them. Bag items dropped on one are equipped there.")]
+        public List<string> EquipmentSlots = new List<string> { "Weapon", "Armor", "Ring" };
+
         [Tooltip("The shop's rows; the same asset the Tl UI Panel's shop list shows, so a buy code's row number names the item.")]
         public TlUiAssetRows Shop;
 
@@ -41,6 +44,12 @@ namespace InventorySample
         [Tooltip("Click Code of the shop list: put the clicked shop item in the bag.")]
         public int BuyCode = 3;
 
+        [Tooltip("Drop Code of the equipment list: equip the bag item dropped on an equipment slot, swapping out what was there.")]
+        public int EquipCode = 4;
+
+        [Tooltip("Drop Code of the bag list: put the equipped item dropped on the bag back, on the slot it lands on or wherever it fits.")]
+        public int UnequipCode = 5;
+
         sealed class Baker : Baker<BagAuthoring>
         {
             public override void Bake(BagAuthoring authoring)
@@ -52,6 +61,9 @@ namespace InventorySample
                     var starting = slot < authoring.StartingItems.Count ? authoring.StartingItems[slot] : default;
                     slots.Add(string.IsNullOrEmpty(starting.Name) ? default : new InventorySlot { Name = new FixedString32Bytes(starting.Name), Count = starting.Count });
                 }
+                var equipment = AddBuffer<EquippedItem>(bag);
+                foreach (var slotName in authoring.EquipmentSlots)
+                    equipment.Add(new EquippedItem { Slot = new FixedString32Bytes(slotName ?? "") });
                 var shop = AddBuffer<ShopEntry>(bag);
                 if (authoring.Shop == null)
                 {
@@ -66,7 +78,7 @@ namespace InventorySample
                         shop.Add(new ShopEntry { Name = row is ShopItem item ? new FixedString32Bytes(item.DisplayName) : default });
                     }
                 }
-                AddComponent(bag, new BagRules { UseCode = authoring.UseCode, MoveCode = authoring.MoveCode, BuyCode = authoring.BuyCode });
+                AddComponent(bag, new BagRules { UseCode = authoring.UseCode, MoveCode = authoring.MoveCode, BuyCode = authoring.BuyCode, EquipCode = authoring.EquipCode, UnequipCode = authoring.UnequipCode });
             }
         }
     }
