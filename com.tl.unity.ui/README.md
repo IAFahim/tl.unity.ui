@@ -251,6 +251,9 @@ Not checked yet:
 
 ## Limits
 
+- Two editor pieces work around `com.tl.unity` until it has extension points. Both need a look when the `com.tl.unity` pin moves:
+  - scrub preview copies Tl's private preview stepping (IAFahim/tl.unity#49);
+  - the Timeline **+** menu entries are hand-written menu tracks (IAFahim/tl.unity#50).
 - 64 Ids (or names), 16 channels and 8 slots of each kind per screen.
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
