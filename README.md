@@ -192,18 +192,22 @@ To animate the screen, give elements an Id with `<tl:TlTarget id="0"/>` and put 
 
 ## Status
 
-Preview, version `0.1.0-preview.5`. Checked on Unity 7000.0.0a16 on Linux.
-
-On `0.1.0-preview.4`:
-- 21 package PlayMode tests, plus the Basics, Hud, Inventory and Menu sample tests (three full runs, 26/26 each);
-- 4 EditMode tests: every block in the **+** menu, **Tl UI Target** naming a clip, scrubbing hiding and restoring Hello, and the element named hello hiding in Play mode;
+Preview, version `0.1.0-preview.5`. Checked on Unity 7000.0.0a16 on Linux, all on `0.1.0-preview.5` code:
+- 5 EditMode tests:
+  - every block in the **+** menu;
+  - **Tl UI Target** naming a clip;
+  - new names skipping Ids already used by number;
+  - scrubbing hiding and restoring Hello;
+  - the element named hello hiding in Play mode.
+- 21 package PlayMode tests plus the Basics, Hud, Inventory and Menu sample tests, 26/26 in three full runs (one installed from GitHub).
 - 13 .NET tests from a fresh clone.
+- Linux CoreCLR and IL2CPP players, built from a GitHub install, run all four samples headless and pass 28 of 28 checks. Once warm, UI Toolkit's own panel update allocates 0 B while the Hud data changes every frame.
 
-On `0.1.0-preview.2`: "Make your own screen" above, built as the steps say.
-
-On `0.1.0-preview.1`: CoreCLR and IL2CPP players running all four samples headless.
-
-Not checked yet: other platforms, how it looks on screen, and newer Unity alphas.
+Not checked yet:
+- other platforms;
+- how it looks on screen;
+- scrub preview drawn in a windowed Editor's Game view (proven headless);
+- newer Unity alphas.
 
 ## Develop
 
