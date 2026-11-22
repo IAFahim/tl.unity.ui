@@ -1,6 +1,6 @@
 # Tl Unity UI
 
-UI Toolkit screens driven by [Tl](https://github.com/IAFahim/tl) timelines and Unity ECS. Built for Unity 7000.0.0a16.
+UI Toolkit screens driven by [Tl](https://github.com/IAFahim/tl) timelines and Unity ECS. Built for Unity 7000.0.0a20.
 
 You make the screen the usual UI Toolkit way, with UXML, USS and UI Builder. Then three things drive it:
 
@@ -41,16 +41,16 @@ Both packages need `com.tl.unity`, the Tl playback package from [IAFahim/tl.unit
 Add these three lines to `dependencies` in your project's `Packages/manifest.json`:
 
 ```json
-"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.5",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.5"
+"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.2.0-preview.1",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.2.0-preview.1"
 ```
 
-You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against. Unity resolves Entities, Input System and Timeline for you.
+You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. For Unity 7000.0.0a16, use `#v0.1.0-preview.5` and `com.tl.unity` at `#92c8c6c343bdbfc179e4d49f88dd9e77414e7346`. Unity resolves Entities, Input System and Timeline for you.
 
 ## Try it in five minutes
 
-1. Add the three lines above to an empty 7000.0.0a16 project.
+1. Add the three lines above to an empty 7000.0.0a20 project. The first time it loads, Tl writes one small menu file per UI block into `Assets/Tl Generated/Editor` and recompiles once.
 2. Open **Window > Package Manager**, select **Tl Unity UI**, open **Samples** and import **Hud**.
 3. Run **Tl UI > Samples > Build Hud** from the menu bar. This creates `Hud.unity`, its timelines and its Panel Settings in the imported sample folder.
 4. Open `Hud.unity` and press Play.

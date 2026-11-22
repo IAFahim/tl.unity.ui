@@ -1,10 +1,10 @@
 {
   "name": "com.tl.ui",
-  "version": "0.1.0-preview.5",
+  "version": "0.2.0-preview.1",
   "displayName": "Tl UI",
   "description": "Engine-free UI timeline clips and rules for Tl. Show, Hide, Enable, Disable, Add Class, Remove Class and Attach clips switch UI targets by Id while they are on; Animate and Text clips drive channels that can hold; Signal and Focus clips raise events. Pure rules turn the columns into a look per target and report what changed, so any engine host applies only the difference. Builds as a .NET project against Tl.Core alone.",
   "unity": "7000.0",
-  "unityRelease": "0a16",
+  "unityRelease": "0a20",
   "license": "MIT",
   "author": {
     "name": "IAFahim",

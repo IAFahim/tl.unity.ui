@@ -60,6 +60,13 @@ namespace TlUiPackage.EditorTests
 
         static string MenuPathOf(System.Type track) => track.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName;
 
+        static System.Type MenuTrack(string menuPath)
+        {
+            var menuTrack = TracksInThePlusMenu().FirstOrDefault(track => MenuPathOf(track) == menuPath);
+            Assert.IsNotNull(menuTrack, menuPath + " is in the Timeline + menu");
+            return menuTrack;
+        }
+
         static TlUiScreenMenu.Created ScreenWithAHideClip(double start, double duration)
         {
             var flowScene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
@@ -68,7 +75,7 @@ namespace TlUiPackage.EditorTests
             EditorSceneManager.SaveScene(flowScene, FlowFolder + "/Flow.unity");
             var created = TlUiScreenMenu.Create(FlowFolder);
             Assert.IsNotNull(created.Screen, "GameObject > Tl UI > Screen makes the screen");
-            var hideTrack = AddFromThePlusMenu(created.Timeline, typeof(HideUiMenuTrack));
+            var hideTrack = AddFromThePlusMenu(created.Timeline, MenuTrack("UI/Hide"));
             var hideClip = hideTrack.CreateClip<TlClip>();
             hideClip.start = start;
             hideClip.duration = duration;
@@ -89,9 +96,12 @@ namespace TlUiPackage.EditorTests
         [Test]
         public void EveryUiBlockIsInTheTimelinePlusMenuAndAddsATlTrackOfThatBlock()
         {
+            var wanted = TlMenuStubFiles.Wanted();
             var plusMenu = TracksInThePlusMenu();
             foreach (var block in Blocks)
             {
+                var stub = block.Data.Name.Replace("_TlData", "_TlMenu") + ".cs";
+                Assert.IsTrue(wanted.ContainsKey(stub), "com.tl.ui opts in with [assembly: TlMenuEntries], so Tl writes " + stub);
                 var menuTrack = plusMenu.FirstOrDefault(track => MenuPathOf(track) == block.Menu);
                 Assert.IsNotNull(menuTrack, block.Menu + " is in the Timeline + menu");
                 var menuTrackInstance = ScriptableObject.CreateInstance(menuTrack);
@@ -119,8 +129,8 @@ namespace TlUiPackage.EditorTests
             var timelinesObject = new GameObject("Screen Timelines").AddComponent<TlUiTimelines>();
             timelinesObject.TargetNames.Add("hello");
             var timeline = TlTimelines.CreateAsset();
-            var hide = AddFromThePlusMenu(timeline, typeof(HideUiMenuTrack)).CreateClip<TlClip>();
-            var animate = AddFromThePlusMenu(timeline, typeof(AnimateUiMenuTrack)).CreateClip<TlClip>();
+            var hide = AddFromThePlusMenu(timeline, MenuTrack("UI/Hide")).CreateClip<TlClip>();
+            var animate = AddFromThePlusMenu(timeline, MenuTrack("UI/Animate")).CreateClip<TlClip>();
             var action = new TlUiTargetAction();
 
             Assert.AreEqual(ActionValidity.Valid, action.Validate(new[] { hide }), "Tl UI Target is offered on a Hide clip");
@@ -163,10 +173,10 @@ namespace TlUiPackage.EditorTests
                 panel.Commands.Add(new UiCommand { TargetId = 6, On = UiCommandEvent.HotkeyOnly });
 
                 var timeline = TlTimelines.CreateAsset();
-                var numbered = AddFromThePlusMenu(timeline, typeof(ShowUiMenuTrack)).CreateClip<TlClip>();
+                var numbered = AddFromThePlusMenu(timeline, MenuTrack("UI/Show")).CreateClip<TlClip>();
                 ((Tl_Ui_ShowClip_TlData)((TlClip)numbered.asset).Data).Id = 3;
-                var hideCoins = AddFromThePlusMenu(timeline, typeof(HideUiMenuTrack)).CreateClip<TlClip>();
-                var hideLives = AddFromThePlusMenu(timeline, typeof(HideUiMenuTrack)).CreateClip<TlClip>();
+                var hideCoins = AddFromThePlusMenu(timeline, MenuTrack("UI/Hide")).CreateClip<TlClip>();
+                var hideLives = AddFromThePlusMenu(timeline, MenuTrack("UI/Hide")).CreateClip<TlClip>();
                 var timelinesObject = new GameObject("Screen Timelines").AddComponent<TlUiTimelines>();
                 timelinesObject.GetComponent<PlayableDirector>().playableAsset = timeline;
 

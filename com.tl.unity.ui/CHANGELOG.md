@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0-preview.1
+
+### Changed
+- **Needs Unity 7000.0.0a20** and `com.tl.unity` at `765657a`: tl.unity main plus IAFahim/tl.unity#51. Stay on 0.1.0-preview.5 for 7000.0.0a16.
+- **Timeline + menu entries now come from Tl itself.**
+  - `com.tl.ui` opts in with `[assembly: TlMenuEntries]`, so on first load Tl writes `Tl_Ui_<Clip>_TlMenu.cs` into `Assets/Tl Generated/Editor` and recompiles once.
+  - The 11 hand-written menu tracks are gone; a new clip needs no new file (IAFahim/tl.unity#50).
+- **Scrub preview uses Tl's public preview API:** `TlPreview.Evaluated`, `Version` and `Record`. It no longer chains onto the preview hook or copies Tl's bake, system list and stepping (IAFahim/tl.unity#49).
+
 ## 0.1.0-preview.5
 
 ### Fixed

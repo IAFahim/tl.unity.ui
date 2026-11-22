@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0-preview.1
+
+### Changed
+- Opts into the Timeline **+** menu with `[assembly: Tl.Unity.TlMenuEntries]`, in Unity builds only; the .NET build ignores it. Needs Unity 7000.0.0a20 and `com.tl.unity` at `765657a`.
+
 ## 0.1.0-preview.5
 
 ### Changed

@@ -15,7 +15,7 @@ Two UPM packages that let a Unity 7 game drive UI Toolkit screens from Tl timeli
 | Rules | `com.tl.ui` | what each clip writes and how clips combine; engine-free, builds as .NET | clip data, ticks | `UiSwitches`, `UiChannels`, a look per target |
 | Host | `com.tl.unity.ui` | applies looks to UI Toolkit, binds ECS data, sends input back | Tl columns, ECS singletons and buffers, UI Toolkit events | element styles and classes, inbox buffers, timeline requests |
 
-`com.tl.unity` (Tl playback) lives in IAFahim/tl.unity and is pinned to `92c8c6c`, the commit these packages are tested against.
+`com.tl.unity` (Tl playback) lives in IAFahim/tl.unity and is pinned to `765657a` (tl.unity main plus IAFahim/tl.unity#51: `TlPreview.Evaluated`/`Version`/`Record` and `[assembly: TlMenuEntries]`), the commit these packages are tested against, on Unity 7000.0.0a20.
 
 ## Start here
 
@@ -38,7 +38,7 @@ git clone --recurse-submodules https://github.com/IAFahim/tl.unity.ui.git
 dotnet test tl.unity.ui/com.tl.ui/Tests~/Tl.Ui.Tests
 ```
 
-Then, in a fresh 7000.0.0a16 project:
+Then, in a fresh 7000.0.0a20 project:
 1. Add the packages with `file:` paths and `"testables": ["com.tl.unity.ui"]`. Unity hides warnings for Git-URL packages, so only a `file:` install shows them.
 2. Compile, and check `error CS` and own warnings are 0.
 3. Run EditMode tests (5: the Timeline menu, the target action, the Id guard for new names, scrub preview, and the designer flow in Play mode), then PlayMode tests (21 package tests). Run PlayMode twice with the samples imported; the allocation checks must read 0 B both times.

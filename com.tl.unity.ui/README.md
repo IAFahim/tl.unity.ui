@@ -13,12 +13,12 @@ The clips and their rules are engine-free and live in `com.tl.ui`; this package 
 This package and `com.tl.ui` live in [IAFahim/tl.unity.ui](https://github.com/IAFahim/tl.unity.ui). `com.tl.unity` lives in [IAFahim/tl.unity](https://github.com/IAFahim/tl.unity). Add all three to `Packages/manifest.json`. List all three, because a Git package cannot pull another Git package:
 
 ```json
-"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#92c8c6c343bdbfc179e4d49f88dd9e77414e7346",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.1.0-preview.5",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.1.0-preview.5"
+"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.2.0-preview.1",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.2.0-preview.1"
 ```
 
-A fresh 7000.0.0a16 project with exactly these lines compiles and passes all 21 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
+A fresh 7000.0.0a20 project with exactly these lines compiles and passes all 21 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
 
 ## Set up a screen
 
@@ -101,7 +101,7 @@ Unity 7 lets a struct ride on any element as a UI Toolkit component. Tl UI ships
 
 From code it is the same struct: `button.AddComponent(new TlSend { Code = 1 })`. TlSend and TlPlay make their element focusable, so keyboard and gamepad navigation reach it and Submit acts like a click. TlSend and TlPlay stop the click there, so a button inside a list row does not also click the row. List rows carry two code-only components the panel adds itself: `TlRow` (list and row index, row clicks) and `TlRowDrag` (drag onto another row).
 
-The handlers are static and registered once per type, the state is an unmanaged struct UI Toolkit keeps in native memory, and nothing is allocated per element or per click. UI Toolkit components are **experimental** in Unity 7000.0.0a16. They need no setting at runtime. **Project Settings > UI Toolkit > Enable UI Components** only adds the Components section to the UI Builder inspector, so a designer can add them there. The Targets and Commands tables work without components. Use the tables for anything that needs an asset or an event: Input Action hotkeys, UnityEvents.
+The handlers are static and registered once per type, the state is an unmanaged struct UI Toolkit keeps in native memory, and nothing is allocated per element or per click. UI Toolkit components are **experimental** in Unity 7000.0.0a20. They need no setting at runtime. **Project Settings > UI Toolkit > Enable UI Components** only adds the Components section to the UI Builder inspector, so a designer can add them there. The Targets and Commands tables work without components. Use the tables for anything that needs an asset or an event: Input Action hotkeys, UnityEvents.
 
 ## Game data
 
@@ -211,7 +211,7 @@ public sealed class NameplateViews : TlUiEntityViews<Nameplate>
 
 ## Measured
 
-Unity 7000.0.0a16, `-batchmode -nographics`, PlayMode tests in a fresh project whose only extra packages are these three:
+Measured on Unity 7000.0.0a16 with 0.1.x, `-batchmode -nographics`, PlayMode tests in a fresh project whose only extra packages are these three; the same checks pass on 7000.0.0a20 with 0.2.0:
 
 - Basics: every block matches its clip to the tick (a 0 to 1 s clip at 60 Hz is on for ticks 0 to 59). On the third play the Tl UI Panel's code allocates 0 B (over 19,025 to 34,369 frames, depending on the run).
 - Hud: Tl UI Data and Tl UI Panel allocate 0 B over 240 frames in which the singleton changes every frame; the whole main thread allocated 158,776 B in those frames against 157,440 B with the data paused, so the binding updates add about 6 B per frame.
@@ -251,9 +251,7 @@ Not checked yet:
 
 ## Limits
 
-- Two editor pieces work around `com.tl.unity` until it has extension points. Both need a look when the `com.tl.unity` pin moves:
-  - scrub preview copies Tl's private preview stepping (IAFahim/tl.unity#49);
-  - the Timeline **+** menu entries are hand-written menu tracks (IAFahim/tl.unity#50).
+- Scrub preview and the Timeline **+** menu use `com.tl.unity`'s own hooks: `TlPreview.Evaluated`, `Version` and `Record`, and `[assembly: TlMenuEntries]`. Both come from IAFahim/tl.unity#51; until it is merged, the pin points at its commit `765657a`.
 - 64 Ids (or names), 16 channels and 8 slots of each kind per screen.
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.
 - Animate writes inline styles; a USS transition on the same property eases the timeline's values.
