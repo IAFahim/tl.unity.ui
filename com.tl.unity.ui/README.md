@@ -246,10 +246,10 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 
 | Check | Result |
 |---|---|
-| Editor tests, `-batchmode -nographics`, Unity 7000.0.0a20 | 21 package PlayMode tests, 4 sample tests and 5 EditMode tests pass, in two full runs from a Git URL install |
-| Engine-free rules | 13 .NET tests pass |
-| Linux player, CoreCLR | builds with 0 errors and 0 warnings; a smoke scene loads all four sample scenes headless and passes 28 checks (3 runs) |
-| Linux player, IL2CPP | builds with 0 errors and 0 warnings and passes the same 28 checks (2 runs) |
+| Editor tests, `-batchmode -nographics`, Unity 7000.0.0a20 | 21 package PlayMode tests, 5 sample tests and 10 EditMode tests pass from a Git URL install of 0.3.0-preview.4, and PlayMode twice from a `file:` install |
+| Engine-free rules | 15 .NET tests pass |
+| Linux player, CoreCLR | builds with 0 errors and 0 warnings; a smoke scene loads all five sample scenes headless and passes 34 checks (3 runs) |
+| Linux player, IL2CPP | builds with 0 errors and 0 warnings and passes the same 34 checks (2 runs) |
 | UXML in a player | TlTarget, TlSend, TlPlay, the three Tl bindings and Tl Radial Fill all load from UXML and work under both backends |
 | Allocation in a player | once warm (full health, every UI timeline finished), UI Toolkit's panel update allocates 0 B over 240 ticks while the Hud data changes every frame |
 | Allocation in the Editor | Tl UI Panel and Tl UI Data allocate 0 B per frame on a third play of the Basics sample and while the Hud data changes every frame |
@@ -266,7 +266,8 @@ Not checked yet:
 - other platforms (Windows, macOS, mobile, consoles, WebGL);
 - what anything looks like (all runs are headless), including scrub preview in a windowed Editor's Game view;
 - authoring in UI Builder's own panels;
-- Unity 7000.0.0a20.
+- the designer helpers on screen (Edit bar, dropdowns, locked Timeline window, `.playable` double-click); their effects are tested headless;
+- newer Unity alphas.
 
 ## Limits
 

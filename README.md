@@ -312,24 +312,27 @@ To animate the screen, give elements a Name in UI Builder and pick that name on 
 
 ## Status
 
-Preview, version `0.3.0-preview.3`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL at the tagged commit `9ff5d3d` (`com.tl.unity#765657a`):
+Preview, version `0.3.0-preview.4`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL at the tagged commit `579eaaa` (`com.tl.unity#765657a`):
 - 0 compile errors and 0 warnings from these packages; Tl writes all 11 **+** menu entries itself.
-- 7 EditMode tests:
+- 10 EditMode tests:
   - every block in the **+** menu;
   - naming clips, Animate included, and renaming on a property change;
   - Commands and Lists picking their element by name;
   - new names skipping Ids already used by number;
   - a slot picked from a dropdown reaching the clip;
   - scrubbing: hide and restore, the playhead exactly at the end, and the starter's fade and move;
-  - the element named hello hiding in Play mode.
+  - the element named hello hiding in Play mode;
+  - the Timeline button: finding and opening a closed Screen Timelines, element names on a timeline from Also Plays, and New timeline… becoming slot 1 in Also Plays (not Play On Awake), saved;
+  - a Commands or Signals row suggesting a timeline name (`play clicked`, `Signal 3`);
+  - Animate presets: what each writes, the clip's new length and name, and Tl's downhill starting Ease being caught.
 - 21 package PlayMode tests plus the Basics, Hud, Inventory, Cards and Menu sample tests: 26/26. Basics, Hud, Inventory and Menu measure 0 B of managed allocation per frame once warm.
 - 15 .NET tests.
 - Linux CoreCLR and IL2CPP players run all five samples headless and pass 34 of 34 checks (3 and 2 runs). The checks include names resolving from ECS, a card dragged onto the table, and 0 B in UI Toolkit's panel update once warm.
-- The screen images in `docs/` are rendered by this version, headless.
+- The screen images in `docs/` are rendered by Unity headless (0.3.0-preview.3; the screens did not change since).
 
 Not checked yet:
 - other platforms;
-- the Editor windows on screen: the Inspector dropdowns and the Edit-mode Game view redraw (the tests run headless, and the Editor pictures in `docs/` are diagrams);
+- the Editor windows on screen: the Edit bar, the dropdowns, the locked Timeline window, a `.playable` double-click, and the Edit-mode Game view redraw. The tests check what they do, headless; the Editor pictures in `docs/` are diagrams;
 - newer Unity alphas.
 
 ## Develop
