@@ -320,7 +320,7 @@ To animate the screen, give elements a Name in UI Builder and pick that name on 
 
 ## Status
 
-Preview, version `0.3.0-preview.4`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL at the tagged commit `579eaaa` (`com.tl.unity#765657a`):
+Preview, version `0.3.0-preview.5`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL at the tagged commit `3e869d5` (`com.tl.unity#765657a`):
 - 0 compile errors and 0 warnings from these packages; Tl writes all 11 **+** menu entries itself.
 - 10 EditMode tests:
   - every block in the **+** menu;
@@ -332,15 +332,18 @@ Preview, version `0.3.0-preview.4`. Checked on Unity 7000.0.0a20 on Linux, insta
   - the element named hello hiding in Play mode;
   - the Timeline button: finding and opening a closed Screen Timelines, element names on a timeline from Also Plays, and New timeline… becoming slot 1 in Also Plays (not Play On Awake), saved;
   - a Commands or Signals row suggesting a timeline name (`play clicked`, `Signal 3`);
-  - Animate presets: what each writes, the clip's new length and name, and Tl's downhill starting Ease being caught.
+  - Animate presets: what each writes, the clip's new length and name, and Tl's downhill starting Ease being caught;
+  - a Timeline field on a row that does not play a timeline showing as not used.
 - 21 package PlayMode tests plus the Basics, Hud, Inventory, Cards and Menu sample tests: 26/26. Basics, Hud, Inventory and Menu measure 0 B of managed allocation per frame once warm.
 - 15 .NET tests.
-- Linux CoreCLR and IL2CPP players run all five samples headless and pass 34 of 34 checks (3 and 2 runs). The checks include names resolving from ECS, a card dragged onto the table, and 0 B in UI Toolkit's panel update once warm.
+- Linux CoreCLR and IL2CPP players run all five samples headless and pass 34 of 34 checks (3 and 2 runs, at 0.3.0-preview.4; preview.5 changed only Editor code, tests and docs). The checks include names resolving from ECS, a card dragged onto the table, and 0 B in UI Toolkit's panel update once warm.
 - The screen images in `docs/` are rendered by Unity headless (0.3.0-preview.3; the screens did not change since).
+
+- In a real windowed Editor (Xvfb, mouse clicks): the Edit bar, the Timeline locked on a new screen, scrubbing redrawing the Game view in Edit mode, the Preset list applying a preset, the Target list, and the Commands Timeline list with **Open … in the Timeline window**. The screenshots in `docs/images/unity-*.png` come from those runs.
 
 Not checked yet:
 - other platforms;
-- the Editor windows on screen: the Edit bar, the dropdowns, the locked Timeline window, a `.playable` double-click, and the Edit-mode Game view redraw. The tests check what they do, headless; the Editor pictures in `docs/` are diagrams;
+- in a windowed Editor: double-clicking a `.playable`, the Hierarchy right-click items, and **New timeline…** typed in its popup (each is covered by EditMode tests of what it does);
 - newer Unity alphas.
 
 ## Develop
