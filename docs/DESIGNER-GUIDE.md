@@ -8,7 +8,11 @@ This is how you build and animate game screens in Unity with Tl UI, without code
 
 Almost everything is a click: element names, timelines and ready-made animations are picked from lists, and a button opens each file you need.
 
-The window pictures here are diagrams of the Unity Editor, drawn to show where to click; they are not screenshots. The screen pictures (Hello, Cards, Inventory) are rendered by Unity 7000.0.0a20 from the package's own samples.
+Two kinds of picture:
+- **Screenshots** (captions start "In Unity") of a real Unity 7000.0.0a20 Editor with this package, taken on Linux.
+- **Diagrams**, with numbered orange circles, drawn to show the order of clicks.
+
+The game screens (Hello, Cards, Inventory) are rendered by Unity from the package's own samples.
 
 ## The windows you use
 
@@ -42,6 +46,15 @@ The menu also opens the Timeline window and selects **Screen**. Screen's Inspect
 
 Right-clicking **Screen** in the Hierarchy offers the same: **Tl UI > Edit Layout** and **Tl UI > Edit Timeline**.
 
+In Unity, right after **Tl UI > Screen**:
+
+![The real Unity Editor right after Tl UI > Screen](images/unity-new-screen.png)
+
+- **Hierarchy** (middle): **Screen**, and **Screen Timelines** already open.
+- **Inspector** (right): the Edit bar under **Tl UI Panel**.
+- **Timeline** (bottom): the two starter clips, **Fade hello** and **Move hello Y**. It stays on them while Screen is selected.
+- **Game** view: Hello. The Scene view's **UI Preview** shows it too.
+
 What the menu made:
 
 | In | Name | What it is |
@@ -65,6 +78,12 @@ What the menu made:
 4. Style it in the same Inspector: text, colour, size, background, spacing.
 5. **Ctrl+S** to save.
 
+In Unity, Hello clicked on the canvas. Its **Name**, `hello`, is the field at the top of UI Builder's Inspector:
+
+![UI Builder with Hello selected](images/unity-ui-builder.png)
+
+If the canvas is a thin strip, click the root (**Screen.uxml**) in UI Builder's Hierarchy, set **Size** to 1920 and 1080, and click **Fit viewport**.
+
 Layout basics:
 - Every box lays out its children in a column or a row: **Flex > Direction**.
 - **Align** and **Justify** place the children.
@@ -83,6 +102,15 @@ Layout basics:
 3. Right-click the track and pick **Add Tl Clip**.
 4. Drag the clip to move it in time; drag its right edge to make it longer.
 5. Drag the white playhead to see the screen at that moment. Press the Timeline's play button, or Play, to watch it run. Scrubbing previews the main timeline; other timelines (a button's, a signal's) show what they do when you press Play.
+6. Clips look tiny? Point at the Timeline and press **A**: every clip fits in view.
+
+In Unity, the playhead clicked at frame 6. The Game view shows Hello faint and lower, part-way through Fade hello and Move hello Y, without pressing Play:
+
+![Scrubbing the Timeline previews the Game view](images/unity-clip-and-scrub.png)
+
+A button's timeline (here the Cards sample's **Cards New Turn**) after pressing **A**:
+
+![A timeline framed with the A key](images/unity-other-timeline.png)
 
 | Block | While the clip is on |
 |---|---|
@@ -112,6 +140,18 @@ Click a clip. In the Inspector, under **Tl Clip**:
 5. **Ease**: the shape of the change, from From at the left to To at the right.
 6. **Hold**: keep the To value after the clip ends. Unticked, the element goes back to how UI Builder made it.
 
+In Unity, the Preset list:
+
+![The Preset list on an Animate clip](images/unity-preset-menu.png)
+
+After picking **Appear > Slide in from the left**, the clip is **Move hello X**, 0.5 s long, Move X from -400 to 0, with Hold ticked:
+
+![An Animate clip after the Slide in from the left preset](images/unity-preset-applied.png)
+
+The Target list shows the element names from your layout:
+
+![The Target list](images/unity-target-menu.png)
+
 When something is wrong, the Inspector says so:
 - If From equals To, it warns that nothing moves.
 - If the Ease curve goes downhill, the clip would play backwards: pick **Preset > Make Ease go uphill**. A new Animate clip is turned uphill for you the first time you click it.
@@ -127,6 +167,12 @@ Select **Screen** in the Hierarchy. Its **Tl UI Panel** component has these tabl
   - play, stop, pause or restart a timeline: pick it in **Timeline** by name. **New timeline…** makes one, named after the button (for example `play clicked`), adds it to the screen and opens it;
   - or send a number (a code) to the game;
   - or run a UnityEvent.
+
+  On rows whose **Do** is Send To Game or Invoke Event, **Timeline** is greyed out and says it is not used. In Unity, the Cards sample's Commands, and the Timeline list of its End turn row:
+
+  ![Commands rows by name](images/unity-commands.png)
+
+  ![The Timeline list on a Commands row](images/unity-timeline-menu.png)
 - **Lists**: pick the container in **Target** by name. Rows come from an asset, or from the game, drawn with a row template (a small UXML).
   - **Drag Code**: a row dropped on another row of the same list (swap, reorder).
   - **Drop Code**: a row dropped here from another list (hand to table, bag to equipment).
@@ -219,5 +265,7 @@ The rules (stacking, swapping, equipping) are a small Burst system. The things y
 | The clip plays backwards | **Preset > Make Ease go uphill** |
 | Nothing previews while scrubbing | open it with **Timeline** on the Edit bar, then drag the playhead. Other timelines preview only in Play |
 | The Timeline window won't show what I click | it is locked on the screen's timeline: click the padlock at its top right |
+| Clips look tiny in the Timeline | point at the Timeline and press **A** |
+| UI Builder's canvas is a thin strip | click **Screen.uxml** in UI Builder's Hierarchy, set Size to 1920 and 1080, click **Fit viewport** |
 | An Add Class clip changes nothing | style that class in your `.uss` |
 | A clip does nothing at all | check that the track isn't muted (the speaker icon) and that the clip is inside the timeline |

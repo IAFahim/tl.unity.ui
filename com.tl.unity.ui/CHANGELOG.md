@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0-preview.5
+
+Checked in a real windowed Unity 7000.0.0a20 Editor for the first time (on a virtual X display, driven by mouse clicks), which found two Inspector problems.
+
+### Fixed
+- **The Edit bar's buttons share the Inspector's width.** The "Edit" label is gone. In a normal-width Inspector, **Other timelines** was cut off.
+- **Timeline is greyed out where it does nothing.** On Commands and Signals rows whose **Do** is Send To Game or Invoke Event, the field says "not used: Do does not play a timeline" instead of naming a timeline.
+
+### Verified on screen
+- **Tl UI > Screen** selects Screen and shows its timeline locked in the Timeline window. Selecting Screen no longer empties the Timeline window.
+- Clicking the Timeline ruler previews the Game view in Edit mode: Hello is faint and lower part-way through Fade hello.
+- The Preset list and its submenus. **Slide in from the left** sets Move X from -400 to 0, makes the clip 0.5 s and renames it **Move hello X**.
+- The Target list shows the layout's element names.
+- On a Commands row, the Timeline list shows timeline names, **New timeline…**, and **Open … in the Timeline window**, which opens that timeline.
+
+### Docs
+- Screenshots of the real Editor in the designer guide and README: the new screen, scrubbing, the Preset and Target lists, Commands with the Timeline list, a framed button timeline, and UI Builder with an element selected.
+- New tips found while taking them: press **A** over the Timeline to fit all clips; fix a thin UI Builder canvas by setting its Size.
+
 ## 0.3.0-preview.4
 
 Made so a designer can set up a screen with clicks only.

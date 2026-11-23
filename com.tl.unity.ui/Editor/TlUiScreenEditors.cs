@@ -14,19 +14,18 @@ namespace TlUi.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.PrefixLabel(new GUIContent("Edit"));
                 var layout = panel != null && panel.Panel != null ? panel.Panel.visualTreeAsset : null;
                 using (new EditorGUI.DisabledScope(layout == null))
-                    if (GUILayout.Button(LayoutButton, EditorStyles.miniButtonLeft))
+                    if (GUILayout.Button(LayoutButton, EditorStyles.miniButtonLeft, GUILayout.MinWidth(50f), GUILayout.ExpandWidth(true)))
                         TlUiScreens.EditTheLayout(panel);
-                if (GUILayout.Button(TimelineButton, EditorStyles.miniButtonMid))
+                if (GUILayout.Button(TimelineButton, EditorStyles.miniButtonMid, GUILayout.MinWidth(50f), GUILayout.ExpandWidth(true)))
                 {
                     if (timelinesObject != null)
                         TlUiScreens.EditTheMainTimeline(timelinesObject);
                     else
                         TlUiScreens.EditTheMainTimelineOfAnyScreen();
                 }
-                var otherTimelines = GUILayoutUtility.GetRect(OtherTimelinesButton, EditorStyles.miniButtonRight);
+                var otherTimelines = GUILayoutUtility.GetRect(OtherTimelinesButton, EditorStyles.miniButtonRight, GUILayout.MinWidth(50f), GUILayout.ExpandWidth(true));
                 if (EditorGUI.DropdownButton(otherTimelines, OtherTimelinesButton, FocusType.Passive, EditorStyles.miniButtonRight))
                     ShowTheOtherTimelines(otherTimelines, timelinesObject);
             }

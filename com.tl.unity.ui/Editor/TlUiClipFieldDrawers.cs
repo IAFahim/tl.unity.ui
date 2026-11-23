@@ -286,9 +286,18 @@ namespace TlUi.Editor
             return code != null ? "Signal " + code.intValue : "New Timeline";
         }
 
+        public static bool UsesATimeline(SerializedProperty slot)
+        {
+            var doAction = TlUiDrawerHelp.Sibling(slot, nameof(UiCommand.Do));
+            if (doAction == null)
+                return true;
+            var action = (UiCommandAction)doAction.enumValueIndex;
+            return action != UiCommandAction.SendToGame && action != UiCommandAction.InvokeEvent;
+        }
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            if (TlUiTargets.TimelinesObjectInOpenScenes() != null || TlUiScreens.ClosedScreenTimelines().Count == 0)
+            if (!UsesATimeline(property) || TlUiTargets.TimelinesObjectInOpenScenes() != null || TlUiScreens.ClosedScreenTimelines().Count == 0)
                 return EditorGUIUtility.singleLineHeight;
             return TlUiDrawerHelp.HeightOfAFieldWithHelp(ScreenTimelinesIsClosed, true);
         }
@@ -298,6 +307,12 @@ namespace TlUi.Editor
             var timelinesObject = TlUiTargets.TimelinesObjectInOpenScenes();
             var line = TlUiDrawerHelp.FieldLine(position);
             var shownLabel = new GUIContent("Timeline", "Which timeline the Play, Stop, Pause, Resume and Restart actions use. The main timeline is the one on Screen Timelines; New timeline… makes another.");
+            if (!UsesATimeline(property))
+            {
+                using (new EditorGUI.DisabledScope(true))
+                    EditorGUI.LabelField(line, shownLabel, new GUIContent("not used: Do does not play a timeline"));
+                return;
+            }
             if (timelinesObject == null)
             {
                 property.intValue = Mathf.Max(0, EditorGUI.IntField(line, new GUIContent("Timeline Slot", shownLabel.tooltip), property.intValue));

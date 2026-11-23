@@ -1,6 +1,6 @@
 {
   "name": "com.tl.unity.ui",
-  "version": "0.3.0-preview.4",
+  "version": "0.3.0-preview.5",
   "displayName": "Tl Unity UI",
   "description": "UI Toolkit screens driven by Tl timelines and ECS, made for designers. Name an element in UI Builder, then pick it on a Show, Hide, Enable, Disable, Add Class, Attach, Animate (opacity, move, scale, rotate, size, typing, value from a number to a number), Text, Signal or Focus clip; scrubbing the Timeline previews the screen in Edit mode. Clicks, drags between lists, value changes and hotkeys start UI timelines or send codes to Burst game systems; Tl UI Data shows an ECS singleton through UI Toolkit data binding. Zero managed allocation per frame once warm.",
   "unity": "7000.0",

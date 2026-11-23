@@ -33,6 +33,10 @@ When you made the screen, the **Timeline** window opened at the bottom and **Scr
 - **Timeline** opens its timeline in the Timeline window, ready to scrub, with element names in the Inspector.
 - **Other timelines** opens the screen's other timelines, or makes a new one.
 
+In Unity, right after **Tl UI > Screen**:
+
+![The real Unity Editor right after Tl UI > Screen](docs/images/unity-new-screen.png)
+
 Come back any time with the same button. The Timeline window stays on the screen's timeline (a padlock at its top right) while you click other things; click the padlock to let it follow your selection again. Double-clicking a `.playable` in the Project window also works, and right-clicking **Screen** in the Hierarchy offers **Tl UI > Edit Timeline** and **Edit Layout**.
 
 Each row in the Timeline is a **track**, and each block on a track is a **clip**. A clip changes something on the screen from where it starts until where it ends. The starter has two clips:
@@ -58,6 +62,10 @@ Click **Fade hello**. The **Inspector** (right side) shows, under **Tl Clip**:
 | **To** | the value when the clip ends | 1 (as designed) |
 | **Ease** | the shape of the change, from From at the left to To at the right | fast, then slow |
 | **Hold** | ticked: keep To after the clip ends. Unticked: go back to how the UXML looks | ticked |
+
+In Unity, the Preset list:
+
+![The Preset list on an Animate clip](docs/images/unity-preset-menu.png)
 
 Try it: pick **Preset > Attention > Shake**, then drag the playhead. Or drag the word **To** left until it reads 0.3: Hello only gets faint. If From and To are the same, or the clip would play backwards, the Inspector says so.
 
@@ -161,8 +169,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.4",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.4"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.5",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.5"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. Unity resolves Entities, Input System and Timeline for you.

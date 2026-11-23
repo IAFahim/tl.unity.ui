@@ -63,11 +63,10 @@ class Drawing:
                 self.text(nx + 10, ny + 22 + 19 * index, line, 13, "#ffe2b8")
 
     def edit_bar(self, x, y, w, highlight=None):
-        self.text(x, y + 16, "Edit", 13, DIM)
-        width = (w - 70) / 3
+        width = w / 3
         for i, words in enumerate(["Layout", "Timeline", "Other timelines ▾"]):
-            self.rect(x + 60 + i * width, y, width - 4, 24, HEADER, ACCENT if words.startswith(highlight or "-") else LINE, 3, 2 if words.startswith(highlight or "-") else 1)
-            self.text(x + 60 + i * width + (width - 4) / 2, y + 17, words, 13, TEXT, anchor="middle")
+            self.rect(x + i * width, y, width - 4, 24, HEADER, ACCENT if words.startswith(highlight or "-") else LINE, 3, 2 if words.startswith(highlight or "-") else 1)
+            self.text(x + i * width + (width - 4) / 2, y + 17, words, 13, TEXT, anchor="middle")
 
     def padlock(self, x, y):
         self.parts.append(f'<path d="M{x + 3},{y + 7} v-3 a4,4 0 0 1 8,0 v3" stroke="{ACCENT}" stroke-width="2" fill="none"/>')

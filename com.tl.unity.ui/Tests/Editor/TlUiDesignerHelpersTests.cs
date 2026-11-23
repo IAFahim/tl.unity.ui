@@ -84,6 +84,8 @@ namespace TlUiPackage.EditorTests
             var serializedPanel = new SerializedObject(panel);
             Assert.AreEqual("play clicked", TlUiTimelineSlotDrawer.SuggestedNameFor(serializedPanel.FindProperty("Commands.Array.data[0].TimelineSlot"), timelinesObject));
             Assert.AreEqual("Signal 3", TlUiTimelineSlotDrawer.SuggestedNameFor(serializedPanel.FindProperty("Signals.Array.data[0].TimelineSlot"), timelinesObject));
+            Assert.IsTrue(TlUiTimelineSlotDrawer.UsesATimeline(serializedPanel.FindProperty("Commands.Array.data[0].TimelineSlot")), "a Restart Timeline row picks a timeline");
+            Assert.IsFalse(TlUiTimelineSlotDrawer.UsesATimeline(serializedPanel.FindProperty("Signals.Array.data[0].TimelineSlot")), "an Invoke Event row shows its Timeline field as not used");
             Assert.IsNotNull(typeof(UiCommand).GetField(nameof(UiCommand.TimelineSlot)).GetCustomAttributes(typeof(TlUiTimelineSlotAttribute), false).FirstOrDefault(), "Commands rows pick their timeline by name");
             Assert.IsNotNull(typeof(UiSignalReaction).GetField(nameof(UiSignalReaction.TimelineSlot)).GetCustomAttributes(typeof(TlUiTimelineSlotAttribute), false).FirstOrDefault(), "and so do Signals rows");
         }

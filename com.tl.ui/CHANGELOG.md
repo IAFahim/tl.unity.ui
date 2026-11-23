@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0-preview.5
+
+### Changed
+- Version only, to stay in step with `com.tl.unity.ui`.
+
 ## 0.3.0-preview.4
 
 ### Changed
