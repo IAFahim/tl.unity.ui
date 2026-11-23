@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 namespace TlUi.Editor
 {
@@ -14,12 +15,13 @@ namespace TlUi.Editor
     {
         readonly string _question;
         readonly Action<string> _addTheTypedName;
-        string _typed = "";
+        string _typed;
 
-        public TlUiTypeANamePopup(string question, Action<string> addTheTypedName)
+        public TlUiTypeANamePopup(string question, Action<string> addTheTypedName, string suggested = "")
         {
             _question = question;
             _addTheTypedName = addTheTypedName;
+            _typed = suggested ?? "";
         }
 
         public override Vector2 GetWindowSize() => new Vector2(260f, EditorGUIUtility.singleLineHeight * 3f + 12f);
@@ -93,38 +95,98 @@ namespace TlUi.Editor
         }
     }
 
+    public static class TlUiDrawerHelp
+    {
+        public static float Line => EditorGUIUtility.singleLineHeight;
+
+        static float HelpHeight(string text) => EditorStyles.helpBox.CalcHeight(new GUIContent(text), EditorGUIUtility.currentViewWidth - 40f);
+
+        public static float HeightOfAFieldWithHelp(string text, bool withAButton) => Line + 2f + HelpHeight(text) + (withAButton ? Line + 4f : 0f) + 2f;
+
+        public static Rect FieldLine(Rect position) => new Rect(position.x, position.y, position.width, Line);
+
+        public static void DrawHelpUnderTheField(Rect position, string text, string buttonLabel, Action onClick)
+        {
+            var help = new Rect(position.x, position.y + Line + 2f, position.width, HelpHeight(text));
+            EditorGUI.HelpBox(help, text, MessageType.Info);
+            if (buttonLabel == null)
+                return;
+            var button = new Rect(position.x + EditorGUIUtility.labelWidth, help.yMax + 2f, position.width - EditorGUIUtility.labelWidth, Line);
+            if (GUI.Button(button, buttonLabel))
+                onClick();
+        }
+
+        public static SerializedProperty Sibling(SerializedProperty property, string name)
+        {
+            var path = property.propertyPath;
+            var parent = path.Contains(".") ? path.Substring(0, path.LastIndexOf('.') + 1) : "";
+            return property.serializedObject.FindProperty(parent + name);
+        }
+
+        public static string ParentPath(SerializedProperty property)
+        {
+            var path = property.propertyPath;
+            return path.Contains(".") ? path.Substring(0, path.LastIndexOf('.') + 1) : "";
+        }
+    }
+
     [CustomPropertyDrawer(typeof(UiTargetRef))]
     public sealed class UiTargetRefDrawer : PropertyDrawer
     {
-        const string HowToGetNames = "To pick the target by name, open the timeline from its object: in the Hierarchy, tick the box next to Screen Timelines (the SubScene), expand it, and click the Screen Timelines object inside. The Timeline window then shows names here.";
+        const string ScreenTimelinesIsClosed = "Screen Timelines is closed, so element names can't be shown here.";
+        const string NotOnAScreenYet = "No Screen Timelines plays this timeline yet, so element names can't be shown here.";
+        const string NoTimelineShown = "Open this clip's timeline in the Timeline window to pick the element by name.";
 
-        static bool NamesCanBeOffered(SerializedProperty property) =>
-            TlUiTargets.TimelinesObjectOf(TimelineEditor.inspectedDirector) != null
-            && TlUiTargets.TimelineClipOf(property.serializedObject.targetObject as TlClip) != null
-            && !property.serializedObject.isEditingMultipleObjects;
+        enum Names { Shown, ScreenTimelinesIsClosed, NotOnAScreenYet, NoTimelineShown }
+
+        static Names WhatCanBeShown(SerializedProperty property)
+        {
+            if (property.serializedObject.isEditingMultipleObjects || TlUiTargets.TimelineClipOf(property.serializedObject.targetObject as TlClip) == null)
+                return Names.NoTimelineShown;
+            var timeline = TimelineEditor.inspectedAsset;
+            if (TlUiScreens.TimelinesObjectFor(timeline) != null)
+                return Names.Shown;
+            if (TlUiScreens.ClosedSubSceneThatPlays(timeline) != null)
+                return Names.ScreenTimelinesIsClosed;
+            return TlUiScreens.TimelinesObjectsInOpenScenes().Count > 0 || TlUiScreens.ClosedScreenTimelines().Count > 0 ? Names.NotOnAScreenYet : Names.NoTimelineShown;
+        }
+
+        static string HelpFor(Names names) => names == Names.ScreenTimelinesIsClosed ? ScreenTimelinesIsClosed : names == Names.NotOnAScreenYet ? NotOnAScreenYet : NoTimelineShown;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            if (NamesCanBeOffered(property))
-                return EditorGUIUtility.singleLineHeight;
-            return EditorGUIUtility.singleLineHeight + 4f + EditorStyles.helpBox.CalcHeight(new GUIContent(HowToGetNames), EditorGUIUtility.currentViewWidth - 40f);
+            var names = WhatCanBeShown(property);
+            return names == Names.Shown ? EditorGUIUtility.singleLineHeight : TlUiDrawerHelp.HeightOfAFieldWithHelp(HelpFor(names), names != Names.NoTimelineShown);
+        }
+
+        static void AddTheShownTimelineToTheScreen()
+        {
+            var timeline = TimelineEditor.inspectedAsset;
+            var timelinesObject = TlUiScreens.FindOrOpenTimelinesObject();
+            if (timeline != null && timelinesObject != null)
+                TlUiScreens.AddExistingTimeline(timelinesObject, timeline);
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var id = property.FindPropertyRelative(nameof(UiTargetRef.Id));
-            var pickByName = new GUIContent(label.text, "The element this clip changes: an element's Name in UI Builder.");
-            if (!NamesCanBeOffered(property))
+            var names = WhatCanBeShown(property);
+            if (names != Names.Shown)
             {
-                var line = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-                EditorGUI.PropertyField(line, id, new GUIContent(label.text + " Id", HowToGetNames));
-                EditorGUI.HelpBox(new Rect(position.x, line.yMax + 2f, position.width, position.height - EditorGUIUtility.singleLineHeight - 4f), HowToGetNames, MessageType.Info);
+                EditorGUI.PropertyField(TlUiDrawerHelp.FieldLine(position), id, new GUIContent(label.text + " Id", HelpFor(names)));
+                if (names == Names.ScreenTimelinesIsClosed)
+                    TlUiDrawerHelp.DrawHelpUnderTheField(position, ScreenTimelinesIsClosed, "Open Screen Timelines", () => TlUiScreens.OpenForEditing(TlUiScreens.ClosedSubSceneThatPlays(TimelineEditor.inspectedAsset)));
+                else if (names == Names.NotOnAScreenYet)
+                    TlUiDrawerHelp.DrawHelpUnderTheField(position, NotOnAScreenYet, "Add this timeline to Screen Timelines", AddTheShownTimelineToTheScreen);
+                else
+                    TlUiDrawerHelp.DrawHelpUnderTheField(position, NoTimelineShown, null, null);
                 return;
             }
-            var timelinesObject = TlUiTargets.TimelinesObjectOf(TimelineEditor.inspectedDirector);
+            var pickByName = new GUIContent(label.text, "The element this clip changes: an element's Name in UI Builder.");
+            var timelinesObject = TlUiScreens.TimelinesObjectFor(TimelineEditor.inspectedAsset);
             var clip = TlUiTargets.TimelineClipOf(property.serializedObject.targetObject as TlClip);
-            var names = timelinesObject.TargetNames;
-            var current = id.intValue < names.Count ? names[id.intValue] : null;
+            var targetNames = timelinesObject.TargetNames;
+            var current = id.intValue < targetNames.Count ? targetNames[id.intValue] : null;
             var shown = string.IsNullOrEmpty(current) ? "Id " + id.intValue + " (no name: pick one)" : current;
             var button = EditorGUI.PrefixLabel(position, pickByName);
             if (!EditorGUI.DropdownButton(button, new GUIContent(shown), FocusType.Keyboard))
@@ -145,29 +207,36 @@ namespace TlUi.Editor
     [CustomPropertyDrawer(typeof(TlUiTargetIdAttribute))]
     public sealed class TlUiTargetIdDrawer : PropertyDrawer
     {
-        const string HowToSeeNames = "Tick the box next to Screen Timelines in the Hierarchy to pick elements by name here.";
+        const string ScreenTimelinesIsClosed = "Screen Timelines is closed, so element names can't be shown here.";
+        const string NoScreenTimelines = "There is no Screen Timelines in the open scenes. Right-click the Hierarchy and pick Tl UI > Screen to make one.";
+
+        static string HelpWhenNoNames() => TlUiScreens.ClosedScreenTimelines().Count > 0 ? ScreenTimelinesIsClosed : NoScreenTimelines;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             if (TlUiTargets.TimelinesObjectInOpenScenes() != null)
                 return EditorGUIUtility.singleLineHeight;
-            return EditorGUIUtility.singleLineHeight + 4f + EditorStyles.helpBox.CalcHeight(new GUIContent(HowToSeeNames), EditorGUIUtility.currentViewWidth - 40f);
+            var help = HelpWhenNoNames();
+            return TlUiDrawerHelp.HeightOfAFieldWithHelp(help, help == ScreenTimelinesIsClosed);
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var panel = property.serializedObject.targetObject as TlUiPanel;
             var timelinesObject = TlUiTargets.TimelinesObjectInOpenScenes();
-            var line = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-            var shownLabel = new GUIContent("Target", "The element, by its Name in UI Builder.");
+            var line = TlUiDrawerHelp.FieldLine(position);
             if (timelinesObject == null)
             {
-                EditorGUI.IntSlider(line, property, 0, UiIds.HighestId, new GUIContent("Target Id", HowToSeeNames));
-                EditorGUI.HelpBox(new Rect(position.x, line.yMax + 2f, position.width, position.height - EditorGUIUtility.singleLineHeight - 4f), HowToSeeNames, MessageType.Info);
+                var help = HelpWhenNoNames();
+                EditorGUI.IntSlider(line, property, 0, UiIds.HighestId, new GUIContent("Target Id", help));
+                if (help == ScreenTimelinesIsClosed)
+                    TlUiDrawerHelp.DrawHelpUnderTheField(position, help, "Open Screen Timelines", () => TlUiScreens.OpenEveryClosedScreenTimelines());
+                else
+                    TlUiDrawerHelp.DrawHelpUnderTheField(position, help, null, null);
                 return;
             }
             var current = TlUiTargets.LabelOfId(panel, timelinesObject, property.intValue);
-            var button = EditorGUI.PrefixLabel(line, shownLabel);
+            var button = EditorGUI.PrefixLabel(line, new GUIContent("Target", "The element, by its Name in UI Builder."));
             if (!EditorGUI.DropdownButton(button, new GUIContent(current ?? "Id " + property.intValue + " (no name: pick one)"), FocusType.Keyboard))
                 return;
             var writeId = TlUiPanelLists.SlotWriterFor(property);
@@ -185,6 +254,85 @@ namespace TlUi.Editor
                         writeId(id);
                 });
             }
+            menu.DropDown(button);
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(TlUiTimelineSlotAttribute))]
+    public sealed class TlUiTimelineSlotDrawer : PropertyDrawer
+    {
+        const string ScreenTimelinesIsClosed = "Screen Timelines is closed, so timeline names can't be shown here.";
+
+        public static string LabelOfSlot(IReadOnlyList<TimelineAsset> slots, int slot) =>
+            slot >= 0 && slot < slots.Count && slots[slot] != null ? slots[slot].name + (slot == 0 ? " (the main timeline)" : "") : null;
+
+        public static string SuggestedNameFor(SerializedProperty slot, TlUiTimelines timelinesObject)
+        {
+            var targetId = TlUiDrawerHelp.Sibling(slot, nameof(UiCommand.TargetId));
+            var on = TlUiDrawerHelp.Sibling(slot, nameof(UiCommand.On));
+            var code = TlUiDrawerHelp.Sibling(slot, nameof(UiSignalReaction.Code));
+            if (targetId != null && on != null)
+            {
+                var element = TlUiTargets.LabelOfId(slot.serializedObject.targetObject as TlUiPanel, timelinesObject, targetId.intValue) ?? "Button";
+                switch ((UiCommandEvent)on.enumValueIndex)
+                {
+                    case UiCommandEvent.Click: return element + " clicked";
+                    case UiCommandEvent.PointerEnter: return element + " hovered";
+                    case UiCommandEvent.PointerLeave: return element + " left";
+                    case UiCommandEvent.ValueChanged: return element + " changed";
+                    default: return element;
+                }
+            }
+            return code != null ? "Signal " + code.intValue : "New Timeline";
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            if (TlUiTargets.TimelinesObjectInOpenScenes() != null || TlUiScreens.ClosedScreenTimelines().Count == 0)
+                return EditorGUIUtility.singleLineHeight;
+            return TlUiDrawerHelp.HeightOfAFieldWithHelp(ScreenTimelinesIsClosed, true);
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var timelinesObject = TlUiTargets.TimelinesObjectInOpenScenes();
+            var line = TlUiDrawerHelp.FieldLine(position);
+            var shownLabel = new GUIContent("Timeline", "Which timeline the Play, Stop, Pause, Resume and Restart actions use. The main timeline is the one on Screen Timelines; New timeline… makes another.");
+            if (timelinesObject == null)
+            {
+                property.intValue = Mathf.Max(0, EditorGUI.IntField(line, new GUIContent("Timeline Slot", shownLabel.tooltip), property.intValue));
+                if (TlUiScreens.ClosedScreenTimelines().Count > 0)
+                    TlUiDrawerHelp.DrawHelpUnderTheField(position, ScreenTimelinesIsClosed, "Open Screen Timelines", () => TlUiScreens.OpenEveryClosedScreenTimelines());
+                return;
+            }
+            var slots = TlUiScreens.Slots(timelinesObject);
+            var current = LabelOfSlot(slots, property.intValue);
+            var button = EditorGUI.PrefixLabel(line, shownLabel);
+            if (!EditorGUI.DropdownButton(button, new GUIContent(current ?? "Slot " + property.intValue + " (no timeline there: pick one)"), FocusType.Keyboard))
+                return;
+            var writeSlot = TlUiPanelLists.SlotWriterFor(property);
+            var suggested = SuggestedNameFor(property, timelinesObject);
+            var shownSlot = property.intValue;
+            var menu = new GenericMenu();
+            for (var slot = 0; slot < slots.Count; slot++)
+            {
+                var slotLabel = LabelOfSlot(slots, slot);
+                if (slotLabel == null)
+                    continue;
+                var chosen = slot;
+                menu.AddItem(new GUIContent(slotLabel.Replace('/', '∕')), chosen == shownSlot, () => writeSlot(chosen));
+            }
+            menu.AddSeparator("");
+            menu.AddItem(new GUIContent("New timeline…"), false, () => PopupWindow.Show(button, new TlUiTypeANamePopup("Name of the new timeline", typed =>
+            {
+                var added = TlUiScreens.AddTimeline(timelinesObject, typed);
+                if (added < 0)
+                    return;
+                writeSlot(added);
+                TlUiScreens.ShowInTheTimelineWindow(TlUiScreens.Slots(timelinesObject)[added]);
+            }, suggested)));
+            if (current != null)
+                menu.AddItem(new GUIContent("Open " + slots[shownSlot].name.Replace('/', '∕') + " in the Timeline window"), false, () => TlUiScreens.ShowInTheTimelineWindow(slots[shownSlot]));
             menu.DropDown(button);
         }
     }
@@ -312,40 +460,53 @@ namespace TlUi.Editor
             }
         }
 
-        static SerializedProperty Sibling(SerializedProperty property, string name)
+        static string HelpFor(SerializedProperty property)
         {
-            var path = property.propertyPath;
-            var parent = path.Contains(".") ? path.Substring(0, path.LastIndexOf('.') + 1) : "";
-            return property.serializedObject.FindProperty(parent + name);
+            var from = TlUiDrawerHelp.Sibling(property, nameof(AnimateClip.From));
+            var to = TlUiDrawerHelp.Sibling(property, nameof(AnimateClip.To));
+            var ease = TlUiDrawerHelp.Sibling(property, nameof(AnimateClip.Ease));
+            var help = WhatTheNumbersMean((UiProperty)property.enumValueIndex) + " The clip goes From → To, shaped by Ease. Hold keeps To after the clip ends.";
+            if (ease != null && TlUiAnimatePresets.RunsBackwards(ease.animationCurveValue))
+                help = "Ease goes downhill, so this clip plays To → From. To fix it, pick Preset > Make Ease go uphill.\n" + help;
+            if (from != null && to != null && from.floatValue == to.floatValue)
+                help = "From and To are both " + from.floatValue + ", so nothing moves. Pick a Preset, or set To to where it should end.\n" + help;
+            return help;
         }
 
-        string HelpFor(SerializedProperty property)
+        static void StartANewClipUphill(SerializedProperty property)
         {
-            var from = Sibling(property, nameof(AnimateClip.From));
-            var to = Sibling(property, nameof(AnimateClip.To));
-            var help = WhatTheNumbersMean((UiProperty)property.enumValueIndex) + " The clip goes From → To, shaped by Ease. Hold keeps To after the clip ends.";
-            if (from != null && to != null && from.floatValue == to.floatValue)
-                help = "From and To are both " + from.floatValue + ", so nothing moves. Set To to where it should end.\n" + help;
-            return help;
+            var from = TlUiDrawerHelp.Sibling(property, nameof(AnimateClip.From));
+            var to = TlUiDrawerHelp.Sibling(property, nameof(AnimateClip.To));
+            var ease = TlUiDrawerHelp.Sibling(property, nameof(AnimateClip.Ease));
+            if (from == null || to == null || ease == null || !TlUiAnimatePresets.IsUntouched(from.floatValue, to.floatValue, ease.animationCurveValue))
+                return;
+            ease.animationCurveValue = TlUiAnimatePresets.FastThenSlow();
+            property.serializedObject.ApplyModifiedProperties();
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var width = EditorGUIUtility.currentViewWidth - 40f;
-            return EditorGUIUtility.singleLineHeight + 4f + EditorStyles.helpBox.CalcHeight(new GUIContent(HelpFor(property)), width);
+            return (EditorGUIUtility.singleLineHeight + 2f) * 2f + 2f + EditorStyles.helpBox.CalcHeight(new GUIContent(HelpFor(property)), width);
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            StartANewClipUphill(property);
             var line = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
             var before = property.enumValueIndex;
             EditorGUI.PropertyField(line, property, new GUIContent(label.text, "What the clip moves on its target."));
-            var help = new Rect(position.x, line.yMax + 2f, position.width, position.height - EditorGUIUtility.singleLineHeight - 4f);
+            var presetLine = new Rect(position.x, line.yMax + 2f, position.width, EditorGUIUtility.singleLineHeight);
+            var presetButton = EditorGUI.PrefixLabel(presetLine, new GUIContent("Preset", "Pick a ready-made animation: it sets Property, From, To, Ease, Hold and the clip's length. Change any of them after."));
+            var ease = TlUiDrawerHelp.Sibling(property, nameof(AnimateClip.Ease));
+            if (EditorGUI.DropdownButton(presetButton, new GUIContent("Pick a ready-made animation…"), FocusType.Keyboard))
+                TlUiAnimatePresets.ShowMenu(presetButton, property.serializedObject.targetObject, TlUiDrawerHelp.ParentPath(property), ease != null && TlUiAnimatePresets.RunsBackwards(ease.animationCurveValue));
+            var help = new Rect(position.x, presetLine.yMax + 2f, position.width, position.height - (EditorGUIUtility.singleLineHeight + 2f) * 2f - 2f);
             EditorGUI.HelpBox(help, HelpFor(property), MessageType.None);
             if (before == property.enumValueIndex)
                 return;
             var clip = TlUiTargets.TimelineClipOf(property.serializedObject.targetObject as TlClip);
-            var timelinesObject = TlUiTargets.TimelinesObjectOf(TimelineEditor.inspectedDirector);
+            var timelinesObject = TlUiScreens.TimelinesObjectFor(TimelineEditor.inspectedAsset);
             if (clip == null || timelinesObject == null || !(clip.asset is TlClip tl))
                 return;
             var nameBefore = TlUiTargets.ClipNameFor(tl.Data, TlUiTargets.TargetNameOf(clip, timelinesObject) ?? "");

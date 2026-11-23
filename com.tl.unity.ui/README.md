@@ -55,6 +55,15 @@ To build it by hand:
 
 The Inspector shows every clip's Target, Class, Text and Template as names, and explains what Animate's numbers mean for the chosen Property. Clips name themselves by what they do (**Hide title**, **Fade hello**, **Move hand Y**), and rename when the Property changes unless you typed a name.
 
+Designer helpers, so setup is clicks:
+- The Inspector of a Screen (Tl UI Panel) and of Screen Timelines starts with an **Edit** bar:
+  - **Layout** opens the UXML in UI Builder.
+  - **Timeline** opens the Screen Timelines SubScene for editing and locks the Timeline window on the screen's timeline.
+  - **Other timelines** opens another timeline of the screen, or makes a **New timeline…**.
+- Double-clicking a `.playable` that a Screen Timelines plays opens it the same way. Every timeline a screen plays gets the Target name list.
+- Animate has a **Preset** dropdown (Fade in, Slide in, Pop, Shake, Type out…) that fills in every field and the clip's length. An untouched Animate clip's Ease is turned uphill, so From → To plays forwards.
+- Commands and Signals pick their **Timeline** by name; **New timeline…** creates one, adds it to Also Plays and picks it.
+
 Rules when clips disagree: Hide beats Show, Disable beats Enable, Remove Class beats Add Class. With no clip on, a target is exactly what the UXML and USS made it. Clips with different Ids overlap freely; two clips that overlap on one track count only the first, so give overlapping work its own track.
 
 ## Commands

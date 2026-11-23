@@ -16,11 +16,11 @@ namespace TlUi.Editor
         public override bool Execute(IEnumerable<TimelineClip> clips)
         {
             var picked = clips.ToList();
-            var timelinesObject = TlUiTargets.TimelinesObjectOf(TimelineEditor.inspectedDirector);
+            var timelinesObject = TlUiScreens.TimelinesObjectFor(TimelineEditor.inspectedAsset);
             var menu = new GenericMenu();
             if (timelinesObject == null)
             {
-                menu.AddDisabledItem(new GUIContent("Select the object with Tl UI Timelines to pick targets"));
+                menu.AddDisabledItem(new GUIContent("No Screen Timelines plays this timeline: open it from the Screen's Timeline button"));
                 menu.ShowAsContext();
                 return true;
             }

@@ -6,6 +6,8 @@ This is how you build and animate game screens in Unity with Tl UI, without code
 - the **Inspector**, to say what each clip changes;
 - the **Game view**, to see it.
 
+Almost everything is a click: element names, timelines and ready-made animations are picked from lists, and a button opens each file you need.
+
 The window pictures here are diagrams of the Unity Editor, drawn to show where to click; they are not screenshots. The screen pictures (Hello, Cards, Inventory) are rendered by Unity 7000.0.0a20 from the package's own samples.
 
 ## The windows you use
@@ -33,7 +35,14 @@ Hello fades in and slides up:
 
 That motion is two clips, **Fade hello** and **Move hello Y**, on the screen's timeline. The next steps show where they are and how to make your own.
 
-What the menu made, so you know what to open later:
+The menu also opens the Timeline window and selects **Screen**. Screen's Inspector starts with an **Edit** bar, your way back to everything:
+- **Layout**: the screen in UI Builder (step 2).
+- **Timeline**: its timeline in the Timeline window (step 3).
+- **Other timelines**: the screen's other timelines, or **New timeline…**.
+
+Right-clicking **Screen** in the Hierarchy offers the same: **Tl UI > Edit Layout** and **Tl UI > Edit Timeline**.
+
+What the menu made:
 
 | In | Name | What it is |
 |---|---|---|
@@ -46,7 +55,7 @@ What the menu made, so you know what to open later:
 
 ![Step 2: design the screen in UI Builder](images/step-2-ui-builder.svg)
 
-1. In the **Project** window, double-click `Assets/Tl UI/Screen.uxml`. UI Builder opens.
+1. Click **Layout** on the Screen's Edit bar. UI Builder opens. (Double-clicking `Assets/Tl UI/Screen.uxml` in the Project window does the same.)
 2. Drag an element from the **Library** onto the screen, or onto UI Builder's **Hierarchy**:
    - **Label**: text;
    - **Button**: something to click;
@@ -66,16 +75,14 @@ Layout basics:
 
 ![Step 3: animate it in the Timeline window](images/step-3-timeline.svg)
 
-1. Open the timeline from its object, every time:
-   - In the Hierarchy, tick the box next to **Screen Timelines**.
-   - Expand it, and click the **Screen Timelines** object inside.
-   - The Timeline window shows its timeline.
-
-   Opened this way, the Inspector offers element names and the Game view previews while you scrub. Opened by double-clicking the `.playable`, it can't.
+1. Click **Timeline** on the Screen's Edit bar.
+   - Screen Timelines opens for editing by itself, and the Timeline window shows the screen's timeline.
+   - The window stays on it, locked (the padlock at its top right), while you click other things. Click the padlock to let it follow your selection again.
+   - Double-clicking a `.playable` in the Project window does the same.
 2. Click **+**, open **UI**, and pick a block. Each block is a track.
 3. Right-click the track and pick **Add Tl Clip**.
 4. Drag the clip to move it in time; drag its right edge to make it longer.
-5. Drag the white playhead to see the screen at that moment. Press the Timeline's play button, or Play, to watch it run.
+5. Drag the white playhead to see the screen at that moment. Press the Timeline's play button, or Play, to watch it run. Scrubbing previews the main timeline; other timelines (a button's, a signal's) show what they do when you press Play.
 
 | Block | While the clip is on |
 |---|---|
@@ -96,13 +103,19 @@ Click a clip. In the Inspector, under **Tl Clip**:
 
 1. **Target**: pick the element by name. The clip renames itself, for example **Hide title**.
 2. **Property** (Animate only): what changes. The grey box under it says what the numbers mean.
-3. **From** and **To**: the value at the clip's start and end.
-4. **Ease**: the shape of the change.
-5. **Hold**: keep the To value after the clip ends. Unticked, the element goes back to how UI Builder made it.
+3. **Preset** (Animate only): pick a ready-made animation. It fills in Property, From, To, Ease, Hold and the clip's length:
+   - **Appear**: Fade in, Slide in from the left, right, top or bottom, Pop in, Type out the text;
+   - **Disappear**: Fade out, Slide out to the left or right, Shrink away;
+   - **Attention**: Pop (grow and back), Shake, Blink, Spin once;
+   - **Fill**: a progress bar (0 to 100), a radial fill (0 to 1).
+4. **From** and **To**: the value at the clip's start and end. To change one without typing, drag the word **From** or **To** left or right.
+5. **Ease**: the shape of the change, from From at the left to To at the right.
+6. **Hold**: keep the To value after the clip ends. Unticked, the element goes back to how UI Builder made it.
 
 When something is wrong, the Inspector says so:
 - If From equals To, it warns that nothing moves.
-- If the Target can't offer names, a blue note says how to open the timeline so it can.
+- If the Ease curve goes downhill, the clip would play backwards: pick **Preset > Make Ease go uphill**. A new Animate clip is turned uphill for you the first time you click it.
+- If the Target can't offer names, a blue note has a button that fixes it: **Open Screen Timelines**, or **Add this timeline to Screen Timelines**.
 
 ## 5. Make buttons and lists do things
 
@@ -111,7 +124,7 @@ When something is wrong, the Inspector says so:
 Select **Screen** in the Hierarchy. Its **Tl UI Panel** component has these tables:
 
 - **Commands**: pick the element in **Target** by name. When it is clicked, hovered, changed, or a hotkey is pressed:
-  - play, stop, pause or restart a timeline, by its slot;
+  - play, stop, pause or restart a timeline: pick it in **Timeline** by name. **New timeline…** makes one, named after the button (for example `play clicked`), adds it to the screen and opens it;
   - or send a number (a code) to the game;
   - or run a UnityEvent.
 - **Lists**: pick the container in **Target** by name. Rows come from an asset, or from the game, drawn with a row template (a small UXML).
@@ -120,40 +133,36 @@ Select **Screen** in the Hierarchy. Its **Tl UI Panel** component has these tabl
 - **Signals**: what a Signal clip, or the game, sets off.
 - **Class Slots**, **Text Slots**, **Template Slots**: the names behind the Add Class, Text and Attach dropdowns. You can also add them from the clip's dropdown, with **New class name…** and **New text…**.
 
-**Timeline slots.** Slot 0 is the timeline on the Screen Timelines object. Add more in that object's **Tl** section, under **Also Plays**. Their order there is slot 1, 2, and so on.
+**Timelines by name.** The Timeline field on Commands and Signals lists the screen's timelines by name, so you never type a slot number. Behind it, slot 0 is the main timeline and the timelines in Screen Timelines' **Also Plays** list are slots 1, 2, and so on.
 
 ## Day-to-day recipes
 
 Each recipe is clicks only.
 
 **Fade a panel in when the screen opens**
-1. On the screen's timeline: **+ > UI > Animate**, then **Add Tl Clip**.
-2. Set the clip: **Target** your panel, **Property** Opacity, **From** 0, **To** 1, **Hold** ticked.
+1. Click **Timeline** on the Screen's Edit bar.
+2. Click **+ > UI > Animate**. Right-click the new track and pick **Add Tl Clip**.
+3. Click the clip. **Target**: your panel. **Preset**: **Appear > Fade in**.
 
 **Slide a menu in from the left**
-- Animate with **Property** Move X, **From** -400, **To** 0, **Hold** ticked.
-- Shape **Ease** fast-then-slow: in the curve editor, drag the left key's handle up.
+- The same, with **Preset**: **Appear > Slide in from the left**.
 
 **A button that pops when clicked**
-1. Make a new timeline: **Project > right-click > Create > Timeline**, named `Pop`.
-2. Add it to **Also Plays** on the Screen Timelines object. If it's first there, it is slot 1.
-3. In `Pop`, add an Animate clip:
-   - **Target**: the button;
-   - **Property**: Scale, **From** 1, **To** 1.2;
-   - **Ease**: a curve that goes up and back down;
-   - **Hold**: unticked;
-   - length: 0.2 s.
-4. On **Screen > Tl UI Panel > Commands**, add a row: **Target** the button (a name list, like on clips), **On** Click, **Do** Play Timeline, **Timeline Slot** 1.
+1. Select **Screen**. Under **Tl UI Panel > Commands**, click **+**.
+2. Set the new row: **Target** the button, **On** Click, **Do** Restart Timeline.
+3. Click **Timeline** and pick **New timeline…**, then **Add**. It is named after the button, for example `play clicked`, and opens in the Timeline window.
+4. In it: **+ > UI > Animate**, **Add Tl Clip**, **Target** the button, **Preset** **Attention > Pop (grow and back)**.
+5. Press Play and click the button.
 
 **Show "Level up!" for two seconds**
-1. Add the label in UI Builder and hide it there (**Display: None**).
+1. Add the label in UI Builder (**Layout**) and hide it there (**Display: None**).
 2. Add a **Show** clip, 2 s long.
-3. Add an **Animate** Scale clip from 0.6 to 1 over the first 0.3 s.
-4. Add an **Animate** Opacity clip from 1 to 0 over the last 0.3 s.
+3. Add an **Animate** clip at the start, **Preset** **Appear > Pop in**.
+4. Add an **Animate** clip at the end, **Preset** **Disappear > Fade out**, and drag it so it ends with the Show clip.
 
 **Type out a line of dialogue**
 1. Add a **Text** clip on the label. In **Text**, pick **New text…** and type the line.
-2. Add an **Animate** clip on the same label: **Property** Reveal, **From** 0, **To** 1.
+2. Add an **Animate** clip on the same label, **Preset** **Appear > Type out the text**.
 
 **Make something glow**
 1. In your `.uss`, write a class: `.glow { scale: 1.1 1.1; transition-duration: 0.2s; }`.
@@ -204,9 +213,11 @@ The rules (stacking, swapping, equipping) are a small Burst system. The things y
 
 | You see | Do |
 |---|---|
-| "Target Id" and a blue note instead of names | on a clip: open the timeline from its object (step 3.1). On the Tl UI Panel: tick the box next to Screen Timelines in the Hierarchy |
+| "Target Id" and a blue note instead of names | click the button under the note |
 | Target says "(no name: pick one)" | pick a name |
-| The Inspector warns From and To are equal | set To |
-| Nothing previews while scrubbing | open the timeline from its object, then drag the playhead |
+| The Inspector warns From and To are equal | pick a **Preset**, or set To |
+| The clip plays backwards | **Preset > Make Ease go uphill** |
+| Nothing previews while scrubbing | open it with **Timeline** on the Edit bar, then drag the playhead. Other timelines preview only in Play |
+| The Timeline window won't show what I click | it is locked on the screen's timeline: click the padlock at its top right |
 | An Add Class clip changes nothing | style that class in your `.uss` |
 | A clip does nothing at all | check that the track isn't muted (the speaker icon) and that the clip is inside the timeline |

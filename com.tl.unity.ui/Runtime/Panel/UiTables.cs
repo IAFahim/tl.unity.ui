@@ -11,6 +11,10 @@ namespace TlUi
     {
     }
 
+    public sealed class TlUiTimelineSlotAttribute : PropertyAttribute
+    {
+    }
+
     [Serializable]
     public struct UiTarget
     {
@@ -33,7 +37,7 @@ namespace TlUi
         public UiCommandAction Do = UiCommandAction.InvokeEvent;
 
         [Tooltip("The UI timeline slot the play, stop, pause, resume and restart actions use: 0 is the director's Playable, 1 and up its Also Plays list.")]
-        [Min(0)]
+        [TlUiTimelineSlot]
         public int TimelineSlot;
 
         [Tooltip("The code Send To Game appends to the UI Command Inbox.")]
@@ -104,7 +108,7 @@ namespace TlUi
         public UiCommandAction Do;
 
         [Tooltip("For timeline actions: 0 is the UI Sequence director's Playable, 1 and up its Also Plays list in order.")]
-        [Min(0)]
+        [TlUiTimelineSlot]
         public int TimelineSlot;
 
         [Tooltip("For Send To Game: the code game systems read from the UI Command Inbox buffer.")]

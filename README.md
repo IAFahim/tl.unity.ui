@@ -28,12 +28,12 @@ That's the whole loop. The rest of this section shows where that motion lives an
 
 ### 2. Find the motion: the Timeline window
 
-When you made the screen, the **Timeline** window opened at the bottom. If you closed it, or come back later:
-1. Open **Window > Sequencing > Timeline**.
-2. In the Hierarchy, tick the box next to **Screen Timelines**. That opens it for editing.
-3. Expand it with the small arrow, and click the **Screen Timelines** object inside.
+When you made the screen, the **Timeline** window opened at the bottom and **Screen** was selected. Screen's Inspector starts with an **Edit** bar:
+- **Layout** opens the screen in UI Builder.
+- **Timeline** opens its timeline in the Timeline window, ready to scrub, with element names in the Inspector.
+- **Other timelines** opens the screen's other timelines, or makes a new one.
 
-Always open the timeline this way, from its object, not by double-clicking the `.playable` file. Only then can the Inspector offer element names and the Game view preview while you scrub.
+Come back any time with the same button. The Timeline window stays on the screen's timeline (a padlock at its top right) while you click other things; click the padlock to let it follow your selection again. Double-clicking a `.playable` in the Project window also works, and right-clicking **Screen** in the Hierarchy offers **Tl UI > Edit Timeline** and **Edit Layout**.
 
 Each row in the Timeline is a **track**, and each block on a track is a **clip**. A clip changes something on the screen from where it starts until where it ends. The starter has two clips:
 - **Fade hello**
@@ -53,12 +53,13 @@ Click **Fade hello**. The **Inspector** (right side) shows, under **Tl Clip**:
 |---|---|---|
 | **Target** | which element on the screen changes. Pick it from the list; it shows every element you gave a **Name** in UI Builder | hello |
 | **Property** | what changes: Opacity, Move X, Move Y, Scale, Rotate, Width Percent, Height Percent, Reveal (typing) or Value (sliders, bars). The grey box under it says what the numbers mean | Opacity |
+| **Preset** | a ready-made animation: Fade in, Slide in from the left, Pop in, Shake, Blink, Type out the text… It fills in every field here and the clip's length. No typing | |
 | **From** | the value when the clip starts | 0 (invisible) |
 | **To** | the value when the clip ends | 1 (as designed) |
 | **Ease** | the shape of the change, from From at the left to To at the right | fast, then slow |
 | **Hold** | ticked: keep To after the clip ends. Unticked: go back to how the UXML looks | ticked |
 
-Try it: set **To** to 0.3, then drag the playhead. Hello only gets faint. If From and To are the same, the Inspector tells you that nothing moves.
+Try it: pick **Preset > Attention > Shake**, then drag the playhead. Or drag the word **To** left until it reads 0.3: Hello only gets faint. If From and To are the same, or the clip would play backwards, the Inspector says so.
 
 Change **timing** by dragging the clip left or right, or by dragging its right edge to make it longer or shorter.
 
@@ -79,13 +80,13 @@ Change **timing** by dragging the clip left or right, or by dragging its right e
 | **Focus** | moves keyboard and gamepad focus to the target |
 
 2. Right-click the new track and pick **Add Tl Clip**.
-3. Click the clip and pick its **Target** in the Inspector. The clip renames itself, for example **Hide title** or **Move title Y**.
+3. Click the clip and pick its **Target** in the Inspector. The clip renames itself, for example **Hide title** or **Move title Y**. On an Animate clip, pick a **Preset** next.
 
 Class, Text and Template fields are lists too. Choose **New class name…** or **New text…** at the bottom to add one without leaving the Inspector.
 
 ### 5. Add your own element
 
-1. In the Project window, double-click `Assets/Tl UI/Screen.uxml`. UI Builder opens.
+1. Click **Layout** on the Screen's Edit bar. UI Builder opens.
 2. Drag a **Label**, **Button** or any element onto the screen, and type a **Name** for it in UI Builder's Inspector (for example `title`).
 3. Save. The name now shows in every clip's **Target** list.
 
@@ -138,8 +139,9 @@ How dragging works:
 ### 7. Nothing moves? Check these
 
 - **The clip's Target says "(no name: pick one)".** Pick a name.
-- **The Inspector shows "Target Id" and a blue note instead of names.** The timeline was opened without its object. Do step 2 again: tick the box next to Screen Timelines, expand it, and click the object inside.
-- **From and To are equal.** The Inspector says so under Property.
+- **The Inspector shows "Target Id" and a blue note instead of names.** Click the button under the note: **Open Screen Timelines**, or **Add this timeline to Screen Timelines**.
+- **From and To are equal.** The Inspector says so under Property. Pick a **Preset**.
+- **The clip plays backwards.** Its Ease curve goes downhill; the Inspector says so. Pick **Preset > Make Ease go uphill**.
 - **The clip is outside the timeline's play range,** or the track is muted (the speaker icon on the track).
 - **Add Class: the class has no style in your USS.** The class is added, but nothing changes how it looks.
 - **Unity is older than 7000.0.0a20.** This version needs a20.
@@ -159,8 +161,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.3",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.3"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.4",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.4"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. Unity resolves Entities, Input System and Timeline for you.

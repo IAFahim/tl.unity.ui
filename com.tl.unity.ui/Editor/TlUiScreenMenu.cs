@@ -7,7 +7,6 @@ using Unity.Scenes;
 using Unity.Scenes.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -40,10 +39,9 @@ namespace TlUi.Editor
             var created = Create(DefaultFolder);
             if (created.Screen == null)
                 return;
-            var director = OpenTimelinesObject(created.Timelines);
-            Selection.activeGameObject = director != null ? director.gameObject : created.Screen;
-            if (director != null && !Application.isBatchMode)
-                TimelineEditor.GetOrCreateWindow().SetTimeline(director);
+            OpenTimelinesObject(created.Timelines);
+            TlUiScreens.ShowInTheTimelineWindow(created.Timeline);
+            Selection.activeGameObject = created.Screen;
         }
 
         public static PlayableDirector OpenTimelinesObject(SubScene timelines)

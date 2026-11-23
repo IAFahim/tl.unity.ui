@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.0-preview.4
+
+Made so a designer can set up a screen with clicks only.
+
+### Added
+- **Edit bar.** The Inspector of a Screen (Tl UI Panel) and of Screen Timelines starts with one row: **Layout** opens the UXML in UI Builder, **Timeline** opens the screen's timeline, **Other timelines** opens the others or makes a **New timeline…**. Right-clicking the Screen in the Hierarchy offers **Tl UI > Edit Layout** and **Tl UI > Edit Timeline**.
+- **No more "tick the box, expand, click the object".** Timeline opens the Screen Timelines SubScene for editing by itself and locks the Timeline window on the screen's timeline, so clicking the Screen or anything else no longer empties it. Double-clicking a `.playable` that a Screen Timelines plays does the same.
+- **Element names on every timeline of a screen.** A clip on a timeline from Also Plays (a button's, a signal's) now gets the Target name list too, however the timeline was opened. Before, only the director's own timeline did.
+- **Presets on Animate clips.** A **Preset** dropdown under Property fills in Property, From, To, Ease, Hold and the clip's length: Fade in, Slide in from each side, Pop in, Type out the text, Fade out, Slide out, Shrink away, Pop (grow and back), Shake, Blink, Spin once, and fills for progress bars and radial fills. **Swap From and To** is in the same menu.
+- **Timelines by name on Commands and Signals.** The Timeline Slot number is a dropdown of the screen's timeline names. **New timeline…** creates one next to the main timeline, named after the row (for example `play clicked`), adds it to Also Plays, saves Screen Timelines, picks it and opens it.
+- **Fix buttons instead of instructions.** Where the Inspector can't show names, the note under the field has a button: **Open Screen Timelines**, or **Add this timeline to Screen Timelines**.
+
+### Fixed
+- **New Animate clips played backwards.** Tl gives a new curve field a downhill line (1 to 0), so an Animate clip set From 0 To 1 went 1 → 0. The Inspector turns the Ease of an untouched Animate clip uphill the first time it is shown, and warns when an Ease goes downhill, with **Preset > Make Ease go uphill**.
+
+### Not yet verified on screen
+- The Edit bar, the dropdowns and the locked Timeline window are covered by EditMode tests of what they do (open, find, create, write), not by a picture of a windowed Editor.
+
+`com.tl.ui` has no changes; its version moves with this package.
+
 ## 0.3.0-preview.3
 
 ### Added

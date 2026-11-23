@@ -62,6 +62,17 @@ class Drawing:
             for index, line in enumerate(lines):
                 self.text(nx + 10, ny + 22 + 19 * index, line, 13, "#ffe2b8")
 
+    def edit_bar(self, x, y, w, highlight=None):
+        self.text(x, y + 16, "Edit", 13, DIM)
+        width = (w - 70) / 3
+        for i, words in enumerate(["Layout", "Timeline", "Other timelines ▾"]):
+            self.rect(x + 60 + i * width, y, width - 4, 24, HEADER, ACCENT if words.startswith(highlight or "-") else LINE, 3, 2 if words.startswith(highlight or "-") else 1)
+            self.text(x + 60 + i * width + (width - 4) / 2, y + 17, words, 13, TEXT, anchor="middle")
+
+    def padlock(self, x, y):
+        self.parts.append(f'<path d="M{x + 3},{y + 7} v-3 a4,4 0 0 1 8,0 v3" stroke="{ACCENT}" stroke-width="2" fill="none"/>')
+        self.rect(x, y + 7, 14, 10, ACCENT, radius=2)
+
     def arrow(self, x1, y1, x2, y2):
         self.parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{ACCENT}" stroke-width="2.5" marker-end="url(#head)"/>')
 
@@ -114,7 +125,7 @@ def editor_map():
 
 
 def create_screen():
-    d = Drawing(1200, 560, "Step 1: make a screen (one click)")
+    d = Drawing(1200, 720, "Step 1: make a screen (one click)")
     d.window(20, 60, 330, 470, "Hierarchy")
     d.row(24, 100, 322, "Main Camera")
     d.row(24, 124, 322, "Directional Light")
@@ -140,12 +151,16 @@ def create_screen():
     d.rect(845, 384, 140, 60, "#2858c8", radius=12)
     d.text(915, 424, "Hello", 26, "#ffffff", "600", "middle")
     d.callout(3, 1150, 300, "Press Play: Hello fades in and\nslides up. That motion is two\nclips on the Screen Timeline.", 860, 456, 290)
+    d.window(20, 560, 620, 100, "Inspector   Screen (selected for you)")
+    d.edit_bar(32, 600, 590)
+    d.text(32, 646, "Tl UI Panel   Commands, Lists, Signals…", 13, DIM)
+    d.callout(4, 660, 612, "The Screen's Inspector starts with an Edit bar.\nLayout opens UI Builder, Timeline opens the\ntimeline, Other timelines opens or makes more.\nThe Timeline window is already open for you.", 690, 590, 420)
     d.save("step-1-create-screen.svg")
 
 
 def ui_builder():
     d = Drawing(1200, 640, "Step 2: design the screen in UI Builder (UI Toolkit)")
-    d.text(20, 64, "In the Project window, double-click Screen.uxml. UI Builder opens:", 14, DIM)
+    d.text(20, 64, "Click Layout on the Screen's Edit bar (or double-click Screen.uxml). UI Builder opens:", 14, DIM)
     d.window(20, 80, 250, 260, "Library")
     for i, words in enumerate(["Containers", "  VisualElement", "  ScrollView", "Controls", "  Label", "  Button", "  Slider", "  ProgressBar"]):
         d.row(24, 124 + 25 * i, 242, words, selected=words.strip() == "Label", color=TEXT if words.startswith("  ") else DIM)
@@ -181,12 +196,18 @@ def ui_builder():
 
 def timeline():
     d = Drawing(1200, 640, "Step 3: animate it in the Timeline window")
-    d.window(20, 60, 300, 210, "Hierarchy")
-    d.row(24, 100, 292, "Screen")
-    d.row(24, 124, 292, "☑ Screen Timelines")
-    d.row(24, 148, 292, "Screen Timelines", indent=16, selected=True)
-    d.callout(1, 296, 124, "Tick the box next to Screen Timelines,\nexpand it, click the object inside.\nWindow ▸ Sequencing ▸ Timeline shows it.", 340, 70, 330)
+    d.window(20, 60, 420, 110, "Inspector   Screen")
+    d.edit_bar(32, 100, 396, highlight="Timeline")
+    d.text(32, 150, "Hierarchy: right-click Screen ▸ Tl UI ▸ Edit Timeline", 12, DIM)
+    d.rect(304, 128, 180, 100, "#2f2f2f", LINE, 4)
+    d.row(308, 152, 172, "play clicked")
+    d.row(308, 176, 172, "level up")
+    d.parts.append(f'<line x1="312" y1="190" x2="476" y2="190" stroke="{LINE}"/>')
+    d.row(308, 214, 172, "New timeline…", selected=True)
+    d.text(500, 200, "Other timelines: a button's or a signal's timeline, or a new one.", 13, DIM)
+    d.callout(1, 452, 112, "Click Timeline. Screen Timelines opens by itself and the Timeline\nwindow shows the screen's timeline. It stays locked on it (the\npadlock), so you can click other things. Double-clicking a\n.playable in the Project window does the same.", 480, 82, 680)
     d.window(20, 290, 1160, 330, "Timeline")
+    d.padlock(1150, 295)
     d.button(30, 324, 30, 22, "+")
     d.rect(30, 350, 180, 150, "#2f2f2f", LINE, 4)
     for i, words in enumerate(["Track Group", "Tl ▸", "UI  ▸"]):
@@ -217,8 +238,8 @@ def timeline():
 
 
 def inspector():
-    d = Drawing(1200, 600, "Step 4: tell the clip what to change (Inspector)")
-    d.window(20, 60, 520, 520, "Inspector")
+    d = Drawing(1200, 640, "Step 4: tell the clip what to change (Inspector)")
+    d.window(20, 60, 520, 560, "Inspector")
     d.text(32, 98, "Fade hello", 15, TEXT, "600")
     d.text(32, 132, "Clip Timing", 13, TEXT, "600")
     d.field(44, 160, 480, "Start", "0 s", 120)
@@ -226,38 +247,50 @@ def inspector():
     d.text(32, 232, "▾ Tl Clip", 13, TEXT, "600")
     d.field(44, 264, 480, "Target", "hello", 120, True, True)
     d.field(44, 296, 480, "Property", "Opacity", 120, True, True)
-    d.rect(44, 310, 480, 54, "#232323", LINE, 3)
-    d.text(54, 330, "0 is invisible, 1 is as designed. The clip goes", 12, DIM)
-    d.text(54, 350, "From → To, shaped by Ease. Hold keeps To after.", 12, DIM)
-    d.field(44, 392, 480, "From", "0", 120, highlight=True)
-    d.field(44, 424, 480, "To", "1", 120, highlight=True)
-    d.text(44, 456, "Ease", 13, DIM)
-    d.rect(164, 441, 360, 40, FIELD, LINE, 3)
-    d.parts.append('<path d="M170,476 C230,445 300,446 518,446" stroke="#4fd1a5" stroke-width="2" fill="none"/>')
-    d.text(44, 512, "Hold", 13, DIM)
-    d.rect(164, 498, 20, 20, SELECT, LINE, 3)
-    d.text(168, 513, "✓", 13, "#ffffff")
+    d.field(44, 328, 480, "Preset", "Pick a ready-made animation…", 120, True, True)
+    d.rect(44, 342, 480, 54, "#232323", LINE, 3)
+    d.text(54, 362, "0 is invisible, 1 is as designed. The clip goes", 12, DIM)
+    d.text(54, 382, "From → To, shaped by Ease. Hold keeps To after.", 12, DIM)
+    d.field(44, 424, 480, "From", "0", 120)
+    d.field(44, 456, 480, "To", "1", 120)
+    d.text(44, 488, "Ease", 13, DIM)
+    d.rect(164, 473, 360, 40, FIELD, LINE, 3)
+    d.parts.append('<path d="M170,508 C230,477 300,478 518,478" stroke="#4fd1a5" stroke-width="2" fill="none"/>')
+    d.text(44, 544, "Hold", 13, DIM)
+    d.rect(164, 530, 20, 20, SELECT, LINE, 3)
+    d.text(168, 545, "✓", 13, "#ffffff")
     d.callout(1, 560, 264, "Target: which element. The list shows\nevery Name from UI Builder. The clip\nrenames itself: Fade hello, Hide title.", 590, 230, 340)
-    d.callout(2, 560, 296, "Property: Opacity, Move X, Move Y,\nScale, Rotate, Width %, Height %,\nReveal (typing) or Value (bars).", 590, 300, 340)
-    d.callout(3, 560, 408, "From and To: the numbers at the\nclip's start and end. Equal numbers\nmean nothing moves (it warns you).", 590, 376, 340)
-    d.callout(4, 560, 461, "Ease: the shape of the change.", 590, 446, 340)
-    d.callout(5, 560, 508, "Hold: keep To after the clip ends.", 590, 496, 340)
-    d.text(960, 120, "Examples", 15, TEXT, "600")
-    examples = [("Fade in", "Opacity 0 → 1"), ("Slide in from left", "Move X -300 → 0"), ("Pop", "Scale 0.6 → 1"), ("Spin", "Rotate 0 → 360"), ("Type out text", "Reveal 0 → 1"), ("Fill a bar", "Value 0 → 1")]
-    for i, (name, value) in enumerate(examples):
-        d.text(960, 150 + 34 * i, name, 13, TEXT)
-        d.text(1180, 150 + 34 * i, value, 13, "#9fd3ff", anchor="end")
+    d.callout(2, 560, 296, "Property: what changes (Animate only).", 590, 300, 340)
+    d.callout(3, 560, 328, "Preset: pick one and it fills in Property,\nFrom, To, Ease, Hold and the clip's length.\nNo typing. Change anything after.", 590, 332, 340)
+    d.callout(4, 560, 440, "From and To: the numbers at the\nclip's start and end. Drag the word\nFrom or To left and right to change it.", 590, 410, 340)
+    d.callout(5, 560, 493, "Ease: the shape of the change.", 590, 478, 340)
+    d.callout(6, 560, 540, "Hold: keep To after the clip ends.", 590, 528, 340)
+    d.text(950, 100, "Presets", 15, TEXT, "600")
+    groups = [("Appear", ["Fade in", "Slide in from the left / right", "Slide in from the top / bottom", "Pop in", "Type out the text"]),
+              ("Disappear", ["Fade out", "Slide out to the left / right", "Shrink away"]),
+              ("Attention", ["Pop (grow and back)", "Shake", "Blink", "Spin once"]),
+              ("Fill", ["a progress bar (0 to 100)", "a radial fill (0 to 1)"])]
+    y = 130
+    for group, items in groups:
+        d.text(950, y, group + " ▸", 13, "#9fd3ff", "600")
+        y += 22
+        for item in items:
+            d.text(966, y, item, 12, TEXT)
+            y += 20
+        y += 8
     d.save("step-4-inspector.svg")
 
 
 def panel_tables():
-    d = Drawing(1200, 600, "Step 5: buttons, lists and drag and drop (Tl UI Panel on the Screen object)")
-    d.window(20, 60, 560, 520, "Inspector   Screen ▸ Tl UI Panel")
+    d = Drawing(1200, 640, "Step 5: buttons, lists and drag and drop (Tl UI Panel on the Screen object)")
+    d.window(20, 60, 560, 560, "Inspector   Screen ▸ Tl UI Panel")
+    d.edit_bar(32, 94, 536)
+    d.parts.append('<g transform="translate(0,40)">')
     d.text(32, 106, "▾ Commands", 13, TEXT, "600")
-    d.field(44, 128, 520, "Target", "draw", 130, True, True)
+    d.field(44, 128, 520, "Target", "play", 130, True, True)
     d.field(44, 158, 520, "On", "Click", 130, True)
-    d.field(44, 188, 520, "Do", "Play Timeline", 130, True, True)
-    d.field(44, 218, 520, "Timeline Slot", "1", 130)
+    d.field(44, 188, 520, "Do", "Restart Timeline", 130, True)
+    d.field(44, 218, 520, "Timeline", "play clicked", 130, True, True)
     d.text(32, 262, "▾ Lists", 13, TEXT, "600")
     d.field(44, 292, 520, "Target", "hand", 130, True)
     d.field(44, 322, 520, "Rows", "Hand Rows", 130)
@@ -266,11 +299,12 @@ def panel_tables():
     d.field(44, 412, 520, "Drop Code", "4", 130, highlight=True)
     d.text(32, 456, "▾ Signals", 13, TEXT, "600")
     d.field(44, 486, 520, "Code", "1", 130)
-    d.field(44, 516, 520, "Do", "Play Timeline (slot 1)", 130, True)
-    d.callout(1, 600, 158, "Commands: pick the element by name;\nwhen it is clicked (or hovered, changed,\nor a hotkey), play a timeline or send\na code to the game.", note_width=330)
+    d.field(44, 516, 520, "Do", "Play Timeline", 130, True)
+    d.callout(1, 600, 158, "Commands: pick the element by name;\nwhen it is clicked (or hovered, changed,\nor a hotkey), play a timeline or send\na code to the game. Timeline: pick one\nby name, or New timeline… makes one\nand opens it.", note_width=330)
     d.callout(2, 600, 322, "Lists: rows from an asset or the\ngame, drawn with a row template.", note_width=330)
     d.callout(3, 600, 397, "Drag Code: a row dropped on another\nrow of this list (swap, reorder).\nDrop Code: a row from another list\ndropped here (hand → table).", note_width=330)
     d.callout(4, 600, 501, "Signals: what a Signal clip, or the\ngame, sets off: play a timeline,\na sound, any UnityEvent.", note_width=330)
+    d.parts.append('</g>')
     d.rect(990, 110, 190, 300, "#10131a", radius=4)
     d.rect(1010, 140, 70, 98, "#c9b0f0", "#ffd25a", 8, 2)
     d.text(1045, 196, "Golem", 12, "#1a1a1a", "600", "middle")

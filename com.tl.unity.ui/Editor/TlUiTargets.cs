@@ -214,6 +214,8 @@ namespace TlUi.Editor
 
         public static TlUiTimelines TimelinesObjectInOpenScenes() => Object.FindObjectsByType<TlUiTimelines>(FindObjectsInactive.Include).FirstOrDefault();
 
+        public static TlUiPanel FindAnyPanel() => Object.FindAnyObjectByType<TlUiPanel>(FindObjectsInactive.Include);
+
         public static string LabelOfId(TlUiPanel panel, TlUiTimelines timelinesObject, int id)
         {
             if (timelinesObject != null && id >= 0 && id < timelinesObject.TargetNames.Count && !string.IsNullOrEmpty(timelinesObject.TargetNames[id]))
