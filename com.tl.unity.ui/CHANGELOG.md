@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0-preview.3
+
+### Added
+- **Commands and Lists pick their element by name too.** The Target field on Tl UI Panel's Commands and Lists rows is a dropdown of element names. A name not used yet is added to Tl UI Timelines > Target Names at a free Id. With the Screen Timelines SubScene closed, a blue note says to tick its box.
+- A visual designer guide, `docs/DESIGNER-GUIDE.md`, with diagrams of each Editor step, day-to-day recipes, and Unity renders of the Hello, Cards and Inventory screens.
+
+### Fixed
+- Inventory sample: the Equipment column is wide enough for its heading, which ran into the Shop heading.
+- Cards sample: the "Drag a card here to play it" hint sits at the bottom of the table, no longer behind a played card.
+
+Both were found in the first renders of the samples (`docs/images`).
+
 ## 0.3.0-preview.2
 
 ### Fixed

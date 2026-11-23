@@ -7,6 +7,10 @@ using UnityEngine.UIElements;
 
 namespace TlUi
 {
+    public sealed class TlUiTargetIdAttribute : PropertyAttribute
+    {
+    }
+
     [Serializable]
     public struct UiTarget
     {
@@ -42,8 +46,8 @@ namespace TlUi
     [Serializable]
     public sealed class UiListBinding
     {
-        [Tooltip("The target Id of the element that shows the rows: a ListView (rows are virtualized) or any container (one row element per row, kept and reused).")]
-        [Range(0, UiIds.HighestId)]
+        [Tooltip("The element that shows the rows, by name: a ListView (rows are virtualized) or any container (one row element per row, kept and reused).")]
+        [TlUiTargetId]
         public int TargetId;
 
         [Tooltip("Where the rows come from: a Tl UI Asset Rows asset, or a component that shows an ECS buffer (a Tl UI Buffer Rows subclass).")]
@@ -89,8 +93,8 @@ namespace TlUi
     [Serializable]
     public sealed class UiCommand
     {
-        [Tooltip("The target Id whose elements send this command.")]
-        [Range(0, UiIds.HighestId)]
+        [Tooltip("The element that sends this command, by name.")]
+        [TlUiTargetId]
         public int TargetId;
 
         [Tooltip("Which element event sends it. Hotkey Only listens to the hotkey alone.")]

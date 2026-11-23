@@ -168,6 +168,21 @@ namespace TlUiPackage.EditorTests
         }
 
         [Test]
+        public void ACommandOrListPicksItsElementByNameAndANewNameTakesAFreeId()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var timelinesObject = new GameObject("Screen Timelines").AddComponent<TlUiTimelines>();
+            timelinesObject.TargetNames.Add("hello");
+            Assert.AreEqual(0, TlUiTargets.IdForName(timelinesObject, "hello"), "a name already in Target Names keeps its Id");
+            Assert.AreEqual(1, TlUiTargets.IdForName(timelinesObject, "play"), "an element name not used yet is added at the first free Id");
+            CollectionAssert.AreEqual(new[] { "hello", "play" }, timelinesObject.TargetNames);
+            Assert.AreEqual(timelinesObject, TlUiTargets.TimelinesObjectInOpenScenes(), "the picker finds the Tl UI Timelines object in the open scenes");
+            Assert.AreEqual("play", TlUiTargets.LabelOfId(null, timelinesObject, 1), "and shows the name for an Id");
+            Assert.IsNull(TlUiTargets.LabelOfId(null, timelinesObject, 7));
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        }
+
+        [Test]
         public void APickedSlotIsWrittenThroughAFreshSerializedObjectSoAMenuCallbackSticks()
         {
             var timeline = TlTimelines.CreateAsset();

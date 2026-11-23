@@ -182,13 +182,11 @@ namespace TlUi.Editor
             return id < timelinesObject.TargetNames.Count ? timelinesObject.TargetNames[id] : null;
         }
 
-        public static bool Assign(IEnumerable<TimelineClip> clips, TlUiTimelines timelinesObject, string name)
+        public static int IdForName(TlUiTimelines timelinesObject, string name) => timelinesObject == null || string.IsNullOrEmpty(name) ? -1 : NameAtAnId(timelinesObject, name, IdsUsedByNumber(timelinesObject, Enumerable.Empty<TimelineClip>()));
+
+        static int NameAtAnId(TlUiTimelines timelinesObject, string name, ulong usedByNumber)
         {
-            if (timelinesObject == null || string.IsNullOrEmpty(name))
-                return false;
-            var clipsToName = clips.ToList();
             var names = timelinesObject.TargetNames;
-            var usedByNumber = IdsUsedByNumber(timelinesObject, clipsToName);
             var id = names.IndexOf(name);
             if (id >= 0 && (usedByNumber & BitOf(id)) != 0)
                 Debug.LogWarning("Tl UI: the name " + name + " is at position " + id + ", and Id " + id + " is also used by number (a Targets, Lists or Commands row, a TlTarget, or a clip with no name), so clips on it drive both. Move one of them to another Id.", timelinesObject);
@@ -198,7 +196,7 @@ namespace TlUi.Editor
                 if (id < 0)
                 {
                     Debug.LogWarning("Tl UI: no free target Id is left in " + timelinesObject.name + "; names and numbered targets together can use " + TlUiTimelines.MostTargetNames + ".", timelinesObject);
-                    return false;
+                    return -1;
                 }
                 Undo.RecordObject(timelinesObject, "Pick Tl UI Target");
                 while (names.Count < id)
@@ -211,6 +209,30 @@ namespace TlUi.Editor
                 if (timelinesObject.gameObject.scene.IsValid())
                     EditorSceneManager.MarkSceneDirty(timelinesObject.gameObject.scene);
             }
+            return id;
+        }
+
+        public static TlUiTimelines TimelinesObjectInOpenScenes() => Object.FindObjectsByType<TlUiTimelines>(FindObjectsInactive.Include).FirstOrDefault();
+
+        public static string LabelOfId(TlUiPanel panel, TlUiTimelines timelinesObject, int id)
+        {
+            if (timelinesObject != null && id >= 0 && id < timelinesObject.TargetNames.Count && !string.IsNullOrEmpty(timelinesObject.TargetNames[id]))
+                return timelinesObject.TargetNames[id];
+            if (panel != null)
+                foreach (var target in panel.Targets)
+                    if (target.Id == id && !string.IsNullOrEmpty(target.Selector))
+                        return target.Selector;
+            return null;
+        }
+
+        public static bool Assign(IEnumerable<TimelineClip> clips, TlUiTimelines timelinesObject, string name)
+        {
+            if (timelinesObject == null || string.IsNullOrEmpty(name))
+                return false;
+            var clipsToName = clips.ToList();
+            var id = NameAtAnId(timelinesObject, name, IdsUsedByNumber(timelinesObject, clipsToName));
+            if (id < 0)
+                return false;
             foreach (var clip in clipsToName)
             {
                 if (!(clip?.asset is TlClip tl))

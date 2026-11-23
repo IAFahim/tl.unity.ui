@@ -129,7 +129,7 @@
 }
 
 .narrow {
-    width: 200px;
+    width: 260px;
 }
 
 .equipment {
@@ -145,7 +145,7 @@
 }
 
 .equip-slot {
-    width: 170px;
+    width: 230px;
     height: 64px;
 }
 

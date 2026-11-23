@@ -12,11 +12,17 @@ Game code never calls the UI and never holds a reference to it. Game code writes
 
 ## Designers: start here (no code)
 
+**Visual guide, with a picture of every step and day-to-day recipes: [docs/DESIGNER-GUIDE.md](docs/DESIGNER-GUIDE.md).**
+
+![Where things are in the Unity Editor](docs/images/editor-map.svg)
+
 ### 1. Your first screen, in one click
 
 1. Save your scene.
 2. In the **Hierarchy** (the list of objects, top left), right-click on empty space and pick **Tl UI > Screen**.
 3. Press **Play** (top middle). A blue **Hello** fades in and slides up.
+
+![Step 1: make a screen](docs/images/step-1-create-screen.svg)
 
 That's the whole loop. The rest of this section shows where that motion lives and how to change it.
 
@@ -35,9 +41,13 @@ Each row in the Timeline is a **track**, and each block on a track is a **clip**
 
 Drag the white playhead (the vertical line) left and right. The Game view shows the screen at that moment, without pressing Play.
 
+![Step 3: animate it in the Timeline window](docs/images/step-3-timeline.svg)
+
 ### 3. Read a clip: the Inspector
 
 Click **Fade hello**. The **Inspector** (right side) shows, under **Tl Clip**:
+
+![Step 4: tell the clip what to change](docs/images/step-4-inspector.svg)
 
 | Field | What it means | Fade hello |
 |---|---|---|
@@ -79,11 +89,17 @@ Class, Text and Template fields are lists too. Choose **New class name…** or *
 2. Drag a **Label**, **Button** or any element onto the screen, and type a **Name** for it in UI Builder's Inspector (for example `title`).
 3. Save. The name now shows in every clip's **Target** list.
 
+![Step 2: design the screen in UI Builder](docs/images/step-2-ui-builder.svg)
+
 Names are stored on the **Screen Timelines** object (**Tl UI Timelines > Target Names**) and baked into ECS as fixed strings. Play mode allocates nothing for them. You never type a number.
 
 ### 6. Cards, inventory, drag and drop
 
 Import the samples from **Window > Package Manager > Tl Unity UI > Samples**. After importing one, build it from the menu bar, for example **Tl UI > Samples > Build Cards**, then open its scene and press Play.
+
+| Cards, rendered by Unity | Dragging a card onto the table | Inventory: equipping the Sword |
+|---|---|---|
+| ![Cards](docs/images/cards.png) | ![Dragging a card](docs/images/cards-drag.png) | ![Inventory drag](docs/images/inventory-drag.png) |
 
 **Cards** is a card table:
 - Hover a card and it lifts.
@@ -106,6 +122,8 @@ Import the samples from **Window > Package Manager > Tl Unity UI > Samples**. Af
 - Drag an item onto another slot to swap them.
 - Drag a bag item onto **Equipment** (Weapon, Armor, Ring) to equip it, and drag it back to unequip.
 - Click a shop row to buy. Enemies carry nameplates.
+
+![Step 5: buttons, lists and drag and drop](docs/images/step-5-panel.svg)
 
 How dragging works:
 - Any list on the **Tl UI Panel** (**Lists**) can take part.
@@ -141,8 +159,8 @@ Add these three lines to `dependencies` in your project's `Packages/manifest.jso
 
 ```json
 "com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.2",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.2"
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.3",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.3"
 ```
 
 You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. Unity resolves Entities, Input System and Timeline for you.

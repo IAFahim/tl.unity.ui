@@ -142,6 +142,53 @@ namespace TlUi.Editor
         }
     }
 
+    [CustomPropertyDrawer(typeof(TlUiTargetIdAttribute))]
+    public sealed class TlUiTargetIdDrawer : PropertyDrawer
+    {
+        const string HowToSeeNames = "Tick the box next to Screen Timelines in the Hierarchy to pick elements by name here.";
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            if (TlUiTargets.TimelinesObjectInOpenScenes() != null)
+                return EditorGUIUtility.singleLineHeight;
+            return EditorGUIUtility.singleLineHeight + 4f + EditorStyles.helpBox.CalcHeight(new GUIContent(HowToSeeNames), EditorGUIUtility.currentViewWidth - 40f);
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var panel = property.serializedObject.targetObject as TlUiPanel;
+            var timelinesObject = TlUiTargets.TimelinesObjectInOpenScenes();
+            var line = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+            var shownLabel = new GUIContent("Target", "The element, by its Name in UI Builder.");
+            if (timelinesObject == null)
+            {
+                EditorGUI.IntSlider(line, property, 0, UiIds.HighestId, new GUIContent("Target Id", HowToSeeNames));
+                EditorGUI.HelpBox(new Rect(position.x, line.yMax + 2f, position.width, position.height - EditorGUIUtility.singleLineHeight - 4f), HowToSeeNames, MessageType.Info);
+                return;
+            }
+            var current = TlUiTargets.LabelOfId(panel, timelinesObject, property.intValue);
+            var button = EditorGUI.PrefixLabel(line, shownLabel);
+            if (!EditorGUI.DropdownButton(button, new GUIContent(current ?? "Id " + property.intValue + " (no name: pick one)"), FocusType.Keyboard))
+                return;
+            var writeId = TlUiPanelLists.SlotWriterFor(property);
+            var menu = new GenericMenu();
+            var offered = TlUiTargets.NamesToOffer(timelinesObject);
+            if (offered.Count == 0)
+                menu.AddDisabledItem(new GUIContent("Give elements a Name in UI Builder first"));
+            foreach (var name in offered)
+            {
+                var chosen = name;
+                menu.AddItem(new GUIContent(chosen), chosen == current, () =>
+                {
+                    var id = TlUiTargets.IdForName(timelinesObject, chosen);
+                    if (id >= 0)
+                        writeId(id);
+                });
+            }
+            menu.DropDown(button);
+        }
+    }
+
     [CustomPropertyDrawer(typeof(UiClassRef))]
     public sealed class UiClassRefDrawer : PropertyDrawer
     {
