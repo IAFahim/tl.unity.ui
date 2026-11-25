@@ -320,9 +320,9 @@ To animate the screen, give elements a Name in UI Builder and pick that name on 
 
 ## Status
 
-Preview, version `0.3.0-preview.5`. Checked on Unity 7000.0.0a20 on Linux, installed by Git URL at the tagged commit `3e869d5` (`com.tl.unity#765657a`):
+Preview, version `0.3.0-preview.6`. Checked on Unity `7000.0.0a21` on Windows 11 (`55750bc`, `com.tl.unity#main` at `4b23471`, `tl` submodule `d87d1998`), from both `file:` and fresh `#main` Git-URL installs:
 - 0 compile errors and 0 warnings from these packages; Tl writes all 11 **+** menu entries itself.
-- 10 EditMode tests:
+- 10 EditMode tests (`10/10` on both `file:` and `#main` Git-URL installs):
   - every block in the **+** menu;
   - naming clips, Animate included, and renaming on a property change;
   - Commands and Lists picking their element by name;
@@ -334,16 +334,15 @@ Preview, version `0.3.0-preview.5`. Checked on Unity 7000.0.0a20 on Linux, insta
   - a Commands or Signals row suggesting a timeline name (`play clicked`, `Signal 3`);
   - Animate presets: what each writes, the clip's new length and name, and Tl's downhill starting Ease being caught;
   - a Timeline field on a row that does not play a timeline showing as not used.
-- 21 package PlayMode tests plus the Basics, Hud, Inventory, Cards and Menu sample tests: 26/26. Basics, Hud, Inventory and Menu measure 0 B of managed allocation per frame once warm.
-- 15 .NET tests.
-- Linux CoreCLR and IL2CPP players run all five samples headless and pass 34 of 34 checks (3 and 2 runs, at 0.3.0-preview.4; preview.5 changed only Editor code, tests and docs). The checks include names resolving from ECS, a card dragged onto the table, and 0 B in UI Toolkit's panel update once warm.
-- The screen images in `docs/` are rendered by Unity headless (0.3.0-preview.3; the screens did not change since).
+- 21 package PlayMode tests (`21/21` on fresh `#main` Git URL) plus the Basics, Hud, Inventory, Cards and Menu sample tests: `26/26` on `file:` (two passes). Basics, Hud, Inventory and Menu measure `0 B` of managed allocation per frame once warm.
+- 15 .NET tests (`15/15`, 0 warnings).
+- Windows x64 CoreCLR player runs all five samples headless and passes `34/34` checks on 3 consecutive runs, including names resolving from ECS, a card dragged onto the table, and `0 B` in UI Toolkit's panel update over 240 ticks while Hud data changes every frame.
+- Linux CoreCLR and IL2CPP players (`34/34`, 3 and 2 runs, at `0.3.0-preview.4`) and windowed Editor checks (`0.3.0-preview.5`) were verified earlier; screenshots in `docs/` are from `0.3.0-preview.3`.
 
-- In a real windowed Editor (Xvfb, mouse clicks): the Edit bar, the Timeline locked on a new screen, scrubbing redrawing the Game view in Edit mode, the Preset list applying a preset, the Target list, and the Commands Timeline list with **Open … in the Timeline window**. The screenshots in `docs/images/unity-*.png` come from those runs.
-
-Not checked yet:
+Not checked yet on `0.3.0-preview.6`:
+- Windows IL2CPP player build and re-running the Linux players on `0.3.0-preview.6`;
 - other platforms;
-- in a windowed Editor: double-clicking a `.playable`, the Hierarchy right-click items, and **New timeline…** typed in its popup (each is covered by EditMode tests of what it does);
+- in a windowed Editor: double-clicking a `.playable`, the Hierarchy right-click items, **New timeline…** typed in its popup, and interactive clicks on `0.3.0-preview.6` (each is covered by EditMode tests of what it does);
 - newer Unity alphas.
 
 ## Develop

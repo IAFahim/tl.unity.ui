@@ -246,28 +246,28 @@ The first play of a timeline pays one-time costs: UI Toolkit focus and blur path
 
 | Check | Result |
 |---|---|
-| Editor tests, `-batchmode -nographics`, Unity 7000.0.0a20 | 21 package PlayMode tests, 5 sample tests and 10 EditMode tests pass from a Git URL install of 0.3.0-preview.4, and PlayMode twice from a `file:` install |
-| Engine-free rules | 15 .NET tests pass |
-| Linux player, CoreCLR | builds with 0 errors and 0 warnings; a smoke scene loads all five sample scenes headless and passes 34 checks (3 runs) |
-| Linux player, IL2CPP | builds with 0 errors and 0 warnings and passes the same 34 checks (2 runs) |
-| UXML in a player | TlTarget, TlSend, TlPlay, the three Tl bindings and Tl Radial Fill all load from UXML and work under both backends |
-| Allocation in a player | once warm (full health, every UI timeline finished), UI Toolkit's panel update allocates 0 B over 240 ticks while the Hud data changes every frame |
-| Allocation in the Editor | Tl UI Panel and Tl UI Data allocate 0 B per frame on a third play of the Basics sample and while the Hud data changes every frame |
-| Git URL install | a fresh project compiles with 0 warnings from these packages, Tl writes the 11 menu entries, and every test above passes |
-| Static state | Unity 7 resets every static (`[AutoStaticsCleanup]` or `SubsystemRegistration`), so it is safe with domain reload off; 0 statics warnings |
+| Editor tests, `-batchmode -nographics`, Unity `7000.0.0a21` (Windows 11) | `10/10` EditMode and `26/26` PlayMode (two passes) from `file:`, plus `10/10` EditMode and `21/21` package PlayMode from fresh `#main` Git-URL install |
+| Engine-free rules | `15/15` .NET tests pass (`0` warnings, `tl` `d87d1998`) |
+| Windows player, CoreCLR (`0.3.0-preview.6`) | builds with `0` errors and `0` warnings; loads all five sample scenes headless and passes `34/34` checks on 3 consecutive runs |
+| Linux players, CoreCLR & IL2CPP (`0.3.0-preview.4`) | `34/34` checks (3 CoreCLR runs, 2 IL2CPP runs on `7000.0.0a20`) |
+| UXML in a player | TlTarget, TlSend, TlPlay, the three Tl bindings and Tl Radial Fill all load from UXML and work under CoreCLR (Windows/Linux) and IL2CPP (Linux) |
+| Allocation in a player | once warm (full health, every UI timeline finished), UI Toolkit's panel update allocates `0 B` over 240 ticks while the Hud data changes every frame (3/3 Windows CoreCLR runs on `0.3.0-preview.6`) |
+| Allocation in the Editor | Tl UI Panel and Tl UI Data allocate `0 B` per frame on a third play of the Basics sample and while the Hud data changes every frame |
+| Git URL install | a fresh project on `#main` compiles with `0` errors / `0` own warnings, Tl writes the 11 menu entries, and `10/10` EditMode + `21/21` PlayMode pass |
+| Static state | Unity 7 resets every static (`[AutoStaticsCleanup]` or `SubsystemRegistration`), so it is safe with domain reload off; `0` statics warnings |
 
 "Once warm" means after first-time costs, which UI Toolkit pays itself:
-- In the Hud, UI Toolkit's update allocated 88 B once, shortly after the low-health pulse stopped, in a CoreCLR player only (0 B with IL2CPP). Likely its style and layout pass; the exact cause is not confirmed.
+- Before `0.3.0-preview.6`, a CoreCLR player occasionally hit one-time lazy `TlUiConverters` string allocations (`24 B`) or an `88 B` style/layout pass (`0 B` with IL2CPP). `0.3.0-preview.6` pre-warms common `tl-integer`, `tl-percent`, and `tl-clock` string caches on registration (`0 B` across 3/3 Windows CoreCLR runs).
 - Tl UI Panel reads the pointer before applying clips, so it never forces UI Toolkit's style and layout pass early inside its own update. `Pick` starts with `ValidateLayout()`.
 
 The smoke scene and the player build script live in a separate test project. They are not shipped in the package.
 
-Not checked yet:
-- other platforms (Windows, macOS, mobile, consoles, WebGL);
-- what anything looks like (all runs are headless), including scrub preview in a windowed Editor's Game view;
+Not checked yet on `0.3.0-preview.6`:
+- Windows IL2CPP player build and re-running Linux players on `0.3.0-preview.6`;
+- other platforms (macOS, mobile, consoles, WebGL);
+- what anything looks like (headless batch runs), including scrub preview in a windowed Editor's Game view on `7000.0.0a21`;
 - authoring in UI Builder's own panels;
-- the designer helpers on screen (Edit bar, dropdowns, locked Timeline window, `.playable` double-click); their effects are tested headless;
-- newer Unity alphas.
+- interactive windowed Editor clicks on `0.3.0-preview.6` (covered by EditMode tests and checked visually on `0.3.0-preview.5`).
 
 ## Limits
 
