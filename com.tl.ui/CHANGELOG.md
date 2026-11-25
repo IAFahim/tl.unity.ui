@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-preview.6
+
+### Changed
+- Bumped `external/tl-kinds` submodule to latest `tl` (`d87d1998`).
+- Updated install docs to unpinned `#main` URLs; verified 15/15 `.NET` tests and Unity `7000.0.0a21`.
+
 ## 0.3.0-preview.5
 
 ### Changed

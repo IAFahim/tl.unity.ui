@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-preview.6
+
+### Changed
+- Updated to latest `tl` (`d87d1998`) and `tl.unity` `main` (PR #51 merged; unpinned `#main` install docs).
+- Pre-warmed common `tl-integer` (`0..999`), `tl-percent` (`0..100%`), and `tl-clock` (`0:00..9:59`) string caches during `TlUiConverters.Register()` for deterministic 0 B cold CoreCLR runs.
+- Verified on Windows 11 with Unity `7000.0.0a21`.
+
 ## 0.3.0-preview.5
 
 Checked in a real windowed Unity 7000.0.0a20 Editor for the first time (on a virtual X display, driven by mouse clicks), which found two Inspector problems.

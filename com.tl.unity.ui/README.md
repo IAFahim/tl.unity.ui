@@ -13,12 +13,12 @@ The clips and their rules are engine-free and live in `com.tl.ui`; this package 
 This package and `com.tl.ui` live in [IAFahim/tl.unity.ui](https://github.com/IAFahim/tl.unity.ui). `com.tl.unity` lives in [IAFahim/tl.unity](https://github.com/IAFahim/tl.unity). Add all three to `Packages/manifest.json`. List all three, because a Git package cannot pull another Git package:
 
 ```json
-"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.2.0-preview.1",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.2.0-preview.1"
+"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#main",
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#main",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#main"
 ```
 
-A fresh 7000.0.0a20 project with exactly these lines compiles and passes all 21 package tests. To edit the packages, clone the repos and use `file:` paths to the package folders instead.
+A fresh Unity 7 project (`7000.0.0a20` or newer) with exactly these lines compiles and passes all 21 package tests (replace `#main` with a release tag such as `#v0.3.0-preview.6` if you want a snapshot). To edit the packages, clone the repos and use `file:` paths to the package folders instead.
 
 ## Set up a screen
 
@@ -271,7 +271,7 @@ Not checked yet:
 
 ## Limits
 
-- Scrub preview and the Timeline **+** menu use `com.tl.unity`'s own hooks: `TlPreview.Evaluated`, `Version` and `Record`, and `[assembly: TlMenuEntries]`. Both come from IAFahim/tl.unity#51; until it is merged, the pin points at its commit `765657a`.
+- Scrub preview and the Timeline **+** menu use `com.tl.unity`'s own hooks: `TlPreview.Evaluated`, `Version` and `Record`, and `[assembly: TlMenuEntries]` (merged on `tl.unity` `main` via IAFahim/tl.unity#51).
 - 64 Ids (or names) and 8 slots of each kind per screen; at most 16 properties animate at once (held ones count).
 - Every MonoBehaviour (a Tl UI Buffer Rows or Tl UI Data subclass too) goes in a file named after it. On 7000.0.0a20, one declared in a file named after another class saves without a script reference and is missing when the scene loads.
 - Ids are shared by every timeline in the World: any timeline with an Id 3 clip drives every target with Id 3.

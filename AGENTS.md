@@ -15,7 +15,7 @@ Two UPM packages that let a Unity 7 game drive UI Toolkit screens from Tl timeli
 | Rules | `com.tl.ui` | what each clip writes and how clips combine; engine-free, builds as .NET | clip data, ticks | `UiSwitches`, `UiChannels`, a look per target |
 | Host | `com.tl.unity.ui` | applies looks to UI Toolkit, binds ECS data, sends input back | Tl columns, ECS singletons and buffers, UI Toolkit events | element styles and classes, inbox buffers, timeline requests |
 
-`com.tl.unity` (Tl playback) lives in IAFahim/tl.unity and is pinned to `765657a` (tl.unity main plus IAFahim/tl.unity#51: `TlPreview.Evaluated`/`Version`/`Record` and `[assembly: TlMenuEntries]`), the commit these packages are tested against, on Unity 7000.0.0a20.
+`com.tl.unity` (Tl playback) tracks [IAFahim/tl.unity](https://github.com/IAFahim/tl.unity) `main` (`TlPreview.Evaluated`/`Version`/`Record` and `[assembly: TlMenuEntries]` from IAFahim/tl.unity#51), tested on the newest Unity 7 (`7000.0.0a21`).
 
 ## Start here
 
@@ -38,9 +38,9 @@ git clone --recurse-submodules https://github.com/IAFahim/tl.unity.ui.git
 dotnet test tl.unity.ui/com.tl.ui/Tests~/Tl.Ui.Tests
 ```
 
-Then, in a fresh 7000.0.0a20 project:
+Then, in a fresh Unity 7 project:
 1. Add the packages with `file:` paths and `"testables": ["com.tl.unity.ui"]`. Unity hides warnings for Git-URL packages, so only a `file:` install shows them.
 2. Compile, and check `error CS` and own warnings are 0.
-3. Run EditMode tests (5: the Timeline menu, the target action, the Id guard for new names, scrub preview, and the designer flow in Play mode), then PlayMode tests (21 package tests). Run PlayMode twice with the samples imported; the allocation checks must read 0 B both times.
+3. Run EditMode tests (10: the Timeline menu, the target action, the Id guard for new names, scrub preview, the designer flow in Play mode, and the designer helpers), then PlayMode tests (21 package tests). Run PlayMode twice with the samples imported; the allocation checks must read 0 B both times.
 4. Import a sample, run its **Tl UI > Samples > Build** item, and run its test.
 5. Before a tag, install the exact commit by Git URL and run the PlayMode tests again.

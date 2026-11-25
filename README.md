@@ -1,6 +1,6 @@
 # Tl Unity UI
 
-UI Toolkit screens driven by [Tl](https://github.com/IAFahim/tl) timelines and Unity ECS. Built for Unity 7000.0.0a20.
+UI Toolkit screens driven by [Tl](https://github.com/IAFahim/tl) timelines and Unity ECS. Built for Unity 7 (`7000.0.0a20` or newer).
 
 You make the screen the usual UI Toolkit way, with UXML, USS and UI Builder. Then three things drive it:
 
@@ -152,7 +152,7 @@ How dragging works:
 - **The clip plays backwards.** Its Ease curve goes downhill; the Inspector says so. Pick **Preset > Make Ease go uphill**.
 - **The clip is outside the timeline's play range,** or the track is muted (the speaker icon on the track).
 - **Add Class: the class has no style in your USS.** The class is added, but nothing changes how it looks.
-- **Unity is older than 7000.0.0a20.** This version needs a20.
+- **Unity is older than 7000.0.0a20.** This version needs Unity 7 (`7000.0.0a20` or newer).
 
 ## What is in this repo
 
@@ -168,16 +168,16 @@ Both packages need `com.tl.unity`, the Tl playback package from [IAFahim/tl.unit
 Add these three lines to `dependencies` in your project's `Packages/manifest.json`:
 
 ```json
-"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#765657a330b46a11a17529d3a8c32c1fce1f0ad6",
-"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#v0.3.0-preview.5",
-"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#v0.3.0-preview.5"
+"com.tl.unity": "https://github.com/IAFahim/tl.unity.git?path=/com.tl.unity#main",
+"com.tl.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.ui#main",
+"com.tl.unity.ui": "https://github.com/IAFahim/tl.unity.ui.git?path=/com.tl.unity.ui#main"
 ```
 
-You need all three lines because a Git package cannot pull in another Git package. `com.tl.unity` is pinned to the commit these packages were tested against: tl.unity main plus IAFahim/tl.unity#51, which adds the preview and menu hooks Tl UI uses. Unity resolves Entities, Input System and Timeline for you.
+You need all three lines because a Git package cannot pull in another Git package. `IAFahim/tl.unity#51` is merged on `tl.unity` `main`, so `#main` tracks the latest tested releases without a commit-hash lock (replace `#main` with a tag such as `#v0.3.0-preview.6` to pin a snapshot). Unity resolves Entities, Input System and Timeline for you.
 
 ## Try it in five minutes
 
-1. Add the three lines above to an empty 7000.0.0a20 project. The first time it loads, Tl writes one small menu file per UI block into `Assets/Tl Generated/Editor` and recompiles once.
+1. Add the three lines above to an empty Unity 7 (`7000.0.0a20` or newer) project. The first time it loads, Tl writes one small menu file per UI block into `Assets/Tl Generated/Editor` and recompiles once.
 2. Open **Window > Package Manager**, select **Tl Unity UI**, open **Samples** and import **Hud**.
 3. Run **Tl UI > Samples > Build Hud** from the menu bar. This creates `Hud.unity`, its timelines and its Panel Settings in the imported sample folder.
 4. Open `Hud.unity` and press Play.

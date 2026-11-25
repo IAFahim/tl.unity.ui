@@ -65,21 +65,36 @@ namespace TlUi
 
         public static void Register()
         {
-            var integer = new ConverterGroup(Integer);
-            integer.AddConverter((ref int value) => IntegerText(value));
-            integer.AddConverter((ref float value) => IntegerText(Mathf.RoundToInt(value)));
-            RegisterOnce(integer);
+            if (!ConverterGroups.TryGetConverterGroup(Integer, out _))
+            {
+                for (var value = 0; value < 1000; value++)
+                    s_Integers[value] ??= value.ToString(CultureInfo.InvariantCulture);
+                var integer = new ConverterGroup(Integer);
+                integer.AddConverter((ref int value) => IntegerText(value));
+                integer.AddConverter((ref float value) => IntegerText(Mathf.RoundToInt(value)));
+                RegisterOnce(integer);
+            }
 
-            var percentCache = new string[1001];
-            var percent = new ConverterGroup(Percent);
-            percent.AddConverter((ref float value) => PercentText(percentCache, value));
-            RegisterOnce(percent);
+            if (!ConverterGroups.TryGetConverterGroup(Percent, out _))
+            {
+                var percentCache = new string[1001];
+                for (var p = 0; p <= 100; p++)
+                    percentCache[p] = p.ToString(CultureInfo.InvariantCulture) + "%";
+                var percent = new ConverterGroup(Percent);
+                percent.AddConverter((ref float value) => PercentText(percentCache, value));
+                RegisterOnce(percent);
+            }
 
-            var clockCache = new string[6000];
-            var clock = new ConverterGroup(Clock);
-            clock.AddConverter((ref float value) => ClockText(clockCache, value));
-            clock.AddConverter((ref int value) => ClockText(clockCache, value));
-            RegisterOnce(clock);
+            if (!ConverterGroups.TryGetConverterGroup(Clock, out _))
+            {
+                var clockCache = new string[6000];
+                for (var s = 0; s < 600; s++)
+                    clockCache[s] = (s / 60).ToString(CultureInfo.InvariantCulture) + ":" + (s % 60).ToString("00", CultureInfo.InvariantCulture);
+                var clock = new ConverterGroup(Clock);
+                clock.AddConverter((ref float value) => ClockText(clockCache, value));
+                clock.AddConverter((ref int value) => ClockText(clockCache, value));
+                RegisterOnce(clock);
+            }
 
             var visible = new ConverterGroup(Visible);
             visible.AddConverter((ref bool value) => new StyleEnum<DisplayStyle>(value ? DisplayStyle.Flex : DisplayStyle.None));
